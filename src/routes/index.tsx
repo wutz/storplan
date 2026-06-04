@@ -261,7 +261,7 @@ function XEOSResult({ data }: { data: XEOSPlanResult }) {
           <p className="text-2xl font-bold text-blue-600">{data.formatted.capacity}</p>
         </div>
         <div className="md:col-span-2">
-          <h3 className="font-semibold text-gray-700 mb-2">性能</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">性能（预测数据）</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="text-gray-500">上传 BW (4MiB)</dt>
@@ -322,7 +322,7 @@ function VastDataResult({ data }: { data: VastDataPlanResult }) {
           </dl>
         </div>
         <div className="md:col-span-2">
-          <h3 className="font-semibold text-gray-700 mb-2">性能</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">性能（厂商数据）</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="text-gray-500">读 BW (4MiB)</dt>
@@ -391,7 +391,7 @@ function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
           </dl>
         </div>
         <div className="md:col-span-2">
-          <h3 className="font-semibold text-gray-700 mb-2">性能（800Gb RoCE）</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">性能（预测数据，800Gb RoCE）</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="text-gray-500">读 BW (4MiB)</dt>
