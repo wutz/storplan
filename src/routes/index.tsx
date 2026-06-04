@@ -196,7 +196,7 @@ const STORAGE_INFO: Record<string, { description: string; features: string[]; pr
   },
   vastdata: {
     description: 'VastData 是全闪统一存储平台，单一系统同时提供文件、对象和块存储服务，基于 NVMe SSD 和 SCM 构建。',
-    features: ['统一协议（NFS/SMB/S3/iSCSI/NVMe-oF）', '全闪 NVMe 架构', 'EBox 线性扩展（11-250 台）', '全局去重和压缩', '无元数据瓶颈'],
+    features: ['统一协议（NFS/SMB/S3/NVMe-oF）', '全闪 NVMe 架构', 'EBox 线性扩展（11-250 台）', '全局去重和压缩', '无元数据瓶颈'],
     pros: ['支持多存储协议可以平替 Ceph', '支持多租户', '去重与压缩提升集群可用容量', '支持 QoS 以及元数据 QoS', '原厂技术支持'],
     cons: ['采购费用高于 GPFS', '采用 QLC 大盘性能低于采用 TLC 小盘 GPFS 等存储系统', '采购周期较长'],
   },
