@@ -93,7 +93,7 @@ function StorplanApp() {
               >
                 <option value="xeos">XSKY XEOS（对象存储）</option>
                 <option value="vastdata">VastData（统一存储）</option>
-                <option value="gpfs-ece">GPFS ECE（文件系统）</option>
+                <option value="gpfs-ece">GPFS/Scale（文件系统）</option>
               </select>
             </div>
             <div>
@@ -190,21 +190,21 @@ function StorplanApp() {
 const STORAGE_INFO: Record<string, { description: string; features: string[]; pros: string[]; cons: string[] }> = {
   xeos: {
     description: 'XSKY XEOS 是分布式对象存储系统，基于 HDD 构建大容量存储池，适合海量非结构化数据存储。',
-    features: ['S3 兼容 API', '纠删码数据保护（EC4+2/EC8+2）', '多节点容错', '线性扩展容量和性能', '多站点复制'],
-    pros: ['单位存储成本低（HDD）', '容量可线性扩展至 EB 级', '高可用设计，支持多节点故障'],
-    cons: ['延迟较高（HDD 随机 IO 受限）', '不适合小文件频繁读写', '仅支持对象协议（S3）'],
+    features: ['S3 兼容 API', '纠删码数据保护（EC4+2/EC8+2）', '多节点容错', '线性扩展容量和性能'],
+    pros: ['单位存储成本低（HDD）', '支持超大规模集群', '支持 QoS', '稳定可靠'],
+    cons: ['软件授权较贵'],
   },
   vastdata: {
     description: 'VastData 是全闪统一存储平台，单一系统同时提供文件、对象和块存储服务，基于 NVMe SSD 和 SCM 构建。',
     features: ['统一协议（NFS/SMB/S3/iSCSI/NVMe-oF）', '全闪 NVMe 架构', 'EBox 线性扩展（11-250 台）', '全局去重和压缩', '无元数据瓶颈'],
-    pros: ['超低延迟（全闪 + SCM 加速）', '统一存储池，协议灵活切换', '性能随节点线性增长'],
-    cons: ['成本较高（全闪）', '最小起步 11 个 EBox', '国内技术支持资源有限'],
+    pros: ['支持多存储协议可以平替 Ceph', '支持多租户', '去重与压缩提升集群可用容量', '支持 QoS 以及元数据 QoS', '原厂技术支持'],
+    cons: ['采购费用高于 GPFS', '采用 QLC 大盘性能低于采用 TLC 小盘 GPFS 等存储系统', '采购周期较长'],
   },
   'gpfs-ece': {
-    description: 'IBM GPFS ECE（Erasure Coding Edition）是高性能并行文件系统，基于 NVMe SSD 和 RDMA 网络构建。',
+    description: 'IBM GPFS/Scale ECE（Erasure Coding Edition）是高性能并行文件系统，基于 NVMe SSD 和 RDMA 网络构建。',
     features: ['POSIX 兼容并行文件系统', '纠删码保护（EC4+2P/EC8+2P/EC8+3P）', '800Gb RoCE/InfiniBand 网络', 'GPU 直连存储（GPUDirect Storage）', '多协议（NFS/SMB/对象网关）'],
-    pros: ['极高顺序读写带宽', '低延迟 RDMA 访问', '适合 AI/HPC 大规模并行工作负载'],
-    cons: ['硬件要求高（RDMA 网络）', '运维复杂度较高', '许可证成本较高'],
+    pros: ['性能高', '采购成本低'],
+    cons: ['多租户支持弱', '运维成本高', '原厂支持弱'],
   },
 }
 
@@ -229,7 +229,7 @@ function StorageInfo({ storage }: { storage: string }) {
           </ul>
         </div>
         <div>
-          <h3 className="font-semibold text-orange-700 mb-2">局限</h3>
+          <h3 className="font-semibold text-orange-700 mb-2">劣势</h3>
           <ul className="space-y-1 text-gray-600">
             {info.cons.map((c, i) => <li key={i}>• {c}</li>)}
           </ul>
@@ -355,7 +355,7 @@ function VastDataResult({ data }: { data: VastDataPlanResult }) {
 function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-bold mb-4">GPFS ECE 规划方案</h2>
+      <h2 className="text-xl font-bold mb-4">GPFS/Scale 规划方案</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <h3 className="font-semibold text-gray-700 mb-2">配置</h3>
