@@ -62,10 +62,3 @@ storplan/
 ```bash
 npm run deploy
 ```
-
-通过 GitHub Actions 自动部署（push 到 main/tanstack-start 分支时触发）：
-
-需要在 GitHub 仓库 Settings > Secrets 中配置：
-- `CLOUDFLARE_API_TOKEN` — Cloudflare API Token（需 Workers 编辑权限）
-- `CLOUDFLARE_ACCOUNT_ID` — Cloudflare Account ID
-
