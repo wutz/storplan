@@ -114,8 +114,8 @@ function StorplanApp() {
                   className="border border-gray-300 rounded-md px-3 py-2"
                 >
                   <option value="TiB">TiB</option>
-                  <option value="TB">TB</option>
                   <option value="PiB">PiB</option>
+                  <option value="TB">TB</option>
                   <option value="PB">PB</option>
                 </select>
               </div>
