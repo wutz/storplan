@@ -127,7 +127,7 @@ export function planXEOS(req: XEOSPlanRequest): XEOSPlanResult {
   const startServers = Math.max(3, minServersForPerf);
 
   for (const diskSize of CONSTANTS.DISK_SIZES) {
-    for (let servers = startServers; servers <= 50; servers++) {
+    for (let servers = startServers; servers <= 200; servers++) {
       const ec = getEcScheme(servers);
       const actual = calculateActualCapacity(servers, diskSize, ec.efficiency);
 
@@ -146,7 +146,7 @@ export function planXEOS(req: XEOSPlanRequest): XEOSPlanResult {
   }
 
   if (configs.length === 0) {
-    throw new Error('无法找到满足需求的配置（超出 50 节点限制）');
+    throw new Error('无法找到满足需求的配置');
   }
 
   const best = configs.reduce((a, b) =>
