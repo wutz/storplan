@@ -55,27 +55,17 @@ storplan/
 
 ## 部署
 
-### Docker
+### Cloudflare Workers
+
+通过 `wrangler` CLI 手动部署：
 
 ```bash
-# 构建镜像
-docker build -t storplan .
-
-# 运行
-docker run -p 3000:3000 storplan
+npm run deploy
 ```
 
-镜像自动通过 GitHub Actions 构建并推送到 GHCR：
+通过 GitHub Actions 自动部署（push 到 main/tanstack-start 分支时触发）：
 
-```bash
-docker pull ghcr.io/wutz/storplan:tanstack-start
-```
+需要在 GitHub 仓库 Settings > Secrets 中配置：
+- `CLOUDFLARE_API_TOKEN` — Cloudflare API Token（需 Workers 编辑权限）
+- `CLOUDFLARE_ACCOUNT_ID` — Cloudflare Account ID
 
-### Kubernetes
-
-```bash
-kubectl apply -f k8s/deployment.yaml
-```
-
-部署包含：Namespace、Deployment（2 副本）、Service、Ingress。
-修改 `k8s/deployment.yaml` 中的 Ingress host 适配实际域名。

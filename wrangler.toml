@@ -1,0 +1,7 @@
+name = "storplan"
+compatibility_date = "2026-06-03"
+compatibility_flags = ["nodejs_compat"]
+main = "@tanstack/react-start/server-entry"
+
+[observability]
+enabled = true
