@@ -451,7 +451,7 @@ function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
           </dl>
         </div>
         <div className="md:col-span-2">
-          <h3 className="font-semibold text-gray-700 mb-2">性能（预测数据，800Gb RoCE）</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">性能（预测数据）</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="text-gray-500">读 BW (4MiB)</dt>
