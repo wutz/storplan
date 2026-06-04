@@ -359,6 +359,10 @@ function VastDataResult({ data }: { data: VastDataPlanResult }) {
               <dd>{data.eboxCount} 台</dd>
             </div>
             <div className="flex justify-between">
+              <dt className="text-gray-500">容错能力</dt>
+              <dd>容忍 2 台节点离线</dd>
+            </div>
+            <div className="flex justify-between">
               <dt className="text-gray-500">磁盘配置</dt>
               <dd>{data.diskConfig}</dd>
             </div>
