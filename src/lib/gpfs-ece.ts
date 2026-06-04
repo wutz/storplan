@@ -120,7 +120,7 @@ export function planGPFSECE(req: GPFSECEPlanRequest): GPFSECEPlanResult {
   const configs: Config[] = [];
 
   for (const ssdSize of CONSTANTS.SSD_SIZES) {
-    for (let servers = minServersForPerf; servers <= 50; servers++) {
+    for (let servers = minServersForPerf; servers <= 256; servers++) {
       const ec = getECScheme(servers);
       const actual = calculateCapacity(servers, ssdSize, ec.efficiency);
 
