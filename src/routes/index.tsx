@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { planXEOS } from '#/lib/xeos'
 import type { XEOSPlanResult } from '#/lib/xeos'
@@ -25,13 +25,16 @@ function StorplanApp() {
   const [result, setResult] = useState<PlanResult | null>(null)
   const [error, setError] = useState('')
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setError('')
-    setResult(null)
+  // 实时计算
+  useEffect(() => {
+    if (!capacityValue) {
+      setResult(null)
+      setError('')
+      return
+    }
 
     try {
-      const capacity = capacityValue ? `${capacityValue}${capacityUnit}` : ''
+      const capacity = `${capacityValue}${capacityUnit}`
 
       if (storage === 'xeos') {
         const uploadBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
@@ -42,6 +45,7 @@ function StorplanApp() {
           downloadBandwidth: downloadBW || undefined,
         })
         setResult({ type: 'xeos', data: plan })
+        setError('')
       } else if (storage === 'vastdata') {
         const readBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
         const writeBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
@@ -51,6 +55,7 @@ function StorplanApp() {
           writeBandwidth: writeBW || undefined,
         })
         setResult({ type: 'vastdata', data: plan })
+        setError('')
       } else if (storage === 'gpfs-ece') {
         const readBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
         const writeBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
@@ -60,11 +65,13 @@ function StorplanApp() {
           writeBandwidth: writeBW || undefined,
         })
         setResult({ type: 'gpfs-ece', data: plan })
+        setError('')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
+      setResult(null)
     }
-  }
+  }, [storage, capacityValue, capacityUnit, downloadBWValue, downloadBWUnit, uploadBWValue, uploadBWUnit])
 
   const bwLabels = storage === 'xeos'
     ? { read: '下载带宽（可选）', write: '上传带宽（可选）' }
@@ -76,8 +83,8 @@ function StorplanApp() {
         <h1 className="text-3xl font-bold mb-2">Storplan</h1>
         <p className="text-gray-600 mb-8">存储容量和性能规划工具</p>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">存储方案</label>
               <select
@@ -99,7 +106,6 @@ function StorplanApp() {
                   onChange={(e) => setCapacityValue(e.target.value)}
                   placeholder="500"
                   className="flex-1 border border-gray-300 rounded-md px-3 py-2"
-                  required
                   min="0"
                   step="0.1"
                 />
@@ -160,13 +166,7 @@ function StorplanApp() {
               </div>
             </div>
           </div>
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
-          >
-            开始规划
-          </button>
-        </form>
+        </div>
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
