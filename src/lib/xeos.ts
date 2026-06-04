@@ -1,4 +1,4 @@
-import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth } from './utils.js';
+import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth } from './utils';
 
 export interface XEOSPlanRequest {
   capacity: string;

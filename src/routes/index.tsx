@@ -1,8 +1,11 @@
 import { useState } from 'react'
-import { planXEOS } from '@storplan/core'
-import type { XEOSPlanResult } from '@storplan/core'
+import { createFileRoute } from '@tanstack/react-router'
+import { planXEOS } from '#/lib/xeos'
+import type { XEOSPlanResult } from '#/lib/xeos'
 
-function App() {
+export const Route = createFileRoute('/')({ component: StorplanApp })
+
+function StorplanApp() {
   const [storage, setStorage] = useState('xeos')
   const [capacity, setCapacity] = useState('')
   const [downloadBW, setDownloadBW] = useState('')
@@ -155,5 +158,3 @@ function App() {
     </div>
   )
 }
-
-export default App

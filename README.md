@@ -2,13 +2,12 @@
 
 存储容量和性能规划工具。支持多种存储方案的容量、性能计算和方案对比。
 
-## 架构
+## 技术栈
 
-TypeScript monorepo + Cloudflare 部署：
-
-- **@storplan/core** — 规划计算引擎（共享库）
-- **@storplan/api** — Cloudflare Workers REST API
-- **@storplan/web** — Cloudflare Pages 前端（Vite + React + Tailwind + shadcn/ui）
+- **TanStack Start** — 全栈 React 框架
+- **TanStack Router** — 类型安全的文件路由
+- **Tailwind CSS** — 样式
+- **TypeScript** — 类型安全
 
 ## 支持的存储方案
 
@@ -23,49 +22,44 @@ TypeScript monorepo + Cloudflare 部署：
 # 安装依赖
 npm install
 
-# 构建 core 库
-npm run build --workspace=packages/core
-
-# 启动前端开发服务器
+# 启动开发服务器
 npm run dev
 
-# 启动 API 开发服务器
-npm run dev:api
-```
-
-## 部署
-
-### API (Cloudflare Workers)
-
-```bash
-cd packages/api
-npx wrangler deploy
-```
-
-### 前端 (Cloudflare Pages)
-
-```bash
-cd packages/web
+# 构建生产版本
 npm run build
-npx wrangler pages deploy dist
+
+# 预览生产构建
+npm run preview
 ```
+
+访问 <http://localhost:3000>
 
 ## 项目结构
 
 ```
 storplan/
-├── packages/
-│   ├── core/        # 规划计算引擎
-│   │   └── src/
-│   │       ├── index.ts   # 导出入口
-│   │       ├── utils.ts   # 容量/带宽解析工具
-│   │       └── xeos.ts    # XEOS 规划器
-│   ├── api/         # Cloudflare Workers API
-│   │   └── src/
-│   │       └── index.ts   # Worker 入口
-│   └── web/         # React 前端
-│       └── src/
-│           ├── App.tsx    # 主组件
-│           └── main.tsx   # 入口
-└── package.json     # Workspace 根配置
+├── src/
+│   ├── lib/             # 核心计算逻辑
+│   │   ├── utils.ts     # 容量/带宽解析工具
+│   │   └── xeos.ts      # XEOS 规划器
+│   ├── routes/          # 路由页面
+│   │   ├── __root.tsx   # 根布局
+│   │   └── index.tsx    # 首页（规划表单）
+│   ├── router.tsx       # 路由配置
+│   └── styles.css       # 全局样式
+├── dist/                # 构建输出
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
 ```
+
+## 部署
+
+TanStack Start 支持多种部署平台：
+
+- Cloudflare Pages
+- Vercel
+- Netlify
+- Node.js
+
+详见 [TanStack Start 部署文档](https://tanstack.com/start/latest/docs/framework/react/deployment)

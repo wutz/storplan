@@ -5,6 +5,10 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# TanStack
+.tanstack/
+src/routeTree.gen.ts
+
 # Wrangler
 .wrangler/
 .dev.vars
