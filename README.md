@@ -1,44 +1,24 @@
 # Storplan
 
-存储容量和性能规划工具，支持多种存储方案的容量、性能计算和方案对比。
+存储容量和性能规划工具。支持多种存储方案的容量、性能计算和方案对比。
 
-## 架构
+## 技术栈
 
-- **Backend（Go）**：规划计算引擎 + REST API 服务
-- **CLI（Go）**：命令行工具，可独立使用或调用后端服务
-- **Frontend（React + shadcn/ui）**：Web 界面
+- **TanStack Start** — 全栈 React 框架
+- **TanStack Router** — 类型安全的文件路由
+- **Tailwind CSS** — 样式
+- **TypeScript** — 类型安全
 
 ## 支持的存储方案
 
-- GPFS ECE — 高性能文件系统
 - XSKY XEOS — 对象存储
-- Vastdata — 统一存储平台（文件/对象/块）
-- Weka — 高性能文件系统
-- Ceph RGW — 对象存储（开发中）
+- GPFS ECE（开发中）
+- Vastdata（开发中）
+- Weka（开发中）
 
 ## 快速开始
 
-### 后端开发
-
 ```bash
-# 安装依赖
-go mod download
-
-# 启动 API 服务器
-go run cmd/server/main.go
-
-# 构建 CLI
-go build -o storplan cmd/storplan/main.go
-
-# 使用 CLI
-./storplan plan --storage xeos --capacity 500TiB
-```
-
-### 前端开发
-
-```bash
-cd web
-
 # 安装依赖
 npm install
 
@@ -47,29 +27,55 @@ npm run dev
 
 # 构建生产版本
 npm run build
+
+# 预览生产构建
+npm run preview
 ```
+
+访问 <http://localhost:3000>
 
 ## 项目结构
 
 ```
-.
-├── cmd/
-│   ├── server/      # API 服务器入口
-│   └── storplan/    # CLI 入口
-├── internal/
-│   ├── planner/     # 规划计算引擎（核心逻辑）
-│   └── api/         # REST API 实现
-└── web/             # 前端应用（React + shadcn/ui）
+storplan/
+├── src/
+│   ├── lib/             # 核心计算逻辑
+│   │   ├── utils.ts     # 容量/带宽解析工具
+│   │   └── xeos.ts      # XEOS 规划器
+│   ├── routes/          # 路由页面
+│   │   ├── __root.tsx   # 根布局
+│   │   └── index.tsx    # 首页（规划表单）
+│   ├── router.tsx       # 路由配置
+│   └── styles.css       # 全局样式
+├── dist/                # 构建输出
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
 ```
 
-## 开发计划
+## 部署
 
-- [x] 项目初始化
-- [ ] 实现 GPFS ECE 规划器
-- [ ] 实现 XSKY XEOS 规划器
-- [ ] 实现 Vastdata 规划器
-- [ ] 实现 Weka 规划器
-- [ ] CLI 基本命令
-- [ ] REST API 服务
-- [ ] Web 前端界面
-- [ ] 方案对比功能
+### Docker
+
+```bash
+# 构建镜像
+docker build -t storplan .
+
+# 运行
+docker run -p 3000:3000 storplan
+```
+
+镜像自动通过 GitHub Actions 构建并推送到 GHCR：
+
+```bash
+docker pull ghcr.io/wutz/storplan:tanstack-start
+```
+
+### Kubernetes
+
+```bash
+kubectl apply -f k8s/deployment.yaml
+```
+
+部署包含：Namespace、Deployment（2 副本）、Service、Ingress。
+修改 `k8s/deployment.yaml` 中的 Ingress host 适配实际域名。

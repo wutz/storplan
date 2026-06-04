@@ -1,22 +1,17 @@
-# Binaries
-/server
-/storplan
-*.exe
-*.dll
-*.so
-*.dylib
+# Dependencies
+node_modules/
 
-# Go
-*.test
-*.out
-vendor/
-go.work
-go.work.sum
+# Build output
+dist/
+*.tsbuildinfo
 
-# Frontend
-/web/node_modules
-/web/dist
-/web/.vite
+# TanStack
+.tanstack/
+src/routeTree.gen.ts
+
+# Wrangler
+.wrangler/
+.dev.vars
 
 # IDE
 .idea/
