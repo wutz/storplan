@@ -261,7 +261,7 @@ function StorplanApp() {
 
 const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: string[]; limits?: string[] }> = {
   xeos: {
-    description: 'XSKY XEOS 是分布式对象存储系统，基于 HDD 构建大容量存储池，适合海量非结构化数据存储。',
+    description: 'XSKY XEOS 是分布式对象存储系统，基于大量 HDD 和少量 NVMe SSD 构建混闪对象存储，适合海量非结构化数据存储。',
     pros: ['支持超大规模集群', '支持 QoS', '稳定可靠', '支持 CRC64 校验', '原厂技术支持'],
     cons: ['软件授权较贵', '得盘率稍低提升成本'],
   },
@@ -317,7 +317,7 @@ function XEOSResult({ data }: { data: XEOSPlanResult }) {
       <h2 className="text-xl font-bold mb-4">XSKY XEOS 规划方案</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <h3 className="font-semibold text-gray-700 mb-2">配置</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
               <dt className="text-gray-500">服务器台数</dt>
@@ -327,19 +327,40 @@ function XEOSResult({ data }: { data: XEOSPlanResult }) {
               <dt className="text-gray-500">纠删码方案</dt>
               <dd>{data.ecScheme}（容忍 {data.tolerance} 节点离线）</dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">磁盘配置</dt>
-              <dd>每台 32 × {data.diskSize}TB HDD</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">网络配置</dt>
-              <dd>2 × 双口 25Gb ETH NIC</dd>
-            </div>
           </dl>
         </div>
         <div>
           <h3 className="font-semibold text-gray-700 mb-2">可用容量</h3>
           <p className="text-2xl font-bold text-blue-600">{data.formatted.capacity}</p>
+        </div>
+        <div className="md:col-span-2">
+          <h3 className="font-semibold text-gray-700 mb-2">每台服务器配置</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">处理器</dt>
+              <dd>2 × Intel Xeon 4134</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">内存</dt>
+              <dd>8 × 32GB DDR4（共 256GB）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">系统盘</dt>
+              <dd>2 × 960GB SATA SSD（RAID1）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">索引缓存盘</dt>
+              <dd>4 × 1.6TB NVMe SSD（≥3 DWPD）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">网卡</dt>
+              <dd>2 × 双口 25Gb ETH NIC</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">数据盘</dt>
+              <dd>32 × {data.diskSize}TB HDD</dd>
+            </div>
+          </dl>
         </div>
         <div className="md:col-span-2">
           <h3 className="font-semibold text-gray-700 mb-2">性能（预测数据）</h3>
