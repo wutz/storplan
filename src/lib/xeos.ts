@@ -14,6 +14,7 @@ export interface XEOSPlanResult {
   tolerance: number;
   diskSize: number;
   actualCapacity: number;
+  rawCapacity: number;
   performance: {
     uploadBandwidth: number;
     downloadBandwidth: number;
@@ -22,6 +23,7 @@ export interface XEOSPlanResult {
   };
   formatted: {
     capacity: string;
+    rawCapacity: string;
     uploadBandwidth: string;
     downloadBandwidth: string;
     uploadOps: string;
@@ -60,6 +62,10 @@ export function getEcScheme(serverCount: number): ECScheme {
 function calculateActualCapacity(serverCount: number, diskSizeTB: number, efficiency: number): number {
   const diskSizeTiB = diskSizeTB * CONSTANTS.TB_TO_TIB;
   return serverCount * CONSTANTS.DISKS_PER_SERVER * diskSizeTiB * CONSTANTS.SPACE_OVERHEAD * efficiency;
+}
+
+function calculateRawCapacity(serverCount: number, diskSizeTB: number): number {
+  return serverCount * CONSTANTS.DISKS_PER_SERVER * diskSizeTB * CONSTANTS.TB_TO_TIB;
 }
 
 function calculatePerformance(serverCount: number) {
@@ -155,6 +161,7 @@ export function planXEOS(req: XEOSPlanRequest): XEOSPlanResult {
   );
 
   const performance = calculatePerformance(best.serverCount);
+  const rawCapacity = calculateRawCapacity(best.serverCount, best.diskSize);
 
   return {
     serverCount: best.serverCount,
@@ -162,9 +169,11 @@ export function planXEOS(req: XEOSPlanRequest): XEOSPlanResult {
     tolerance: best.tolerance,
     diskSize: best.diskSize,
     actualCapacity: best.actualCapacity,
+    rawCapacity,
     performance,
     formatted: {
       capacity: formatCapacity(best.actualCapacity, capacityInfo.isBinary),
+      rawCapacity: formatCapacity(rawCapacity, capacityInfo.isBinary),
       uploadBandwidth: formatBandwidth(performance.uploadBandwidth, bandwidthUnitType),
       downloadBandwidth: formatBandwidth(performance.downloadBandwidth, bandwidthUnitType),
       uploadOps: `${performance.uploadOps.toLocaleString()}`,

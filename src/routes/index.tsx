@@ -333,8 +333,17 @@ function XEOSResult({ data }: { data: XEOSPlanResult }) {
           </dl>
         </div>
         <div>
-          <h3 className="font-semibold text-gray-700 mb-2">可用容量</h3>
-          <p className="text-2xl font-bold text-blue-600">{data.formatted.capacity}</p>
+          <h3 className="font-semibold text-gray-700 mb-2">容量</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">可用容量</dt>
+              <dd className="text-xl font-bold text-blue-600">{data.formatted.capacity}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">裸容量</dt>
+              <dd>{data.formatted.rawCapacity}</dd>
+            </div>
+          </dl>
         </div>
         <div className="md:col-span-2">
           <h3 className="font-semibold text-gray-700 mb-2">每台服务器配置</h3>
@@ -480,7 +489,7 @@ function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
       <h2 className="text-xl font-bold mb-4">GPFS/Scale 规划方案</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <h3 className="font-semibold text-gray-700 mb-2">配置</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
               <dt className="text-gray-500">服务器台数</dt>
@@ -489,14 +498,6 @@ function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
             <div className="flex justify-between">
               <dt className="text-gray-500">纠删码方案</dt>
               <dd>{data.ecScheme}（容忍 {data.tolerance} 节点离线）</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">磁盘配置</dt>
-              <dd>{data.ssdConfig}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">网络配置</dt>
-              <dd>2 × 双口 200Gb RoCE/IB NIC</dd>
             </div>
           </dl>
         </div>
@@ -510,6 +511,35 @@ function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
             <div className="flex justify-between">
               <dt className="text-gray-500">裸容量</dt>
               <dd>{data.formatted.rawCapacity}</dd>
+            </div>
+          </dl>
+        </div>
+        <div className="md:col-span-2">
+          <h3 className="font-semibold text-gray-700 mb-2">每台服务器配置</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">处理器</dt>
+              <dd>2 × Intel Xeon 6530</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">内存</dt>
+              <dd>16 × 32GB DDR5 4800（共 512GB）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">系统盘</dt>
+              <dd>2 × 480GB SATA SSD（RAID1）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">存储网络</dt>
+              <dd>2 × 双口 200Gb RoCE/IB NIC</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">管理网络</dt>
+              <dd>1 × 双口 25Gb 以太网卡</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">数据盘</dt>
+              <dd>{data.ssdConfig}</dd>
             </div>
           </dl>
         </div>
