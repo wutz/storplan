@@ -33,7 +33,7 @@ export interface XEOSPlanResult {
   bandwidthUnitType: string;
 }
 
-const CONSTANTS = {
+export const CONSTANTS = {
   DISKS_PER_SERVER: 32,
   SPACE_OVERHEAD: 0.81,
   EC8_2_EFFICIENCY: 0.8,
@@ -42,9 +42,20 @@ const CONSTANTS = {
   DOWNLOAD_BW_PER_DISK: 60,
   UPLOAD_OPS_PER_DISK: 100,
   DOWNLOAD_OPS_PER_DISK: 300,
-  DISK_SIZES: [24, 22, 20, 18, 16, 12, 10, 8],
+  DISK_SIZES: [24, 22, 20, 18, 16, 12, 10, 8] as const,
   TB_TO_TIB: 0.909,
 };
+
+export const EC_SCHEMES = [
+  { scheme: 'EC4+2:1', efficiency: CONSTANTS.EC4_2_EFFICIENCY, tolerance: 1, minServers: 3 },
+  { scheme: 'EC8+2:1', efficiency: CONSTANTS.EC8_2_EFFICIENCY, tolerance: 1, minServers: 5 },
+  { scheme: 'EC4+2', efficiency: CONSTANTS.EC4_2_EFFICIENCY, tolerance: 2, minServers: 6 },
+  { scheme: 'EC8+2', efficiency: CONSTANTS.EC8_2_EFFICIENCY, tolerance: 2, minServers: 10 },
+] as const;
+
+export function calculateCapacityTiB(serverCount: number, diskSizeTB: number, ecEfficiency: number): number {
+  return serverCount * CONSTANTS.DISKS_PER_SERVER * diskSizeTB * CONSTANTS.TB_TO_TIB * CONSTANTS.SPACE_OVERHEAD * ecEfficiency;
+}
 
 interface ECScheme {
   scheme: string;

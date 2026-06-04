@@ -31,25 +31,26 @@ export interface VastDataPlanResult {
   };
 }
 
-const CONSTANTS = {
+export const CONSTANTS = {
   MIN_EBOX: 11,
   MAX_EBOX: 250,
   TB_TO_TIB: 0.909,
-  // EBox 配置 (每个 EBox)
   EBOX_CONFIGS: [
     { diskSize: 15.36, label: '2×800GB SCM + 8×15.36TB NVMe', rawPerEbox: 122.88 },
     { diskSize: 30.72, label: '2×1.6TB SCM + 8×30.72TB NVMe', rawPerEbox: 245.76 },
     { diskSize: 61.44, label: '3×1.6TB SCM + 7×61.44TB NVMe', rawPerEbox: 430.08 },
-  ],
-  // EBox 性能 (per EBox)
-  READ_BW_PER_EBOX: 21, // GB/s
-  SUSTAINED_WRITE_BW_PER_EBOX: 2.6, // GB/s
-  BURST_WRITE_BW_PER_EBOX: 10, // GB/s
+  ] as { diskSize: number; label: string; rawPerEbox: number }[],
+  READ_BW_PER_EBOX: 21,
+  SUSTAINED_WRITE_BW_PER_EBOX: 2.6,
+  BURST_WRITE_BW_PER_EBOX: 10,
   READ_IOPS_PER_EBOX: 180000,
   WRITE_IOPS_PER_EBOX: 23750,
-  // 可用容量系数 (考虑元数据、副本等)
   USABLE_RATIO: 0.728,
 };
+
+export function calculateCapacityTiB(eboxCount: number, rawPerEbox: number): number {
+  return eboxCount * rawPerEbox * CONSTANTS.TB_TO_TIB * CONSTANTS.USABLE_RATIO;
+}
 
 function calculateEboxConfig(eboxCount: number, diskConfig: typeof CONSTANTS.EBOX_CONFIGS[0]) {
   const rawTB = eboxCount * diskConfig.rawPerEbox;

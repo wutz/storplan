@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { planXEOS, getEcScheme } from '#/lib/xeos'
+import { planXEOS, getEcScheme, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity } from '#/lib/xeos'
 import type { XEOSPlanResult } from '#/lib/xeos'
-import { planVastData } from '#/lib/vastdata'
+import { planVastData, CONSTANTS as VAST_CONSTANTS, calculateCapacityTiB as vastCapacity } from '#/lib/vastdata'
 import type { VastDataPlanResult } from '#/lib/vastdata'
-import { planGPFSECE, getECScheme as getGpfsEcScheme } from '#/lib/gpfs-ece'
+import { planGPFSECE, getECScheme as getGpfsEcScheme, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
@@ -107,28 +107,71 @@ function StorplanApp() {
     : { read: '读 BW', write: '写 BW' }
 
   const handleXeosServerCountChange = (newCount: number) => {
-    if (!results.xeos) return
+    if (!results.xeos || newCount < 3) return
     const { diskSize } = results.xeos
     const ec = getEcScheme(newCount)
-    const newCapacityTiB = newCount * 32 * diskSize * 0.909 * 0.81 * ec.efficiency
+    const newCapacityTiB = xeosCapacity(newCount, diskSize, ec.efficiency)
+    setCapacityValue(newCapacityTiB.toFixed(2))
+    setCapacityUnit('TiB')
+  }
+
+  const handleXeosDiskChange = (newDiskSize: number) => {
+    if (!results.xeos) return
+    const { serverCount } = results.xeos
+    const ec = getEcScheme(serverCount)
+    const newCapacityTiB = xeosCapacity(serverCount, newDiskSize, ec.efficiency)
+    setCapacityValue(newCapacityTiB.toFixed(2))
+    setCapacityUnit('TiB')
+  }
+
+  const handleXeosEcChange = (ecEfficiency: number) => {
+    if (!results.xeos) return
+    const { serverCount, diskSize } = results.xeos
+    const newCapacityTiB = xeosCapacity(serverCount, diskSize, ecEfficiency)
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
   }
 
   const handleVastDataEboxCountChange = (newCount: number) => {
-    if (!results.vastdata) return
+    if (!results.vastdata || newCount < 11) return
     const { diskSize } = results.vastdata
-    const rawTB = newCount * (diskSize === 15.36 ? 122.88 : diskSize === 30.72 ? 245.76 : 430.08)
-    const newCapacityTiB = rawTB * 0.909 * 0.728
+    const config = VAST_CONSTANTS.EBOX_CONFIGS.find(c => c.diskSize === diskSize)!
+    const newCapacityTiB = vastCapacity(newCount, config.rawPerEbox)
+    setCapacityValue(newCapacityTiB.toFixed(2))
+    setCapacityUnit('TiB')
+  }
+
+  const handleVastDataDiskChange = (newDiskSize: number) => {
+    if (!results.vastdata) return
+    const { eboxCount } = results.vastdata
+    const config = VAST_CONSTANTS.EBOX_CONFIGS.find(c => c.diskSize === newDiskSize)!
+    const newCapacityTiB = vastCapacity(eboxCount, config.rawPerEbox)
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
   }
 
   const handleGpfsServerCountChange = (newCount: number) => {
-    if (!results['gpfs-ece']) return
+    if (!results['gpfs-ece'] || newCount < 3) return
     const { ssdSize } = results['gpfs-ece']
     const ec = getGpfsEcScheme(newCount)
-    const newCapacityTiB = newCount * 24 * ssdSize * 0.909 * ec.efficiency * 0.9
+    const newCapacityTiB = gpfsCapacity(newCount, ssdSize, ec.efficiency)
+    setCapacityValue(newCapacityTiB.toFixed(2))
+    setCapacityUnit('TiB')
+  }
+
+  const handleGpfsDiskChange = (newSsdSize: number) => {
+    if (!results['gpfs-ece']) return
+    const { serverCount } = results['gpfs-ece']
+    const ec = getGpfsEcScheme(serverCount)
+    const newCapacityTiB = gpfsCapacity(serverCount, newSsdSize, ec.efficiency)
+    setCapacityValue(newCapacityTiB.toFixed(2))
+    setCapacityUnit('TiB')
+  }
+
+  const handleGpfsEcChange = (ecEfficiency: number) => {
+    if (!results['gpfs-ece']) return
+    const { serverCount, ssdSize } = results['gpfs-ece']
+    const newCapacityTiB = gpfsCapacity(serverCount, ssdSize, ecEfficiency)
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
   }
@@ -243,7 +286,7 @@ function StorplanApp() {
             )}
             {results.vastdata && (
               <div className="mb-8">
-                <VastDataResult data={results.vastdata} onEboxCountChange={handleVastDataEboxCountChange} />
+                <VastDataResult data={results.vastdata} onEboxCountChange={handleVastDataEboxCountChange} onDiskChange={handleVastDataDiskChange} />
               </div>
             )}
           </>
@@ -259,7 +302,7 @@ function StorplanApp() {
             )}
             {results['gpfs-ece'] && (
               <div className="mb-8">
-                <GPFSECEResult data={results['gpfs-ece']} onServerCountChange={handleGpfsServerCountChange} />
+                <GPFSECEResult data={results['gpfs-ece']} onServerCountChange={handleGpfsServerCountChange} onDiskChange={handleGpfsDiskChange} onEcChange={handleGpfsEcChange} />
               </div>
             )}
           </>
@@ -275,7 +318,7 @@ function StorplanApp() {
             )}
             {results.xeos && (
               <div className="mb-8">
-                <XEOSResult data={results.xeos} onServerCountChange={handleXeosServerCountChange} />
+                <XEOSResult data={results.xeos} onServerCountChange={handleXeosServerCountChange} onDiskChange={handleXeosDiskChange} onEcChange={handleXeosEcChange} />
               </div>
             )}
           </>
@@ -343,7 +386,7 @@ function StorageInfo({ storage }: { storage: string }) {
   )
 }
 
-function XEOSResult({ data, onServerCountChange }: { data: XEOSPlanResult; onServerCountChange: (n: number) => void }) {
+function XEOSResult({ data, onServerCountChange, onDiskChange, onEcChange }: { data: XEOSPlanResult; onServerCountChange: (n: number) => void; onDiskChange: (n: number) => void; onEcChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.downloadBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
 
@@ -363,9 +406,13 @@ function XEOSResult({ data, onServerCountChange }: { data: XEOSPlanResult; onSer
                 <span className="ml-0.5">台</span>
               </dd>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <dt className="text-gray-500">纠删码方案</dt>
-              <dd>{data.ecScheme}（容忍 {data.tolerance} 节点离线）</dd>
+              <dd>
+                <select value={data.ecScheme} onChange={(e) => { const s = XEOS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {XEOS_EC_SCHEMES.map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}（容忍 {s.tolerance} 节点离线）</option>)}
+                </select>
+              </dd>
             </div>
           </dl>
         </div>
@@ -405,9 +452,13 @@ function XEOSResult({ data, onServerCountChange }: { data: XEOSPlanResult; onSer
               <dt className="text-gray-500">网卡</dt>
               <dd>2 × 双口 25Gb ETH NIC</dd>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <dt className="text-gray-500">数据盘</dt>
-              <dd>32 × {data.diskSize}TB HDD</dd>
+              <dd>
+                32 × <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {XEOS_CONSTANTS.DISK_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
+                </select> HDD
+              </dd>
             </div>
           </dl>
         </div>
@@ -441,7 +492,7 @@ function XEOSResult({ data, onServerCountChange }: { data: XEOSPlanResult; onSer
   )
 }
 
-function VastDataResult({ data, onEboxCountChange }: { data: VastDataPlanResult; onEboxCountChange: (n: number) => void }) {
+function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastDataPlanResult; onEboxCountChange: (n: number) => void; onDiskChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
 
@@ -465,9 +516,13 @@ function VastDataResult({ data, onEboxCountChange }: { data: VastDataPlanResult;
               <dt className="text-gray-500">容错能力</dt>
               <dd>容忍 2 台节点离线</dd>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <dt className="text-gray-500">磁盘配置</dt>
-              <dd>{data.diskConfig}</dd>
+              <dd>
+                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {VAST_CONSTANTS.EBOX_CONFIGS.map(c => <option key={c.diskSize} value={c.diskSize}>{c.label}</option>)}
+                </select>
+              </dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">网络配置</dt>
@@ -522,7 +577,7 @@ function VastDataResult({ data, onEboxCountChange }: { data: VastDataPlanResult;
   )
 }
 
-function GPFSECEResult({ data, onServerCountChange }: { data: GPFSECEPlanResult; onServerCountChange: (n: number) => void }) {
+function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange }: { data: GPFSECEPlanResult; onServerCountChange: (n: number) => void; onDiskChange: (n: number) => void; onEcChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
 
@@ -542,9 +597,13 @@ function GPFSECEResult({ data, onServerCountChange }: { data: GPFSECEPlanResult;
                 <span className="ml-0.5">台</span>
               </dd>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <dt className="text-gray-500">纠删码方案</dt>
-              <dd>{data.ecScheme}（容忍 {data.tolerance} 节点离线）</dd>
+              <dd>
+                <select value={data.ecScheme} onChange={(e) => { const s = GPFS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {GPFS_EC_SCHEMES.map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}（容忍 {s.tolerance} 节点离线）</option>)}
+                </select>
+              </dd>
             </div>
           </dl>
         </div>
@@ -584,9 +643,13 @@ function GPFSECEResult({ data, onServerCountChange }: { data: GPFSECEPlanResult;
               <dt className="text-gray-500">管理网络</dt>
               <dd>1 × 双口 25Gb 以太网卡</dd>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <dt className="text-gray-500">数据盘</dt>
-              <dd>{data.ssdConfig}</dd>
+              <dd>
+                24 × <select value={data.ssdSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {GPFS_CONSTANTS.SSD_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
+                </select> NVMe SSD
+              </dd>
             </div>
           </dl>
         </div>

@@ -30,24 +30,31 @@ export interface GPFSECEPlanResult {
   };
 }
 
-const CONSTANTS = {
+export const CONSTANTS = {
   SSDS_PER_SERVER: 24,
   TB_TO_TIB: 0.909,
   METADATA_RESERVED: 0.9,
-  // EC 方案效率
   EC4_2P_EFFICIENCY: 0.6667,
   EC8_3P_EFFICIENCY: 0.7273,
   EC8_2P_EFFICIENCY: 0.8,
-  // SSD 规格
-  SSD_SIZES: [7.68, 15.36],
-  // 性能 (per server, 800Gb RoCE)
-  WRITE_BW_PER_SERVER: 21800, // MiB/s
-  READ_BW_BASE: 52000, // MiB/s (3 节点)
-  READ_BW_DECAY: 636, // 每增加节点减少
-  READ_BW_FLOOR: 38000, // 最低读带宽
+  SSD_SIZES: [7.68, 15.36] as const,
+  WRITE_BW_PER_SERVER: 21800,
+  READ_BW_BASE: 52000,
+  READ_BW_DECAY: 636,
+  READ_BW_FLOOR: 38000,
   READ_IOPS_PER_SERVER: 225000,
   WRITE_IOPS_PER_SERVER: 225000,
 };
+
+export const EC_SCHEMES = [
+  { scheme: 'EC4+2P', efficiency: CONSTANTS.EC4_2P_EFFICIENCY, tolerance: 1, minServers: 3 },
+  { scheme: 'EC8+3P', efficiency: CONSTANTS.EC8_3P_EFFICIENCY, tolerance: 1, minServers: 4 },
+  { scheme: 'EC8+2P', efficiency: CONSTANTS.EC8_2P_EFFICIENCY, tolerance: 1, minServers: 5 },
+] as const;
+
+export function calculateCapacityTiB(serverCount: number, ssdSizeTB: number, ecEfficiency: number): number {
+  return serverCount * CONSTANTS.SSDS_PER_SERVER * ssdSizeTB * CONSTANTS.TB_TO_TIB * ecEfficiency * CONSTANTS.METADATA_RESERVED;
+}
 
 interface ECScheme {
   scheme: string;
