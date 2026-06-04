@@ -9,70 +9,101 @@ import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
 
-type PlanResult =
-  | { type: 'xeos'; data: XEOSPlanResult }
-  | { type: 'vastdata'; data: VastDataPlanResult }
-  | { type: 'gpfs-ece'; data: GPFSECEPlanResult }
+type PlanResults = {
+  xeos?: XEOSPlanResult
+  vastdata?: VastDataPlanResult
+  'gpfs-ece'?: GPFSECEPlanResult
+}
 
 function StorplanApp() {
-  const [storage, setStorage] = useState('xeos')
+  const [selectedStorages, setSelectedStorages] = useState<Set<string>>(new Set(['xeos']))
   const [capacityValue, setCapacityValue] = useState('')
   const [capacityUnit, setCapacityUnit] = useState('TiB')
   const [downloadBWValue, setDownloadBWValue] = useState('')
   const [downloadBWUnit, setDownloadBWUnit] = useState('GB/s')
   const [uploadBWValue, setUploadBWValue] = useState('')
   const [uploadBWUnit, setUploadBWUnit] = useState('GB/s')
-  const [result, setResult] = useState<PlanResult | null>(null)
-  const [error, setError] = useState('')
+  const [results, setResults] = useState<PlanResults>({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     if (!capacityValue && !downloadBWValue && !uploadBWValue) {
-      setResult(null)
-      setError('')
+      setResults({})
+      setErrors({})
       return
     }
+
+    const newResults: PlanResults = {}
+    const newErrors: Record<string, string> = {}
 
     try {
       const capacity = capacityValue ? `${capacityValue}${capacityUnit}` : `0${capacityUnit}`
 
-      if (storage === 'xeos') {
-        const uploadBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
-        const downloadBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
-        const plan = planXEOS({
-          capacity,
-          uploadBandwidth: uploadBW || undefined,
-          downloadBandwidth: downloadBW || undefined,
-        })
-        setResult({ type: 'xeos', data: plan })
-        setError('')
-      } else if (storage === 'vastdata') {
-        const readBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
-        const writeBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
-        const plan = planVastData({
-          capacity,
-          readBandwidth: readBW || undefined,
-          writeBandwidth: writeBW || undefined,
-        })
-        setResult({ type: 'vastdata', data: plan })
-        setError('')
-      } else if (storage === 'gpfs-ece') {
-        const readBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
-        const writeBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
-        const plan = planGPFSECE({
-          capacity,
-          readBandwidth: readBW || undefined,
-          writeBandwidth: writeBW || undefined,
-        })
-        setResult({ type: 'gpfs-ece', data: plan })
-        setError('')
+      if (selectedStorages.has('xeos')) {
+        try {
+          const uploadBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
+          const downloadBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
+          const plan = planXEOS({
+            capacity,
+            uploadBandwidth: uploadBW || undefined,
+            downloadBandwidth: downloadBW || undefined,
+          })
+          newResults.xeos = plan
+        } catch (err) {
+          newErrors.xeos = err instanceof Error ? err.message : 'Unknown error'
+        }
+      }
+
+      if (selectedStorages.has('vastdata')) {
+        try {
+          const readBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
+          const writeBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
+          const plan = planVastData({
+            capacity,
+            readBandwidth: readBW || undefined,
+            writeBandwidth: writeBW || undefined,
+          })
+          newResults.vastdata = plan
+        } catch (err) {
+          newErrors.vastdata = err instanceof Error ? err.message : 'Unknown error'
+        }
+      }
+
+      if (selectedStorages.has('gpfs-ece')) {
+        try {
+          const readBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
+          const writeBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
+          const plan = planGPFSECE({
+            capacity,
+            readBandwidth: readBW || undefined,
+            writeBandwidth: writeBW || undefined,
+          })
+          newResults['gpfs-ece'] = plan
+        } catch (err) {
+          newErrors['gpfs-ece'] = err instanceof Error ? err.message : 'Unknown error'
+        }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
-      setResult(null)
+      // Global error handling if needed
     }
-  }, [storage, capacityValue, capacityUnit, downloadBWValue, downloadBWUnit, uploadBWValue, uploadBWUnit])
 
-  const bwLabels = storage === 'xeos'
+    setResults(newResults)
+    setErrors(newErrors)
+  }, [selectedStorages, capacityValue, capacityUnit, downloadBWValue, downloadBWUnit, uploadBWValue, uploadBWUnit])
+
+  const toggleStorage = (storage: string) => {
+    const newSet = new Set(selectedStorages)
+    if (newSet.has(storage)) {
+      if (newSet.size > 1) {
+        newSet.delete(storage)
+      }
+    } else {
+      newSet.add(storage)
+    }
+    setSelectedStorages(newSet)
+  }
+
+  const bwLabels = selectedStorages.size === 1 && selectedStorages.has('xeos')
     ? { read: '下载 BW', write: '上传 BW' }
     : { read: '读 BW', write: '写 BW' }
 
@@ -86,15 +117,20 @@ function StorplanApp() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">存储方案</label>
-              <select
-                value={storage}
-                onChange={(e) => { setStorage(e.target.value); setResult(null) }}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option value="xeos">XSKY XEOS（对象存储）</option>
-                <option value="vastdata">VastData（统一存储）</option>
-                <option value="gpfs-ece">GPFS/Scale（文件系统）</option>
-              </select>
+              <div className="flex flex-wrap gap-3">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={selectedStorages.has('xeos')} onChange={() => toggleStorage('xeos')} className="rounded" />
+                  <span className="text-sm">XSKY XEOS（对象存储）</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={selectedStorages.has('vastdata')} onChange={() => toggleStorage('vastdata')} className="rounded" />
+                  <span className="text-sm">VastData（统一存储）</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={selectedStorages.has('gpfs-ece')} onChange={() => toggleStorage('gpfs-ece')} className="rounded" />
+                  <span className="text-sm">GPFS/Scale（文件系统）</span>
+                </label>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">容量</label>
@@ -171,17 +207,41 @@ function StorplanApp() {
           </div>
         </div>
 
-        <StorageInfo storage={storage} />
+        {selectedStorages.has('xeos') && <StorageInfo storage="xeos" />}
+        {selectedStorages.has('vastdata') && <StorageInfo storage="vastdata" />}
+        {selectedStorages.has('gpfs-ece') && <StorageInfo storage="gpfs-ece" />}
 
-        {error && (
+        {errors.xeos && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-            <p className="text-red-800">{error}</p>
+            <p className="text-red-800"><strong>XEOS:</strong> {errors.xeos}</p>
+          </div>
+        )}
+        {errors.vastdata && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+            <p className="text-red-800"><strong>VastData:</strong> {errors.vastdata}</p>
+          </div>
+        )}
+        {errors['gpfs-ece'] && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+            <p className="text-red-800"><strong>GPFS/Scale:</strong> {errors['gpfs-ece']}</p>
           </div>
         )}
 
-        {result?.type === 'xeos' && <XEOSResult data={result.data} />}
-        {result?.type === 'vastdata' && <VastDataResult data={result.data} />}
-        {result?.type === 'gpfs-ece' && <GPFSECEResult data={result.data} />}
+        {results.xeos && (
+          <div className="mb-8">
+            <XEOSResult data={results.xeos} />
+          </div>
+        )}
+        {results.vastdata && (
+          <div className="mb-8">
+            <VastDataResult data={results.vastdata} />
+          </div>
+        )}
+        {results['gpfs-ece'] && (
+          <div className="mb-8">
+            <GPFSECEResult data={results['gpfs-ece']} />
+          </div>
+        )}
       </div>
     </div>
   )
