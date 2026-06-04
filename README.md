@@ -11,10 +11,9 @@
 
 ## 支持的存储方案
 
-- XSKY XEOS — 对象存储
-- GPFS ECE（开发中）
-- Vastdata（开发中）
-- Weka（开发中）
+- **XSKY XEOS** — 对象存储
+- **VastData** — 统一存储（NFS、SMB、S3、iSCSI、NVMe-oF）
+- **GPFS ECE** — 高性能文件系统
 
 ## 快速开始
 

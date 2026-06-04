@@ -2,8 +2,17 @@ import { useState } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { planXEOS } from '#/lib/xeos'
 import type { XEOSPlanResult } from '#/lib/xeos'
+import { planVastData } from '#/lib/vastdata'
+import type { VastDataPlanResult } from '#/lib/vastdata'
+import { planGPFSECE } from '#/lib/gpfs-ece'
+import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
+
+type PlanResult =
+  | { type: 'xeos'; data: XEOSPlanResult }
+  | { type: 'vastdata'; data: VastDataPlanResult }
+  | { type: 'gpfs-ece'; data: GPFSECEPlanResult }
 
 function StorplanApp() {
   const [storage, setStorage] = useState('xeos')
@@ -13,7 +22,7 @@ function StorplanApp() {
   const [downloadBWUnit, setDownloadBWUnit] = useState('Gbps')
   const [uploadBWValue, setUploadBWValue] = useState('')
   const [uploadBWUnit, setUploadBWUnit] = useState('Gbps')
-  const [result, setResult] = useState<XEOSPlanResult | null>(null)
+  const [result, setResult] = useState<PlanResult | null>(null)
   const [error, setError] = useState('')
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -22,26 +31,44 @@ function StorplanApp() {
     setResult(null)
 
     try {
-      if (storage !== 'xeos') {
-        setError(`存储方案 "${storage}" 暂未支持`)
-        return
-      }
-
       const capacity = capacityValue ? `${capacityValue}${capacityUnit}` : ''
-      const uploadBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
-      const downloadBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
 
-      const plan = planXEOS({
-        capacity,
-        uploadBandwidth: uploadBW || undefined,
-        downloadBandwidth: downloadBW || undefined,
-      })
-
-      setResult(plan)
+      if (storage === 'xeos') {
+        const uploadBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
+        const downloadBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
+        const plan = planXEOS({
+          capacity,
+          uploadBandwidth: uploadBW || undefined,
+          downloadBandwidth: downloadBW || undefined,
+        })
+        setResult({ type: 'xeos', data: plan })
+      } else if (storage === 'vastdata') {
+        const readBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
+        const writeBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
+        const plan = planVastData({
+          capacity,
+          readBandwidth: readBW || undefined,
+          writeBandwidth: writeBW || undefined,
+        })
+        setResult({ type: 'vastdata', data: plan })
+      } else if (storage === 'gpfs-ece') {
+        const readBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
+        const writeBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
+        const plan = planGPFSECE({
+          capacity,
+          readBandwidth: readBW || undefined,
+          writeBandwidth: writeBW || undefined,
+        })
+        setResult({ type: 'gpfs-ece', data: plan })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     }
   }
+
+  const bwLabels = storage === 'xeos'
+    ? { read: '下载带宽（可选）', write: '上传带宽（可选）' }
+    : { read: '读带宽（可选）', write: '写带宽（可选）' }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -55,13 +82,12 @@ function StorplanApp() {
               <label className="block text-sm font-medium text-gray-700 mb-1">存储方案</label>
               <select
                 value={storage}
-                onChange={(e) => setStorage(e.target.value)}
+                onChange={(e) => { setStorage(e.target.value); setResult(null) }}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
               >
                 <option value="xeos">XSKY XEOS（对象存储）</option>
-                <option value="gpfs-ece" disabled>GPFS ECE（开发中）</option>
-                <option value="vastdata" disabled>Vastdata（开发中）</option>
-                <option value="weka" disabled>Weka（开发中）</option>
+                <option value="vastdata">VastData（统一存储）</option>
+                <option value="gpfs-ece">GPFS ECE（文件系统）</option>
               </select>
             </div>
             <div>
@@ -90,7 +116,7 @@ function StorplanApp() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">下载带宽（可选）</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{bwLabels.read}</label>
               <div className="flex gap-2">
                 <input
                   type="number"
@@ -112,7 +138,7 @@ function StorplanApp() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">上传带宽（可选）</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{bwLabels.write}</label>
               <div className="flex gap-2">
                 <input
                   type="number"
@@ -148,57 +174,186 @@ function StorplanApp() {
           </div>
         )}
 
-        {result && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">XSKY XEOS 规划方案</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-semibold text-gray-700 mb-2">配置</h3>
-                <dl className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <dt className="text-gray-500">服务器台数</dt>
-                    <dd>{result.serverCount} 台</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-gray-500">纠删码方案</dt>
-                    <dd>{result.ecScheme}（容忍 {result.tolerance} 节点离线）</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-gray-500">磁盘配置</dt>
-                    <dd>每台 32 × {result.diskSize}TB HDD</dd>
-                  </div>
-                </dl>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-700 mb-2">可用容量</h3>
-                <p className="text-2xl font-bold text-blue-600">
-                  {result.formatted.capacity}
-                </p>
-              </div>
-              <div className="md:col-span-2">
-                <h3 className="font-semibold text-gray-700 mb-2">性能</h3>
-                <dl className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <dt className="text-gray-500">上传带宽</dt>
-                    <dd className="font-medium">{result.formatted.uploadBandwidth}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-gray-500">下载带宽</dt>
-                    <dd className="font-medium">{result.formatted.downloadBandwidth}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-gray-500">上传 OPS</dt>
-                    <dd className="font-medium">{result.formatted.uploadOps}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-gray-500">下载 OPS</dt>
-                    <dd className="font-medium">{result.formatted.downloadOps}</dd>
-                  </div>
-                </dl>
-              </div>
+        {result?.type === 'xeos' && <XEOSResult data={result.data} />}
+        {result?.type === 'vastdata' && <VastDataResult data={result.data} />}
+        {result?.type === 'gpfs-ece' && <GPFSECEResult data={result.data} />}
+      </div>
+    </div>
+  )
+}
+
+function XEOSResult({ data }: { data: XEOSPlanResult }) {
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h2 className="text-xl font-bold mb-4">XSKY XEOS 规划方案</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">配置</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">服务器台数</dt>
+              <dd>{data.serverCount} 台</dd>
             </div>
-          </div>
-        )}
+            <div className="flex justify-between">
+              <dt className="text-gray-500">纠删码方案</dt>
+              <dd>{data.ecScheme}（容忍 {data.tolerance} 节点离线）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">磁盘配置</dt>
+              <dd>每台 32 × {data.diskSize}TB HDD</dd>
+            </div>
+          </dl>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">可用容量</h3>
+          <p className="text-2xl font-bold text-blue-600">{data.formatted.capacity}</p>
+        </div>
+        <div className="md:col-span-2">
+          <h3 className="font-semibold text-gray-700 mb-2">性能</h3>
+          <dl className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-gray-500">上传带宽</dt>
+              <dd className="font-medium">{data.formatted.uploadBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">下载带宽</dt>
+              <dd className="font-medium">{data.formatted.downloadBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">上传 OPS</dt>
+              <dd className="font-medium">{data.formatted.uploadOps}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">下载 OPS</dt>
+              <dd className="font-medium">{data.formatted.downloadOps}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function VastDataResult({ data }: { data: VastDataPlanResult }) {
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h2 className="text-xl font-bold mb-4">VastData 统一存储规划方案</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">配置</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">EBox 数量</dt>
+              <dd>{data.eboxCount} 台</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">磁盘配置</dt>
+              <dd>{data.diskConfig}</dd>
+            </div>
+          </dl>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">容量</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">可用容量</dt>
+              <dd className="text-xl font-bold text-blue-600">{data.formatted.capacity}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">裸容量</dt>
+              <dd>{data.formatted.rawCapacity}</dd>
+            </div>
+          </dl>
+        </div>
+        <div className="md:col-span-2">
+          <h3 className="font-semibold text-gray-700 mb-2">性能</h3>
+          <dl className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-gray-500">读带宽</dt>
+              <dd className="font-medium">{data.formatted.readBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">持续写带宽</dt>
+              <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">峰值写带宽</dt>
+              <dd className="font-medium">{data.formatted.burstWriteBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">读 IOPS</dt>
+              <dd className="font-medium">{data.formatted.readIOPS}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">写 IOPS</dt>
+              <dd className="font-medium">{data.formatted.writeIOPS}</dd>
+            </div>
+          </dl>
+        </div>
+        <div className="md:col-span-2 bg-gray-50 rounded p-3 text-xs text-gray-500">
+          支持协议：NFS v3/v4、SMB、S3、iSCSI、NVMe-oF（统一存储池）
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <h2 className="text-xl font-bold mb-4">GPFS ECE 规划方案</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">配置</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">服务器台数</dt>
+              <dd>{data.serverCount} 台</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">纠删码方案</dt>
+              <dd>{data.ecScheme}（容忍 {data.tolerance} 节点离线）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">磁盘配置</dt>
+              <dd>{data.ssdConfig}</dd>
+            </div>
+          </dl>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">容量</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">可用容量</dt>
+              <dd className="text-xl font-bold text-blue-600">{data.formatted.capacity}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">裸容量</dt>
+              <dd>{data.formatted.rawCapacity}</dd>
+            </div>
+          </dl>
+        </div>
+        <div className="md:col-span-2">
+          <h3 className="font-semibold text-gray-700 mb-2">性能（800Gb RoCE）</h3>
+          <dl className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-gray-500">读带宽</dt>
+              <dd className="font-medium">{data.formatted.readBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">写带宽</dt>
+              <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">读 IOPS</dt>
+              <dd className="font-medium">{data.formatted.readIOPS}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">写 IOPS</dt>
+              <dd className="font-medium">{data.formatted.writeIOPS}</dd>
+            </div>
+          </dl>
+        </div>
       </div>
     </div>
   )
