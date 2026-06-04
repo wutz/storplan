@@ -187,22 +187,19 @@ function StorplanApp() {
   )
 }
 
-const STORAGE_INFO: Record<string, { description: string; features: string[]; pros: string[]; cons: string[] }> = {
+const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: string[] }> = {
   xeos: {
     description: 'XSKY XEOS 是分布式对象存储系统，基于 HDD 构建大容量存储池，适合海量非结构化数据存储。',
-    features: ['S3 兼容 API', '纠删码数据保护（EC4+2/EC8+2）', '多节点容错', '线性扩展容量和性能'],
-    pros: ['单位存储成本低（HDD）', '支持超大规模集群', '支持 QoS', '稳定可靠'],
-    cons: ['软件授权较贵'],
+    pros: ['支持超大规模集群', '支持 QoS', '稳定可靠', '支持 CRC64 校验', '原厂技术支持'],
+    cons: ['软件授权较贵', '得盘率稍低提升成本'],
   },
   vastdata: {
     description: 'VastData 是全闪统一存储平台，单一系统同时提供文件、对象和块存储服务，基于 NVMe SSD 和 SCM 构建。',
-    features: ['统一协议（NFS/SMB/S3/NVMe-oF）', '全闪 NVMe 架构', 'EBox 线性扩展（11-250 台）', '全局去重和压缩', '无元数据瓶颈'],
     pros: ['支持多存储协议可以平替 Ceph', '支持多租户', '去重与压缩提升集群可用容量', '支持 QoS 以及元数据 QoS', '原厂技术支持'],
-    cons: ['采购费用高于 GPFS', '采用 QLC 大盘性能低于采用 TLC 小盘 GPFS 等存储系统', '采购周期较长'],
+    cons: ['采购费用高于 GPFS', '采用 QLC 大盘性能低于 GPFS 等采用 TLC 小盘的存储系统', '采购周期较长'],
   },
   'gpfs-ece': {
     description: 'IBM GPFS/Scale ECE（Erasure Coding Edition）是高性能并行文件系统，基于 NVMe SSD 和 RDMA 网络构建。',
-    features: ['POSIX 兼容并行文件系统', '纠删码保护（EC4+2P/EC8+2P/EC8+3P）', '800Gb RoCE/InfiniBand 网络', 'GPU 直连存储（GPUDirect Storage）', '多协议（NFS/SMB/对象网关）'],
     pros: ['性能高', '采购成本低'],
     cons: ['多租户支持弱', '运维成本高', '原厂支持弱'],
   },
@@ -215,13 +212,7 @@ function StorageInfo({ storage }: { storage: string }) {
   return (
     <div className="bg-white rounded-lg shadow p-6 mb-8">
       <p className="text-gray-600 mb-4">{info.description}</p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-        <div>
-          <h3 className="font-semibold text-gray-700 mb-2">功能特性</h3>
-          <ul className="space-y-1 text-gray-600">
-            {info.features.map((f, i) => <li key={i}>• {f}</li>)}
-          </ul>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
         <div>
           <h3 className="font-semibold text-green-700 mb-2">优势</h3>
           <ul className="space-y-1 text-gray-600">
