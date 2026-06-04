@@ -207,40 +207,52 @@ function StorplanApp() {
           </div>
         </div>
 
-        {selectedStorages.has('xeos') && <StorageInfo storage="xeos" />}
-        {selectedStorages.has('vastdata') && <StorageInfo storage="vastdata" />}
-        {selectedStorages.has('gpfs-ece') && <StorageInfo storage="gpfs-ece" />}
-
-        {errors.xeos && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-            <p className="text-red-800"><strong>XEOS:</strong> {errors.xeos}</p>
-          </div>
-        )}
-        {errors.vastdata && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-            <p className="text-red-800"><strong>VastData:</strong> {errors.vastdata}</p>
-          </div>
-        )}
-        {errors['gpfs-ece'] && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-            <p className="text-red-800"><strong>GPFS/Scale:</strong> {errors['gpfs-ece']}</p>
-          </div>
+        {selectedStorages.has('xeos') && (
+          <>
+            <StorageInfo storage="xeos" />
+            {errors.xeos && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+                <p className="text-red-800">{errors.xeos}</p>
+              </div>
+            )}
+            {results.xeos && (
+              <div className="mb-8">
+                <XEOSResult data={results.xeos} />
+              </div>
+            )}
+          </>
         )}
 
-        {results.xeos && (
-          <div className="mb-8">
-            <XEOSResult data={results.xeos} />
-          </div>
+        {selectedStorages.has('vastdata') && (
+          <>
+            <StorageInfo storage="vastdata" />
+            {errors.vastdata && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+                <p className="text-red-800">{errors.vastdata}</p>
+              </div>
+            )}
+            {results.vastdata && (
+              <div className="mb-8">
+                <VastDataResult data={results.vastdata} />
+              </div>
+            )}
+          </>
         )}
-        {results.vastdata && (
-          <div className="mb-8">
-            <VastDataResult data={results.vastdata} />
-          </div>
-        )}
-        {results['gpfs-ece'] && (
-          <div className="mb-8">
-            <GPFSECEResult data={results['gpfs-ece']} />
-          </div>
+
+        {selectedStorages.has('gpfs-ece') && (
+          <>
+            <StorageInfo storage="gpfs-ece" />
+            {errors['gpfs-ece'] && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+                <p className="text-red-800">{errors['gpfs-ece']}</p>
+              </div>
+            )}
+            {results['gpfs-ece'] && (
+              <div className="mb-8">
+                <GPFSECEResult data={results['gpfs-ece']} />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
