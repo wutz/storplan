@@ -7,9 +7,12 @@ export const Route = createFileRoute('/')({ component: StorplanApp })
 
 function StorplanApp() {
   const [storage, setStorage] = useState('xeos')
-  const [capacity, setCapacity] = useState('')
-  const [downloadBW, setDownloadBW] = useState('')
-  const [uploadBW, setUploadBW] = useState('')
+  const [capacityValue, setCapacityValue] = useState('')
+  const [capacityUnit, setCapacityUnit] = useState('TiB')
+  const [downloadBWValue, setDownloadBWValue] = useState('')
+  const [downloadBWUnit, setDownloadBWUnit] = useState('Gbps')
+  const [uploadBWValue, setUploadBWValue] = useState('')
+  const [uploadBWUnit, setUploadBWUnit] = useState('Gbps')
   const [result, setResult] = useState<XEOSPlanResult | null>(null)
   const [error, setError] = useState('')
 
@@ -23,6 +26,10 @@ function StorplanApp() {
         setError(`存储方案 "${storage}" 暂未支持`)
         return
       }
+
+      const capacity = capacityValue ? `${capacityValue}${capacityUnit}` : ''
+      const uploadBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
+      const downloadBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
 
       const plan = planXEOS({
         capacity,
@@ -59,34 +66,72 @@ function StorplanApp() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">容量需求</label>
-              <input
-                type="text"
-                value={capacity}
-                onChange={(e) => setCapacity(e.target.value)}
-                placeholder="例如: 500TiB, 2PB"
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-                required
-              />
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={capacityValue}
+                  onChange={(e) => setCapacityValue(e.target.value)}
+                  placeholder="500"
+                  className="flex-1 border border-gray-300 rounded-md px-3 py-2"
+                  required
+                  min="0"
+                  step="0.1"
+                />
+                <select
+                  value={capacityUnit}
+                  onChange={(e) => setCapacityUnit(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="TiB">TiB</option>
+                  <option value="TB">TB</option>
+                  <option value="PiB">PiB</option>
+                  <option value="PB">PB</option>
+                </select>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">下载带宽（可选）</label>
-              <input
-                type="text"
-                value={downloadBW}
-                onChange={(e) => setDownloadBW(e.target.value)}
-                placeholder="例如: 20Gbps"
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={downloadBWValue}
+                  onChange={(e) => setDownloadBWValue(e.target.value)}
+                  placeholder="20"
+                  className="flex-1 border border-gray-300 rounded-md px-3 py-2"
+                  min="0"
+                  step="0.1"
+                />
+                <select
+                  value={downloadBWUnit}
+                  onChange={(e) => setDownloadBWUnit(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="Mbps">Mbps</option>
+                  <option value="Gbps">Gbps</option>
+                </select>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">上传带宽（可选）</label>
-              <input
-                type="text"
-                value={uploadBW}
-                onChange={(e) => setUploadBW(e.target.value)}
-                placeholder="例如: 10Gbps"
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={uploadBWValue}
+                  onChange={(e) => setUploadBWValue(e.target.value)}
+                  placeholder="10"
+                  className="flex-1 border border-gray-300 rounded-md px-3 py-2"
+                  min="0"
+                  step="0.1"
+                />
+                <select
+                  value={uploadBWUnit}
+                  onChange={(e) => setUploadBWUnit(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="Mbps">Mbps</option>
+                  <option value="Gbps">Gbps</option>
+                </select>
+              </div>
             </div>
           </div>
           <button
