@@ -109,7 +109,7 @@ export function planXEOS(req: XEOSPlanRequest): XEOSPlanResult {
   if (req.uploadOps) perfReq.uploadOps = req.uploadOps;
   if (req.downloadOps) perfReq.downloadOps = req.downloadOps;
 
-  if (bandwidthUnitType === null) bandwidthUnitType = 'decimal-bit';
+  if (bandwidthUnitType === null) bandwidthUnitType = 'decimal-byte';
 
   const minServersForPerf = calculateMinServersForPerf(perfReq);
 
@@ -163,10 +163,10 @@ export function planXEOS(req: XEOSPlanRequest): XEOSPlanResult {
     performance,
     formatted: {
       capacity: formatCapacity(best.actualCapacity, capacityInfo.isBinary),
-      uploadBandwidth: formatBandwidth(performance.uploadBandwidth, bandwidthUnitType) + ' (4MiB)',
-      downloadBandwidth: formatBandwidth(performance.downloadBandwidth, bandwidthUnitType) + ' (4MiB)',
-      uploadOps: `${performance.uploadOps.toLocaleString()} (4KiB)`,
-      downloadOps: `${performance.downloadOps.toLocaleString()} (4KiB)`,
+      uploadBandwidth: formatBandwidth(performance.uploadBandwidth, bandwidthUnitType),
+      downloadBandwidth: formatBandwidth(performance.downloadBandwidth, bandwidthUnitType),
+      uploadOps: `${performance.uploadOps.toLocaleString()}`,
+      downloadOps: `${performance.downloadOps.toLocaleString()}`,
     },
     capacityUnitPreference: capacityInfo.isBinary,
     bandwidthUnitType,

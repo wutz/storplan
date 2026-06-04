@@ -148,7 +148,7 @@ export function planGPFSECE(req: GPFSECEPlanRequest): GPFSECEPlanResult {
   const performance = calculatePerformance(best.serverCount);
   const rawCapacity = best.serverCount * CONSTANTS.SSDS_PER_SERVER * best.ssdSize * CONSTANTS.TB_TO_TIB;
 
-  const bandwidthUnitType = req.readBandwidth || req.writeBandwidth ? 'decimal-bit' : 'decimal-bit';
+  const bandwidthUnitType = req.readBandwidth || req.writeBandwidth ? 'decimal-byte' : 'decimal-byte';
 
   return {
     serverCount: best.serverCount,

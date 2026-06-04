@@ -106,7 +106,7 @@ export function planVastData(req: VastDataPlanRequest): VastDataPlanResult {
     throw new Error('无法找到满足需求的配置（超出 250 EBox 限制）');
   }
 
-  const bandwidthUnitType = req.readBandwidth || req.writeBandwidth ? 'decimal-bit' : 'decimal-bit';
+  const bandwidthUnitType = req.readBandwidth || req.writeBandwidth ? 'decimal-byte' : 'decimal-byte';
 
   return {
     mode: 'ebox',

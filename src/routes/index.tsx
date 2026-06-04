@@ -19,9 +19,9 @@ function StorplanApp() {
   const [capacityValue, setCapacityValue] = useState('')
   const [capacityUnit, setCapacityUnit] = useState('TiB')
   const [downloadBWValue, setDownloadBWValue] = useState('')
-  const [downloadBWUnit, setDownloadBWUnit] = useState('Gbps')
+  const [downloadBWUnit, setDownloadBWUnit] = useState('GB/s')
   const [uploadBWValue, setUploadBWValue] = useState('')
-  const [uploadBWUnit, setUploadBWUnit] = useState('Gbps')
+  const [uploadBWUnit, setUploadBWUnit] = useState('GB/s')
   const [result, setResult] = useState<PlanResult | null>(null)
   const [error, setError] = useState('')
 
@@ -73,8 +73,8 @@ function StorplanApp() {
   }, [storage, capacityValue, capacityUnit, downloadBWValue, downloadBWUnit, uploadBWValue, uploadBWUnit])
 
   const bwLabels = storage === 'xeos'
-    ? { read: '下载带宽', write: '上传带宽' }
-    : { read: '读带宽', write: '写带宽' }
+    ? { read: '下载 BW', write: '上传 BW' }
+    : { read: '读 BW', write: '写 BW' }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -137,6 +137,8 @@ function StorplanApp() {
                   onChange={(e) => setDownloadBWUnit(e.target.value)}
                   className="border border-gray-300 rounded-md px-3 py-2"
                 >
+                  <option value="MB/s">MB/s</option>
+                  <option value="GB/s">GB/s</option>
                   <option value="Mbps">Mbps</option>
                   <option value="Gbps">Gbps</option>
                 </select>
@@ -159,6 +161,8 @@ function StorplanApp() {
                   onChange={(e) => setUploadBWUnit(e.target.value)}
                   className="border border-gray-300 rounded-md px-3 py-2"
                 >
+                  <option value="MB/s">MB/s</option>
+                  <option value="GB/s">GB/s</option>
                   <option value="Mbps">Mbps</option>
                   <option value="Gbps">Gbps</option>
                 </select>
@@ -265,19 +269,19 @@ function XEOSResult({ data }: { data: XEOSPlanResult }) {
           <h3 className="font-semibold text-gray-700 mb-2">性能</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <dt className="text-gray-500">上传带宽</dt>
+              <dt className="text-gray-500">上传 BW (4MiB)</dt>
               <dd className="font-medium">{data.formatted.uploadBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">下载带宽</dt>
+              <dt className="text-gray-500">下载 BW (4MiB)</dt>
               <dd className="font-medium">{data.formatted.downloadBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">上传 OPS</dt>
+              <dt className="text-gray-500">上传 OPS (4KiB)</dt>
               <dd className="font-medium">{data.formatted.uploadOps}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">下载 OPS</dt>
+              <dt className="text-gray-500">下载 OPS (4KiB)</dt>
               <dd className="font-medium">{data.formatted.downloadOps}</dd>
             </div>
           </dl>
@@ -322,23 +326,23 @@ function VastDataResult({ data }: { data: VastDataPlanResult }) {
           <h3 className="font-semibold text-gray-700 mb-2">性能</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <dt className="text-gray-500">读带宽</dt>
+              <dt className="text-gray-500">读 BW (4MiB)</dt>
               <dd className="font-medium">{data.formatted.readBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">持续写带宽</dt>
+              <dt className="text-gray-500">持续写 BW (4MiB)</dt>
               <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">峰值写带宽</dt>
+              <dt className="text-gray-500">峰值写 BW (4MiB)</dt>
               <dd className="font-medium">{data.formatted.burstWriteBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">读 IOPS</dt>
+              <dt className="text-gray-500">读 IOPS (4KiB)</dt>
               <dd className="font-medium">{data.formatted.readIOPS}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">写 IOPS</dt>
+              <dt className="text-gray-500">写 IOPS (4KiB)</dt>
               <dd className="font-medium">{data.formatted.writeIOPS}</dd>
             </div>
           </dl>
@@ -387,19 +391,19 @@ function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
           <h3 className="font-semibold text-gray-700 mb-2">性能（800Gb RoCE）</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <dt className="text-gray-500">读带宽</dt>
+              <dt className="text-gray-500">读 BW (4MiB)</dt>
               <dd className="font-medium">{data.formatted.readBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">写带宽</dt>
+              <dt className="text-gray-500">写 BW (4MiB)</dt>
               <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">读 IOPS</dt>
+              <dt className="text-gray-500">读 IOPS (4KiB)</dt>
               <dd className="font-medium">{data.formatted.readIOPS}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">写 IOPS</dt>
+              <dt className="text-gray-500">写 IOPS (4KiB)</dt>
               <dd className="font-medium">{data.formatted.writeIOPS}</dd>
             </div>
           </dl>
