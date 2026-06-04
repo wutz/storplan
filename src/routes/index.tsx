@@ -250,6 +250,10 @@ function XEOSResult({ data }: { data: XEOSPlanResult }) {
               <dt className="text-gray-500">磁盘配置</dt>
               <dd>每台 32 × {data.diskSize}TB HDD</dd>
             </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">网络配置</dt>
+              <dd>每台 4 × 10Gb 以太网</dd>
+            </div>
           </dl>
         </div>
         <div>
@@ -297,6 +301,10 @@ function VastDataResult({ data }: { data: VastDataPlanResult }) {
             <div className="flex justify-between">
               <dt className="text-gray-500">磁盘配置</dt>
               <dd>{data.diskConfig}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">网络配置</dt>
+              <dd>每台 2 × 100Gb 以太网</dd>
             </div>
           </dl>
         </div>
@@ -362,6 +370,10 @@ function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
             <div className="flex justify-between">
               <dt className="text-gray-500">磁盘配置</dt>
               <dd>{data.ssdConfig}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">网络配置</dt>
+              <dd>每台 2 × 双口 200Gb RoCE NIC</dd>
             </div>
           </dl>
         </div>
