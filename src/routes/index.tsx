@@ -25,16 +25,15 @@ function StorplanApp() {
   const [result, setResult] = useState<PlanResult | null>(null)
   const [error, setError] = useState('')
 
-  // 实时计算
   useEffect(() => {
-    if (!capacityValue) {
+    if (!capacityValue && !downloadBWValue && !uploadBWValue) {
       setResult(null)
       setError('')
       return
     }
 
     try {
-      const capacity = `${capacityValue}${capacityUnit}`
+      const capacity = capacityValue ? `${capacityValue}${capacityUnit}` : `0${capacityUnit}`
 
       if (storage === 'xeos') {
         const uploadBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
@@ -74,8 +73,8 @@ function StorplanApp() {
   }, [storage, capacityValue, capacityUnit, downloadBWValue, downloadBWUnit, uploadBWValue, uploadBWUnit])
 
   const bwLabels = storage === 'xeos'
-    ? { read: '下载带宽（可选）', write: '上传带宽（可选）' }
-    : { read: '读带宽（可选）', write: '写带宽（可选）' }
+    ? { read: '下载带宽', write: '上传带宽' }
+    : { read: '读带宽', write: '写带宽' }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -98,7 +97,7 @@ function StorplanApp() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">容量需求</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">容量</label>
               <div className="flex gap-2">
                 <input
                   type="number"
@@ -168,6 +167,8 @@ function StorplanApp() {
           </div>
         </div>
 
+        <StorageInfo storage={storage} />
+
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
             <p className="text-red-800">{error}</p>
@@ -177,6 +178,58 @@ function StorplanApp() {
         {result?.type === 'xeos' && <XEOSResult data={result.data} />}
         {result?.type === 'vastdata' && <VastDataResult data={result.data} />}
         {result?.type === 'gpfs-ece' && <GPFSECEResult data={result.data} />}
+      </div>
+    </div>
+  )
+}
+
+const STORAGE_INFO: Record<string, { description: string; features: string[]; pros: string[]; cons: string[] }> = {
+  xeos: {
+    description: 'XSKY XEOS 是分布式对象存储系统，基于 HDD 构建大容量存储池，适合海量非结构化数据存储。',
+    features: ['S3 兼容 API', '纠删码数据保护（EC4+2/EC8+2）', '多节点容错', '线性扩展容量和性能', '多站点复制'],
+    pros: ['单位存储成本低（HDD）', '容量可线性扩展至 EB 级', '高可用设计，支持多节点故障'],
+    cons: ['延迟较高（HDD 随机 IO 受限）', '不适合小文件频繁读写', '仅支持对象协议（S3）'],
+  },
+  vastdata: {
+    description: 'VastData 是全闪统一存储平台，单一系统同时提供文件、对象和块存储服务，基于 NVMe SSD 和 SCM 构建。',
+    features: ['统一协议（NFS/SMB/S3/iSCSI/NVMe-oF）', '全闪 NVMe 架构', 'EBox 线性扩展（11-250 台）', '全局去重和压缩', '无元数据瓶颈'],
+    pros: ['超低延迟（全闪 + SCM 加速）', '统一存储池，协议灵活切换', '性能随节点线性增长'],
+    cons: ['成本较高（全闪）', '最小起步 11 个 EBox', '国内技术支持资源有限'],
+  },
+  'gpfs-ece': {
+    description: 'IBM GPFS ECE（Erasure Coding Edition）是高性能并行文件系统，基于 NVMe SSD 和 RDMA 网络构建。',
+    features: ['POSIX 兼容并行文件系统', '纠删码保护（EC4+2P/EC8+2P/EC8+3P）', '800Gb RoCE/InfiniBand 网络', 'GPU 直连存储（GPUDirect Storage）', '多协议（NFS/SMB/对象网关）'],
+    pros: ['极高顺序读写带宽', '低延迟 RDMA 访问', '适合 AI/HPC 大规模并行工作负载'],
+    cons: ['硬件要求高（RDMA 网络）', '运维复杂度较高', '许可证成本较高'],
+  },
+}
+
+function StorageInfo({ storage }: { storage: string }) {
+  const info = STORAGE_INFO[storage]
+  if (!info) return null
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6 mb-8">
+      <p className="text-gray-600 mb-4">{info.description}</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">功能特性</h3>
+          <ul className="space-y-1 text-gray-600">
+            {info.features.map((f, i) => <li key={i}>• {f}</li>)}
+          </ul>
+        </div>
+        <div>
+          <h3 className="font-semibold text-green-700 mb-2">优势</h3>
+          <ul className="space-y-1 text-gray-600">
+            {info.pros.map((p, i) => <li key={i}>• {p}</li>)}
+          </ul>
+        </div>
+        <div>
+          <h3 className="font-semibold text-orange-700 mb-2">局限</h3>
+          <ul className="space-y-1 text-gray-600">
+            {info.cons.map((c, i) => <li key={i}>• {c}</li>)}
+          </ul>
+        </div>
       </div>
     </div>
   )
@@ -289,9 +342,6 @@ function VastDataResult({ data }: { data: VastDataPlanResult }) {
               <dd className="font-medium">{data.formatted.writeIOPS}</dd>
             </div>
           </dl>
-        </div>
-        <div className="md:col-span-2 bg-gray-50 rounded p-3 text-xs text-gray-500">
-          支持协议：NFS v3/v4、SMB、S3、iSCSI、NVMe-oF（统一存储池）
         </div>
       </div>
     </div>
