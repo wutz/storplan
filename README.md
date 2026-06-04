@@ -57,8 +57,30 @@ storplan/
 
 ### Cloudflare Workers
 
-通过 `wrangler` CLI 手动部署：
+#### 分支部署策略
+
+- **功能分支** → 自动部署到预览环境（`storplan-<branch-name>.workers.dev`）
+- **PR 合并到 main** → 自动部署到生产环境（`storplan.workers.dev`）
+- **分支删除/PR 关闭** → 自动清理预览 Worker
+
+#### GitHub Actions 自动部署
+
+需要在仓库 Settings > Secrets 中配置：
+- `CLOUDFLARE_API_TOKEN` — Cloudflare API Token（需 Workers 编辑权限）
+- `CLOUDFLARE_ACCOUNT_ID` — Cloudflare Account ID
+
+工作流：
+1. 创建功能分支 → 推送代码 → 自动部署预览 Worker
+2. 创建 PR → 在 PR 评论中查看预览链接
+3. 合并到 main → 自动部署到生产环境
+4. PR 关闭或分支删除 → 自动清理预览 Worker
+
+#### 手动部署
 
 ```bash
+# 部署到生产环境
 npm run deploy
+
+# 部署到指定分支预览
+npx wrangler deploy --name storplan-feature-branch
 ```
