@@ -119,16 +119,16 @@ function StorplanApp() {
               <label className="block text-sm font-medium text-gray-700 mb-1">存储方案</label>
               <div className="flex flex-wrap gap-3">
                 <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input type="checkbox" checked={selectedStorages.has('xeos')} onChange={() => toggleStorage('xeos')} className="rounded" />
-                  <span className="text-sm">XSKY XEOS（对象存储）</span>
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer">
                   <input type="checkbox" checked={selectedStorages.has('vastdata')} onChange={() => toggleStorage('vastdata')} className="rounded" />
                   <span className="text-sm">VastData（统一存储）</span>
                 </label>
                 <label className="flex items-center gap-1.5 cursor-pointer">
                   <input type="checkbox" checked={selectedStorages.has('gpfs-ece')} onChange={() => toggleStorage('gpfs-ece')} className="rounded" />
                   <span className="text-sm">GPFS/Scale（文件系统）</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="checkbox" checked={selectedStorages.has('xeos')} onChange={() => toggleStorage('xeos')} className="rounded" />
+                  <span className="text-sm">XSKY XEOS（对象存储）</span>
                 </label>
               </div>
             </div>
@@ -207,22 +207,6 @@ function StorplanApp() {
           </div>
         </div>
 
-        {selectedStorages.has('xeos') && (
-          <>
-            <StorageInfo storage="xeos" />
-            {errors.xeos && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-                <p className="text-red-800">{errors.xeos}</p>
-              </div>
-            )}
-            {results.xeos && (
-              <div className="mb-8">
-                <XEOSResult data={results.xeos} />
-              </div>
-            )}
-          </>
-        )}
-
         {selectedStorages.has('vastdata') && (
           <>
             <StorageInfo storage="vastdata" />
@@ -254,12 +238,28 @@ function StorplanApp() {
             )}
           </>
         )}
+
+        {selectedStorages.has('xeos') && (
+          <>
+            <StorageInfo storage="xeos" />
+            {errors.xeos && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+                <p className="text-red-800">{errors.xeos}</p>
+              </div>
+            )}
+            {results.xeos && (
+              <div className="mb-8">
+                <XEOSResult data={results.xeos} />
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   )
 }
 
-const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: string[] }> = {
+const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: string[]; limits?: string[] }> = {
   xeos: {
     description: 'XSKY XEOS 是分布式对象存储系统，基于 HDD 构建大容量存储池，适合海量非结构化数据存储。',
     pros: ['支持超大规模集群', '支持 QoS', '稳定可靠', '支持 CRC64 校验', '原厂技术支持'],
@@ -274,6 +274,7 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
     description: 'IBM GPFS/Scale ECE（Erasure Coding Edition）是高性能并行文件系统，基于 NVMe SSD 和 RDMA 网络构建。',
     pros: ['性能高', '采购成本低'],
     cons: ['多租户支持弱', '运维成本高', '原厂支持弱'],
+    limits: ['启用多租户支持时，容量起步和扩容步长均为 50TiB', '启用多租户时，K8s 只能使用 hostPath，不能使用基于 CSI 的 PVC 方式'],
   },
 }
 
@@ -298,6 +299,14 @@ function StorageInfo({ storage }: { storage: string }) {
           </ul>
         </div>
       </div>
+      {info.limits && (
+        <div className="mt-4 text-sm">
+          <h3 className="font-semibold text-red-700 mb-2">限制</h3>
+          <ul className="space-y-1 text-gray-600">
+            {info.limits.map((l, i) => <li key={i}>• {l}</li>)}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
@@ -486,13 +495,6 @@ function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
               <dd className="font-medium">{data.formatted.writeIOPS}</dd>
             </div>
           </dl>
-        </div>
-        <div className="md:col-span-2">
-          <h3 className="font-semibold text-gray-700 mb-2">限制</h3>
-          <ul className="space-y-1 text-sm text-gray-600">
-            <li>• 启用多租户支持时，容量起步和扩容步长均为 50TiB</li>
-            <li>• 支持 K8s 时只能使用 hostPath，不能使用基于 CSI 的 PVC 方式</li>
-          </ul>
         </div>
       </div>
     </div>
