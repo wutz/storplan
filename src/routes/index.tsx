@@ -312,6 +312,9 @@ function StorageInfo({ storage }: { storage: string }) {
 }
 
 function XEOSResult({ data }: { data: XEOSPlanResult }) {
+  const perTiBReadBW = data.performance.downloadBandwidth / data.actualCapacity
+  const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-xl font-bold mb-4">XSKY XEOS 规划方案</h2>
@@ -374,6 +377,10 @@ function XEOSResult({ data }: { data: XEOSPlanResult }) {
               <dd className="font-medium">{data.formatted.downloadBandwidth}</dd>
             </div>
             <div>
+              <dt className="text-gray-500">每 TiB 读 BW (4MiB)</dt>
+              <dd className="font-medium">{perTiBReadBWFormatted}</dd>
+            </div>
+            <div>
               <dt className="text-gray-500">上传 OPS (4KiB)</dt>
               <dd className="font-medium">{data.formatted.uploadOps}</dd>
             </div>
@@ -389,6 +396,9 @@ function XEOSResult({ data }: { data: XEOSPlanResult }) {
 }
 
 function VastDataResult({ data }: { data: VastDataPlanResult }) {
+  const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
+  const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-xl font-bold mb-4">VastData 统一存储规划方案</h2>
@@ -443,6 +453,10 @@ function VastDataResult({ data }: { data: VastDataPlanResult }) {
               <dd className="font-medium">{data.formatted.burstWriteBandwidth}</dd>
             </div>
             <div>
+              <dt className="text-gray-500">每 TiB 读 BW (4MiB)</dt>
+              <dd className="font-medium">{perTiBReadBWFormatted}</dd>
+            </div>
+            <div>
               <dt className="text-gray-500">读 IOPS (4KiB)</dt>
               <dd className="font-medium">{data.formatted.readIOPS}</dd>
             </div>
@@ -458,6 +472,9 @@ function VastDataResult({ data }: { data: VastDataPlanResult }) {
 }
 
 function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
+  const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
+  const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-xl font-bold mb-4">GPFS/Scale 规划方案</h2>
@@ -506,6 +523,10 @@ function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
             <div>
               <dt className="text-gray-500">写 BW (4MiB)</dt>
               <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">每 TiB 读 BW (4MiB)</dt>
+              <dd className="font-medium">{perTiBReadBWFormatted}</dd>
             </div>
             <div>
               <dt className="text-gray-500">读 IOPS (4KiB)</dt>
