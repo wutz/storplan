@@ -55,11 +55,27 @@ storplan/
 
 ## 部署
 
-TanStack Start 支持多种部署平台：
+### Docker
 
-- Cloudflare Pages
-- Vercel
-- Netlify
-- Node.js
+```bash
+# 构建镜像
+docker build -t storplan .
 
-详见 [TanStack Start 部署文档](https://tanstack.com/start/latest/docs/framework/react/deployment)
+# 运行
+docker run -p 3000:3000 storplan
+```
+
+镜像自动通过 GitHub Actions 构建并推送到 GHCR：
+
+```bash
+docker pull ghcr.io/wutz/storplan:tanstack-start
+```
+
+### Kubernetes
+
+```bash
+kubectl apply -f k8s/deployment.yaml
+```
+
+部署包含：Namespace、Deployment（2 副本）、Service、Ingress。
+修改 `k8s/deployment.yaml` 中的 Ingress host 适配实际域名。
