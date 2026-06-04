@@ -252,7 +252,7 @@ function XEOSResult({ data }: { data: XEOSPlanResult }) {
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">网络配置</dt>
-              <dd>每台 2 × 双口 25Gb ETH NIC</dd>
+              <dd>2 × 双口 25Gb ETH NIC</dd>
             </div>
           </dl>
         </div>
@@ -304,7 +304,7 @@ function VastDataResult({ data }: { data: VastDataPlanResult }) {
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">网络配置</dt>
-              <dd>每台 2 × 双口 200Gb RoCE/IB/ETH NIC</dd>
+              <dd>2 × 双口 200Gb RoCE/IB/ETH NIC</dd>
             </div>
           </dl>
         </div>
@@ -373,7 +373,7 @@ function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">网络配置</dt>
-              <dd>每台 2 × 双口 200Gb RoCE/IB NIC</dd>
+              <dd>2 × 双口 200Gb RoCE/IB NIC</dd>
             </div>
           </dl>
         </div>
