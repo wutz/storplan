@@ -20,9 +20,8 @@ function StorplanApp() {
   const [capacityValue, setCapacityValue] = useState('')
   const [capacityUnit, setCapacityUnit] = useState('TiB')
   const [downloadBWValue, setDownloadBWValue] = useState('')
-  const [downloadBWUnit, setDownloadBWUnit] = useState('GB/s')
+  const [bwUnit, setBwUnit] = useState('GB/s')
   const [uploadBWValue, setUploadBWValue] = useState('')
-  const [uploadBWUnit, setUploadBWUnit] = useState('GB/s')
   const [results, setResults] = useState<PlanResults>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -41,8 +40,8 @@ function StorplanApp() {
 
       if (selectedStorages.has('xeos')) {
         try {
-          const uploadBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
-          const downloadBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
+          const uploadBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
+          const downloadBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
           const plan = planXEOS({
             capacity,
             uploadBandwidth: uploadBW || undefined,
@@ -56,8 +55,8 @@ function StorplanApp() {
 
       if (selectedStorages.has('vastdata')) {
         try {
-          const readBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
-          const writeBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
+          const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
+          const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
           const plan = planVastData({
             capacity,
             readBandwidth: readBW || undefined,
@@ -71,8 +70,8 @@ function StorplanApp() {
 
       if (selectedStorages.has('gpfs-ece')) {
         try {
-          const readBW = downloadBWValue ? `${downloadBWValue}${downloadBWUnit}` : ''
-          const writeBW = uploadBWValue ? `${uploadBWValue}${uploadBWUnit}` : ''
+          const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
+          const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
           const plan = planGPFSECE({
             capacity,
             readBandwidth: readBW || undefined,
@@ -89,7 +88,7 @@ function StorplanApp() {
 
     setResults(newResults)
     setErrors(newErrors)
-  }, [selectedStorages, capacityValue, capacityUnit, downloadBWValue, downloadBWUnit, uploadBWValue, uploadBWUnit])
+  }, [selectedStorages, capacityValue, capacityUnit, downloadBWValue, bwUnit, uploadBWValue])
 
   const toggleStorage = (storage: string) => {
     const newSet = new Set(selectedStorages)
@@ -169,8 +168,8 @@ function StorplanApp() {
                   step="0.1"
                 />
                 <select
-                  value={downloadBWUnit}
-                  onChange={(e) => setDownloadBWUnit(e.target.value)}
+                  value={bwUnit}
+                  onChange={(e) => setBwUnit(e.target.value)}
                   className="border border-gray-300 rounded-md px-3 py-2"
                 >
                   <option value="MB/s">MB/s</option>
@@ -193,8 +192,8 @@ function StorplanApp() {
                   step="0.1"
                 />
                 <select
-                  value={uploadBWUnit}
-                  onChange={(e) => setUploadBWUnit(e.target.value)}
+                  value={bwUnit}
+                  onChange={(e) => setBwUnit(e.target.value)}
                   className="border border-gray-300 rounded-md px-3 py-2"
                 >
                   <option value="MB/s">MB/s</option>
