@@ -475,6 +475,13 @@ function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
             </div>
           </dl>
         </div>
+        <div className="md:col-span-2">
+          <h3 className="font-semibold text-gray-700 mb-2">限制</h3>
+          <ul className="space-y-1 text-sm text-gray-600">
+            <li>• 启用多租户支持时，容量起步和扩容步长均为 50TiB</li>
+            <li>• 支持 K8s 时只能使用 hostPath，不能使用基于 CSI 的 PVC 方式</li>
+          </ul>
+        </div>
       </div>
     </div>
   )
