@@ -16,7 +16,7 @@ type PlanResults = {
 }
 
 function StorplanApp() {
-  const [selectedStorages, setSelectedStorages] = useState<Set<string>>(new Set(['xeos']))
+  const [selectedStorages, setSelectedStorages] = useState<Set<string>>(new Set(['vastdata']))
   const [capacityValue, setCapacityValue] = useState('')
   const [capacityUnit, setCapacityUnit] = useState('TiB')
   const [downloadBWValue, setDownloadBWValue] = useState('')
