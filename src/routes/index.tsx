@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { planXEOS } from '#/lib/xeos'
+import { planXEOS, getEcScheme } from '#/lib/xeos'
 import type { XEOSPlanResult } from '#/lib/xeos'
 import { planVastData } from '#/lib/vastdata'
 import type { VastDataPlanResult } from '#/lib/vastdata'
-import { planGPFSECE } from '#/lib/gpfs-ece'
+import { planGPFSECE, getECScheme as getGpfsEcScheme } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
@@ -105,6 +105,33 @@ function StorplanApp() {
   const bwLabels = selectedStorages.size === 1 && selectedStorages.has('xeos')
     ? { read: '下载 BW', write: '上传 BW' }
     : { read: '读 BW', write: '写 BW' }
+
+  const handleXeosServerCountChange = (newCount: number) => {
+    if (!results.xeos) return
+    const { diskSize } = results.xeos
+    const ec = getEcScheme(newCount)
+    const newCapacityTiB = newCount * 32 * diskSize * 0.909 * 0.81 * ec.efficiency
+    setCapacityValue(newCapacityTiB.toFixed(2))
+    setCapacityUnit('TiB')
+  }
+
+  const handleVastDataEboxCountChange = (newCount: number) => {
+    if (!results.vastdata) return
+    const { diskSize } = results.vastdata
+    const rawTB = newCount * (diskSize === 15.36 ? 122.88 : diskSize === 30.72 ? 245.76 : 430.08)
+    const newCapacityTiB = rawTB * 0.909 * 0.728
+    setCapacityValue(newCapacityTiB.toFixed(2))
+    setCapacityUnit('TiB')
+  }
+
+  const handleGpfsServerCountChange = (newCount: number) => {
+    if (!results['gpfs-ece']) return
+    const { ssdSize } = results['gpfs-ece']
+    const ec = getGpfsEcScheme(newCount)
+    const newCapacityTiB = newCount * 24 * ssdSize * 0.909 * ec.efficiency * 0.9
+    setCapacityValue(newCapacityTiB.toFixed(2))
+    setCapacityUnit('TiB')
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -216,7 +243,7 @@ function StorplanApp() {
             )}
             {results.vastdata && (
               <div className="mb-8">
-                <VastDataResult data={results.vastdata} />
+                <VastDataResult data={results.vastdata} onEboxCountChange={handleVastDataEboxCountChange} />
               </div>
             )}
           </>
@@ -232,7 +259,7 @@ function StorplanApp() {
             )}
             {results['gpfs-ece'] && (
               <div className="mb-8">
-                <GPFSECEResult data={results['gpfs-ece']} />
+                <GPFSECEResult data={results['gpfs-ece']} onServerCountChange={handleGpfsServerCountChange} />
               </div>
             )}
           </>
@@ -248,7 +275,7 @@ function StorplanApp() {
             )}
             {results.xeos && (
               <div className="mb-8">
-                <XEOSResult data={results.xeos} />
+                <XEOSResult data={results.xeos} onServerCountChange={handleXeosServerCountChange} />
               </div>
             )}
           </>
@@ -316,7 +343,7 @@ function StorageInfo({ storage }: { storage: string }) {
   )
 }
 
-function XEOSResult({ data }: { data: XEOSPlanResult }) {
+function XEOSResult({ data, onServerCountChange }: { data: XEOSPlanResult; onServerCountChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.downloadBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
 
@@ -327,9 +354,14 @@ function XEOSResult({ data }: { data: XEOSPlanResult }) {
         <div>
           <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
           <dl className="space-y-1 text-sm">
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <dt className="text-gray-500">服务器台数</dt>
-              <dd>{data.serverCount} 台</dd>
+              <dd className="flex items-center gap-1">
+                <button onClick={() => onServerCountChange(data.serverCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.serverCount <= 3}>−</button>
+                <span className="min-w-[2rem] text-center">{data.serverCount}</span>
+                <button onClick={() => onServerCountChange(data.serverCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
+                <span className="ml-0.5">台</span>
+              </dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">纠删码方案</dt>
@@ -409,7 +441,7 @@ function XEOSResult({ data }: { data: XEOSPlanResult }) {
   )
 }
 
-function VastDataResult({ data }: { data: VastDataPlanResult }) {
+function VastDataResult({ data, onEboxCountChange }: { data: VastDataPlanResult; onEboxCountChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
 
@@ -420,9 +452,14 @@ function VastDataResult({ data }: { data: VastDataPlanResult }) {
         <div>
           <h3 className="font-semibold text-gray-700 mb-2">配置</h3>
           <dl className="space-y-1 text-sm">
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <dt className="text-gray-500">EBox 数量</dt>
-              <dd>{data.eboxCount} 台</dd>
+              <dd className="flex items-center gap-1">
+                <button onClick={() => onEboxCountChange(data.eboxCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.eboxCount <= 11}>−</button>
+                <span className="min-w-[2rem] text-center">{data.eboxCount}</span>
+                <button onClick={() => onEboxCountChange(data.eboxCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
+                <span className="ml-0.5">台</span>
+              </dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">容错能力</dt>
@@ -485,7 +522,7 @@ function VastDataResult({ data }: { data: VastDataPlanResult }) {
   )
 }
 
-function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
+function GPFSECEResult({ data, onServerCountChange }: { data: GPFSECEPlanResult; onServerCountChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
 
@@ -496,9 +533,14 @@ function GPFSECEResult({ data }: { data: GPFSECEPlanResult }) {
         <div>
           <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
           <dl className="space-y-1 text-sm">
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <dt className="text-gray-500">服务器台数</dt>
-              <dd>{data.serverCount} 台</dd>
+              <dd className="flex items-center gap-1">
+                <button onClick={() => onServerCountChange(data.serverCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.serverCount <= 3}>−</button>
+                <span className="min-w-[2rem] text-center">{data.serverCount}</span>
+                <button onClick={() => onServerCountChange(data.serverCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
+                <span className="ml-0.5">台</span>
+              </dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">纠删码方案</dt>

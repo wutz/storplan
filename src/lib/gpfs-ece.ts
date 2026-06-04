@@ -55,7 +55,7 @@ interface ECScheme {
   tolerance: number;
 }
 
-function getECScheme(serverCount: number): ECScheme {
+export function getECScheme(serverCount: number): ECScheme {
   if (serverCount <= 3) {
     return { scheme: 'EC4+2P', efficiency: CONSTANTS.EC4_2P_EFFICIENCY, tolerance: 1 };
   }
