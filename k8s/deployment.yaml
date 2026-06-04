@@ -22,7 +22,8 @@ spec:
     spec:
       containers:
       - name: storplan
-        image: ghcr.io/wutz/storplan:tanstack-start
+        image: ghcr.io/wutz/storplan:sha-dfe4047
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
           name: http
