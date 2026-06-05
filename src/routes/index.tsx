@@ -217,12 +217,8 @@ function StorplanApp() {
 
   const handleGpfsServerCountChange = (newCount: number) => {
     if (!results['gpfs-ece'] || newCount < 3) return
-    const { ssdSize, ecScheme } = results['gpfs-ece']
-    const allowed = getAllowedECSchemes(newCount)
-    const currentStillAllowed = allowed.find(s => s.scheme === ecScheme)
-    const ec = currentStillAllowed
-      ? { scheme: currentStillAllowed.scheme, efficiency: currentStillAllowed.efficiency, tolerance: getGPFSTolerance(newCount, currentStillAllowed.scheme) }
-      : getGpfsEcScheme(newCount)
+    const { ssdSize } = results['gpfs-ece']
+    const ec = getGpfsEcScheme(newCount)
     const newCapacityTiB = gpfsCapacity(newCount, ssdSize, ec.efficiency)
     setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount: newCount, ssdSize, ecEfficiency: ec.efficiency } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
