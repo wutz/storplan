@@ -52,10 +52,36 @@ export const EC_SCHEMES = [
   { scheme: 'EC8+2P', efficiency: CONSTANTS.EC8_2P_EFFICIENCY, minServers: 5 },
 ] as const;
 
+export function getAllowedECSchemes(serverCount: number) {
+  if (serverCount === 3) {
+    // 3 nodes: only EC4+2P
+    return [EC_SCHEMES[0]]; // EC4+2P
+  }
+  if (serverCount === 4) {
+    // 4 nodes: only EC4+2P and EC8+3P
+    return [EC_SCHEMES[0], EC_SCHEMES[1]]; // EC4+2P, EC8+3P
+  }
+  if (serverCount === 5) {
+    // 5 nodes: all schemes allowed
+    return [...EC_SCHEMES];
+  }
+  if (serverCount >= 6 && serverCount <= 9) {
+    // 6-9 nodes: all schemes allowed
+    return [...EC_SCHEMES];
+  }
+  // 10+ nodes: all schemes
+  return [...EC_SCHEMES];
+}
+
 export function getGPFSTolerance(serverCount: number, scheme: string): number {
   if (serverCount === 3) return 1;
   if (serverCount === 4) return 1;
-  if (serverCount >= 5 && serverCount <= 9) return 1;
+  if (serverCount === 5) return 1;
+  if (serverCount >= 6 && serverCount <= 9) {
+    // EC4+2P can tolerate 2 nodes offline for 6-9 nodes
+    if (scheme === 'EC4+2P') return 2;
+    return 1;
+  }
   if (serverCount >= 10) {
     // EC8+3P with 11+ nodes tolerates 3 nodes offline
     if (scheme === 'EC8+3P' && serverCount >= 11) return 3;
@@ -79,11 +105,14 @@ export function getECScheme(serverCount: number): ECScheme {
     return { scheme: 'EC4+2P', efficiency: CONSTANTS.EC4_2P_EFFICIENCY, tolerance: 1 };
   }
   if (serverCount === 4) {
+    // Default to EC8+3P for 4 nodes
     return { scheme: 'EC8+3P', efficiency: CONSTANTS.EC8_3P_EFFICIENCY, tolerance: 1 };
   }
-  if (serverCount <= 9) {
+  if (serverCount >= 5 && serverCount <= 9) {
+    // Default to EC8+2P for 5-9 nodes, tolerance 1
     return { scheme: 'EC8+2P', efficiency: CONSTANTS.EC8_2P_EFFICIENCY, tolerance: 1 };
   }
+  // 10+ nodes: EC8+2P with tolerance 2
   return { scheme: 'EC8+2P', efficiency: CONSTANTS.EC8_2P_EFFICIENCY, tolerance: 2 };
 }
 

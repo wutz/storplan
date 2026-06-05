@@ -4,7 +4,7 @@ import { planXEOS, buildXEOSResult, getEcScheme, CONSTANTS as XEOS_CONSTANTS, EC
 import type { XEOSPlanResult } from '#/lib/xeos'
 import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calculateCapacityTiB as vastCapacity } from '#/lib/vastdata'
 import type { VastDataPlanResult } from '#/lib/vastdata'
-import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
+import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, getAllowedECSchemes, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
@@ -217,8 +217,12 @@ function StorplanApp() {
 
   const handleGpfsServerCountChange = (newCount: number) => {
     if (!results['gpfs-ece'] || newCount < 3) return
-    const { ssdSize } = results['gpfs-ece']
-    const ec = getGpfsEcScheme(newCount)
+    const { ssdSize, ecScheme } = results['gpfs-ece']
+    const allowed = getAllowedECSchemes(newCount)
+    const currentStillAllowed = allowed.find(s => s.scheme === ecScheme)
+    const ec = currentStillAllowed
+      ? { scheme: currentStillAllowed.scheme, efficiency: currentStillAllowed.efficiency, tolerance: getGPFSTolerance(newCount, currentStillAllowed.scheme) }
+      : getGpfsEcScheme(newCount)
     const newCapacityTiB = gpfsCapacity(newCount, ssdSize, ec.efficiency)
     setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount: newCount, ssdSize, ecEfficiency: ec.efficiency } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
@@ -687,7 +691,7 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange }: 
               <dt className="text-gray-500">纠删码方案</dt>
               <dd>
                 <select value={data.ecScheme} onChange={(e) => { const s = GPFS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
-                  {GPFS_EC_SCHEMES.map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}</option>)}
+                  {getAllowedECSchemes(data.serverCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}</option>)}
                 </select>
               </dd>
             </div>
