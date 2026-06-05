@@ -4,7 +4,7 @@ import { planXEOS, buildXEOSResult, getEcScheme, CONSTANTS as XEOS_CONSTANTS, EC
 import type { XEOSPlanResult } from '#/lib/xeos'
 import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calculateCapacityTiB as vastCapacity } from '#/lib/vastdata'
 import type { VastDataPlanResult } from '#/lib/vastdata'
-import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
+import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
@@ -81,7 +81,7 @@ function StorplanApp() {
           if (manualConfig['gpfs-ece']) {
             const mc = manualConfig['gpfs-ece']
             const ec = GPFS_EC_SCHEMES.find(s => s.efficiency === mc.ecEfficiency)!
-            newResults['gpfs-ece'] = buildGPFSECEResult(mc.serverCount, mc.ssdSize, ec.scheme, ec.efficiency, ec.tolerance, isBinary, bwUnit.includes('iB') ? 'binary' : bwUnit.includes('bps') ? 'decimal-bit' : 'decimal-byte')
+            newResults['gpfs-ece'] = buildGPFSECEResult(mc.serverCount, mc.ssdSize, ec.scheme, ec.efficiency, getGPFSTolerance(mc.serverCount, ec.scheme), isBinary, bwUnit.includes('iB') ? 'binary' : bwUnit.includes('bps') ? 'decimal-bit' : 'decimal-byte')
           } else {
             const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
             const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
