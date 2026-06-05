@@ -195,12 +195,12 @@ function StorplanApp() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">Storplan</h1>
         <p className="text-gray-600 mb-8">存储容量和性能规划工具</p>
 
         <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">存储方案</label>
               <div className="flex flex-wrap gap-3">
@@ -293,53 +293,49 @@ function StorplanApp() {
           </div>
         </div>
 
-        {selectedStorages.has('vastdata') && (
-          <>
-            <StorageInfo storage="vastdata" />
-            {errors.vastdata && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-                <p className="text-red-800">{errors.vastdata}</p>
-              </div>
-            )}
-            {results.vastdata && (
-              <div className="mb-8">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          {selectedStorages.has('vastdata') && (
+            <div>
+              <StorageInfo storage="vastdata" />
+              {errors.vastdata && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-red-800">{errors.vastdata}</p>
+                </div>
+              )}
+              {results.vastdata && (
                 <VastDataResult data={results.vastdata} onEboxCountChange={handleVastDataEboxCountChange} onDiskChange={handleVastDataDiskChange} />
-              </div>
-            )}
-          </>
-        )}
+              )}
+            </div>
+          )}
 
-        {selectedStorages.has('gpfs-ece') && (
-          <>
-            <StorageInfo storage="gpfs-ece" />
-            {errors['gpfs-ece'] && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-                <p className="text-red-800">{errors['gpfs-ece']}</p>
-              </div>
-            )}
-            {results['gpfs-ece'] && (
-              <div className="mb-8">
+          {selectedStorages.has('gpfs-ece') && (
+            <div>
+              <StorageInfo storage="gpfs-ece" />
+              {errors['gpfs-ece'] && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-red-800">{errors['gpfs-ece']}</p>
+                </div>
+              )}
+              {results['gpfs-ece'] && (
                 <GPFSECEResult data={results['gpfs-ece']} onServerCountChange={handleGpfsServerCountChange} onDiskChange={handleGpfsDiskChange} onEcChange={handleGpfsEcChange} />
-              </div>
-            )}
-          </>
-        )}
+              )}
+            </div>
+          )}
 
-        {selectedStorages.has('xeos') && (
-          <>
-            <StorageInfo storage="xeos" />
-            {errors.xeos && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-                <p className="text-red-800">{errors.xeos}</p>
-              </div>
-            )}
-            {results.xeos && (
-              <div className="mb-8">
+          {selectedStorages.has('xeos') && (
+            <div>
+              <StorageInfo storage="xeos" />
+              {errors.xeos && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-red-800">{errors.xeos}</p>
+                </div>
+              )}
+              {results.xeos && (
                 <XEOSResult data={results.xeos} onServerCountChange={handleXeosServerCountChange} onDiskChange={handleXeosDiskChange} onEcChange={handleXeosEcChange} />
-              </div>
-            )}
-          </>
-        )}
+              )}
+            </div>
+          )}
+        </div>
 
         <footer className="text-center text-sm text-gray-400 mt-12 pb-8">
           <a href="https://github.com/wutz/storplan" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600">
@@ -375,7 +371,7 @@ function StorageInfo({ storage }: { storage: string }) {
   if (!info) return null
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-8">
+    <div className="bg-white rounded-lg shadow p-6 mb-4">
       <p className="text-gray-600 mb-4">{info.description}</p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
         <div>
@@ -410,10 +406,11 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onEcChange }: { d
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-xl font-bold mb-4">XSKY XEOS 规划方案</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
-          <dl className="space-y-1 text-sm">
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
+            <dl className="space-y-1 text-sm">
             <div className="flex justify-between items-center">
               <dt className="text-gray-500">服务器台数</dt>
               <dd className="flex items-center gap-1">
@@ -450,7 +447,8 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onEcChange }: { d
             </div>
           </dl>
         </div>
-        <div className="md:col-span-2">
+        </div>
+        <div>
           <h3 className="font-semibold text-gray-700 mb-2">每台服务器配置</h3>
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
@@ -483,7 +481,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onEcChange }: { d
             </div>
           </dl>
         </div>
-        <div className="md:col-span-2">
+        <div>
           <h3 className="font-semibold text-gray-700 mb-2">性能（预测数据）</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
@@ -520,10 +518,11 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-xl font-bold mb-4">VastData 统一存储规划方案</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h3 className="font-semibold text-gray-700 mb-2">配置</h3>
-          <dl className="space-y-1 text-sm">
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-2">配置</h3>
+            <dl className="space-y-1 text-sm">
             <div className="flex justify-between items-center">
               <dt className="text-gray-500">EBox 数量</dt>
               <dd className="flex items-center gap-1">
@@ -564,7 +563,8 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
             </div>
           </dl>
         </div>
-        <div className="md:col-span-2">
+        </div>
+        <div>
           <h3 className="font-semibold text-gray-700 mb-2">性能（厂商数据）</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
@@ -605,10 +605,11 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange }: 
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-xl font-bold mb-4">GPFS/Scale 规划方案</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
-          <dl className="space-y-1 text-sm">
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
+            <dl className="space-y-1 text-sm">
             <div className="flex justify-between items-center">
               <dt className="text-gray-500">服务器台数</dt>
               <dd className="flex items-center gap-1">
@@ -645,7 +646,8 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange }: 
             </div>
           </dl>
         </div>
-        <div className="md:col-span-2">
+        </div>
+        <div>
           <h3 className="font-semibold text-gray-700 mb-2">每台服务器配置</h3>
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
@@ -678,7 +680,7 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange }: 
             </div>
           </dl>
         </div>
-        <div className="md:col-span-2">
+        <div>
           <h3 className="font-semibold text-gray-700 mb-2">性能（预测数据）</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
