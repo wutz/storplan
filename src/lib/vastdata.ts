@@ -72,6 +72,42 @@ function calculateEboxConfig(eboxCount: number, diskConfig: typeof CONSTANTS.EBO
   };
 }
 
+export function buildVastDataResult(
+  eboxCount: number,
+  diskSize: number,
+  diskConfig: string,
+  isBinary: boolean,
+  bandwidthUnitType: string
+): VastDataPlanResult {
+  const config = CONSTANTS.EBOX_CONFIGS.find(c => c.diskSize === diskSize)!;
+  const rawTB = eboxCount * config.rawPerEbox;
+  const usableTiB = rawTB * CONSTANTS.TB_TO_TIB * CONSTANTS.USABLE_RATIO;
+  return {
+    mode: 'ebox',
+    eboxCount,
+    diskSize,
+    diskConfig,
+    actualCapacity: usableTiB,
+    rawCapacity: rawTB * CONSTANTS.TB_TO_TIB,
+    performance: {
+      readBandwidth: eboxCount * CONSTANTS.READ_BW_PER_EBOX * 1000,
+      writeBandwidth: eboxCount * CONSTANTS.SUSTAINED_WRITE_BW_PER_EBOX * 1000,
+      burstWriteBandwidth: eboxCount * CONSTANTS.BURST_WRITE_BW_PER_EBOX * 1000,
+      readIOPS: eboxCount * CONSTANTS.READ_IOPS_PER_EBOX,
+      writeIOPS: eboxCount * CONSTANTS.WRITE_IOPS_PER_EBOX,
+    },
+    formatted: {
+      capacity: formatCapacity(usableTiB, isBinary),
+      rawCapacity: formatCapacity(rawTB * CONSTANTS.TB_TO_TIB, isBinary),
+      readBandwidth: formatBandwidth(eboxCount * CONSTANTS.READ_BW_PER_EBOX * 1000, bandwidthUnitType),
+      writeBandwidth: formatBandwidth(eboxCount * CONSTANTS.SUSTAINED_WRITE_BW_PER_EBOX * 1000, bandwidthUnitType),
+      burstWriteBandwidth: formatBandwidth(eboxCount * CONSTANTS.BURST_WRITE_BW_PER_EBOX * 1000, bandwidthUnitType),
+      readIOPS: `${(eboxCount * CONSTANTS.READ_IOPS_PER_EBOX).toLocaleString()}`,
+      writeIOPS: `${(eboxCount * CONSTANTS.WRITE_IOPS_PER_EBOX).toLocaleString()}`,
+    },
+  };
+}
+
 export function planVastData(req: VastDataPlanRequest): VastDataPlanResult {
   const capacityInfo = parseCapacity(req.capacity);
   const capacityTiB = capacityInfo.tib;

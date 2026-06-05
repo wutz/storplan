@@ -106,6 +106,33 @@ function scoreConfig(serverCount: number, ecEfficiency: number, actualCapacity: 
   return serverCount * 1000 + (1 - ecEfficiency) * 100 + overProvisionRatio;
 }
 
+export function buildXEOSResult(
+  serverCount: number,
+  diskSize: number,
+  ecScheme: string,
+  ecEfficiency: number,
+  tolerance: number,
+  isBinary: boolean,
+  bandwidthUnitType: string
+): XEOSPlanResult {
+  const actualCapacity = calculateActualCapacity(serverCount, diskSize, ecEfficiency);
+  const rawCapacity = calculateRawCapacity(serverCount, diskSize);
+  const performance = calculatePerformance(serverCount);
+  return {
+    serverCount, ecScheme, tolerance, diskSize, actualCapacity, rawCapacity, performance,
+    formatted: {
+      capacity: formatCapacity(actualCapacity, isBinary),
+      rawCapacity: formatCapacity(rawCapacity, isBinary),
+      uploadBandwidth: formatBandwidth(performance.uploadBandwidth, bandwidthUnitType),
+      downloadBandwidth: formatBandwidth(performance.downloadBandwidth, bandwidthUnitType),
+      uploadOps: `${performance.uploadOps.toLocaleString()}`,
+      downloadOps: `${performance.downloadOps.toLocaleString()}`,
+    },
+    capacityUnitPreference: isBinary,
+    bandwidthUnitType,
+  };
+}
+
 export function planXEOS(req: XEOSPlanRequest): XEOSPlanResult {
   const capacityInfo = parseCapacity(req.capacity);
   const capacityTiB = capacityInfo.tib;

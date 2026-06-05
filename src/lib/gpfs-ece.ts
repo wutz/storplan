@@ -96,6 +96,32 @@ function calculatePerformance(serverCount: number) {
   };
 }
 
+export function buildGPFSECEResult(
+  serverCount: number,
+  ssdSize: number,
+  ecScheme: string,
+  ecEfficiency: number,
+  tolerance: number,
+  isBinary: boolean,
+  bandwidthUnitType: string
+): GPFSECEPlanResult {
+  const actualCapacity = calculateCapacityTiB(serverCount, ssdSize, ecEfficiency);
+  const rawCapacity = serverCount * CONSTANTS.SSDS_PER_SERVER * ssdSize * CONSTANTS.TB_TO_TIB;
+  const performance = calculatePerformance(serverCount);
+  return {
+    serverCount, ecScheme, tolerance, ssdConfig: `24 × ${ssdSize}TB NVMe SSD`, ssdSize,
+    actualCapacity, rawCapacity, performance,
+    formatted: {
+      capacity: formatCapacity(actualCapacity, isBinary),
+      rawCapacity: formatCapacity(rawCapacity, isBinary),
+      readBandwidth: formatBandwidth(performance.readBandwidth, bandwidthUnitType),
+      writeBandwidth: formatBandwidth(performance.writeBandwidth, bandwidthUnitType),
+      readIOPS: `${performance.readIOPS.toLocaleString()}`,
+      writeIOPS: `${performance.writeIOPS.toLocaleString()}`,
+    },
+  };
+}
+
 export function planGPFSECE(req: GPFSECEPlanRequest): GPFSECEPlanResult {
   const capacityInfo = parseCapacity(req.capacity);
   const capacityTiB = capacityInfo.tib;

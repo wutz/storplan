@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { planXEOS, getEcScheme, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity } from '#/lib/xeos'
+import { planXEOS, buildXEOSResult, getEcScheme, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity } from '#/lib/xeos'
 import type { XEOSPlanResult } from '#/lib/xeos'
-import { planVastData, CONSTANTS as VAST_CONSTANTS, calculateCapacityTiB as vastCapacity } from '#/lib/vastdata'
+import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calculateCapacityTiB as vastCapacity } from '#/lib/vastdata'
 import type { VastDataPlanResult } from '#/lib/vastdata'
-import { planGPFSECE, getECScheme as getGpfsEcScheme, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
+import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
@@ -24,6 +24,11 @@ function StorplanApp() {
   const [uploadBWValue, setUploadBWValue] = useState('')
   const [results, setResults] = useState<PlanResults>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [manualConfig, setManualConfig] = useState<{
+    xeos?: { serverCount: number; diskSize: number; ecEfficiency: number };
+    vastdata?: { eboxCount: number; diskSize: number };
+    'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number };
+  }>({})
 
   useEffect(() => {
     if (!capacityValue && !downloadBWValue && !uploadBWValue) {
@@ -37,17 +42,19 @@ function StorplanApp() {
 
     try {
       const capacity = capacityValue ? `${capacityValue}${capacityUnit}` : `0${capacityUnit}`
+      const isBinary = capacityUnit === 'TiB' || capacityUnit === 'PiB'
 
       if (selectedStorages.has('xeos')) {
         try {
-          const uploadBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
-          const downloadBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
-          const plan = planXEOS({
-            capacity,
-            uploadBandwidth: uploadBW || undefined,
-            downloadBandwidth: downloadBW || undefined,
-          })
-          newResults.xeos = plan
+          if (manualConfig.xeos) {
+            const mc = manualConfig.xeos
+            const ec = XEOS_EC_SCHEMES.find(s => s.efficiency === mc.ecEfficiency)!
+            newResults.xeos = buildXEOSResult(mc.serverCount, mc.diskSize, ec.scheme, ec.efficiency, ec.tolerance, isBinary, bwUnit.includes('iB') ? 'binary' : bwUnit.includes('bps') ? 'decimal-bit' : 'decimal-byte')
+          } else {
+            const uploadBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
+            const downloadBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
+            newResults.xeos = planXEOS({ capacity, uploadBandwidth: uploadBW || undefined, downloadBandwidth: downloadBW || undefined })
+          }
         } catch (err) {
           newErrors.xeos = err instanceof Error ? err.message : 'Unknown error'
         }
@@ -55,14 +62,15 @@ function StorplanApp() {
 
       if (selectedStorages.has('vastdata')) {
         try {
-          const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
-          const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
-          const plan = planVastData({
-            capacity,
-            readBandwidth: readBW || undefined,
-            writeBandwidth: writeBW || undefined,
-          })
-          newResults.vastdata = plan
+          if (manualConfig.vastdata) {
+            const mc = manualConfig.vastdata
+            const config = VAST_CONSTANTS.EBOX_CONFIGS.find(c => c.diskSize === mc.diskSize)!
+            newResults.vastdata = buildVastDataResult(mc.eboxCount, mc.diskSize, config.label, isBinary, bwUnit.includes('iB') ? 'binary' : bwUnit.includes('bps') ? 'decimal-bit' : 'decimal-byte')
+          } else {
+            const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
+            const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
+            newResults.vastdata = planVastData({ capacity, readBandwidth: readBW || undefined, writeBandwidth: writeBW || undefined })
+          }
         } catch (err) {
           newErrors.vastdata = err instanceof Error ? err.message : 'Unknown error'
         }
@@ -70,14 +78,15 @@ function StorplanApp() {
 
       if (selectedStorages.has('gpfs-ece')) {
         try {
-          const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
-          const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
-          const plan = planGPFSECE({
-            capacity,
-            readBandwidth: readBW || undefined,
-            writeBandwidth: writeBW || undefined,
-          })
-          newResults['gpfs-ece'] = plan
+          if (manualConfig['gpfs-ece']) {
+            const mc = manualConfig['gpfs-ece']
+            const ec = GPFS_EC_SCHEMES.find(s => s.efficiency === mc.ecEfficiency)!
+            newResults['gpfs-ece'] = buildGPFSECEResult(mc.serverCount, mc.ssdSize, ec.scheme, ec.efficiency, ec.tolerance, isBinary, bwUnit.includes('iB') ? 'binary' : bwUnit.includes('bps') ? 'decimal-bit' : 'decimal-byte')
+          } else {
+            const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
+            const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
+            newResults['gpfs-ece'] = planGPFSECE({ capacity, readBandwidth: readBW || undefined, writeBandwidth: writeBW || undefined })
+          }
         } catch (err) {
           newErrors['gpfs-ece'] = err instanceof Error ? err.message : 'Unknown error'
         }
@@ -88,7 +97,7 @@ function StorplanApp() {
 
     setResults(newResults)
     setErrors(newErrors)
-  }, [selectedStorages, capacityValue, capacityUnit, downloadBWValue, bwUnit, uploadBWValue])
+  }, [selectedStorages, capacityValue, capacityUnit, downloadBWValue, bwUnit, uploadBWValue, manualConfig])
 
   const toggleStorage = (storage: string) => {
     const newSet = new Set(selectedStorages)
@@ -111,6 +120,7 @@ function StorplanApp() {
     const { diskSize } = results.xeos
     const ec = getEcScheme(newCount)
     const newCapacityTiB = xeosCapacity(newCount, diskSize, ec.efficiency)
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount: newCount, diskSize, ecEfficiency: ec.efficiency } }))
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
   }
@@ -120,6 +130,7 @@ function StorplanApp() {
     const { serverCount } = results.xeos
     const ec = getEcScheme(serverCount)
     const newCapacityTiB = xeosCapacity(serverCount, newDiskSize, ec.efficiency)
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, diskSize: newDiskSize, ecEfficiency: ec.efficiency } }))
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
   }
@@ -128,6 +139,7 @@ function StorplanApp() {
     if (!results.xeos) return
     const { serverCount, diskSize } = results.xeos
     const newCapacityTiB = xeosCapacity(serverCount, diskSize, ecEfficiency)
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, diskSize, ecEfficiency } }))
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
   }
@@ -137,6 +149,7 @@ function StorplanApp() {
     const { diskSize } = results.vastdata
     const config = VAST_CONSTANTS.EBOX_CONFIGS.find(c => c.diskSize === diskSize)!
     const newCapacityTiB = vastCapacity(newCount, config.rawPerEbox)
+    setManualConfig(prev => ({ ...prev, vastdata: { eboxCount: newCount, diskSize } }))
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
   }
@@ -146,6 +159,7 @@ function StorplanApp() {
     const { eboxCount } = results.vastdata
     const config = VAST_CONSTANTS.EBOX_CONFIGS.find(c => c.diskSize === newDiskSize)!
     const newCapacityTiB = vastCapacity(eboxCount, config.rawPerEbox)
+    setManualConfig(prev => ({ ...prev, vastdata: { eboxCount, diskSize: newDiskSize } }))
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
   }
@@ -155,6 +169,7 @@ function StorplanApp() {
     const { ssdSize } = results['gpfs-ece']
     const ec = getGpfsEcScheme(newCount)
     const newCapacityTiB = gpfsCapacity(newCount, ssdSize, ec.efficiency)
+    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount: newCount, ssdSize, ecEfficiency: ec.efficiency } }))
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
   }
@@ -164,6 +179,7 @@ function StorplanApp() {
     const { serverCount } = results['gpfs-ece']
     const ec = getGpfsEcScheme(serverCount)
     const newCapacityTiB = gpfsCapacity(serverCount, newSsdSize, ec.efficiency)
+    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize: newSsdSize, ecEfficiency: ec.efficiency } }))
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
   }
@@ -172,6 +188,7 @@ function StorplanApp() {
     if (!results['gpfs-ece']) return
     const { serverCount, ssdSize } = results['gpfs-ece']
     const newCapacityTiB = gpfsCapacity(serverCount, ssdSize, ecEfficiency)
+    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize, ecEfficiency } }))
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
   }
@@ -207,7 +224,7 @@ function StorplanApp() {
                 <input
                   type="number"
                   value={capacityValue}
-                  onChange={(e) => setCapacityValue(e.target.value)}
+                  onChange={(e) => { setCapacityValue(e.target.value); setManualConfig({}) }}
                   placeholder="500"
                   className="flex-1 border border-gray-300 rounded-md px-3 py-2"
                   min="0"
@@ -215,7 +232,7 @@ function StorplanApp() {
                 />
                 <select
                   value={capacityUnit}
-                  onChange={(e) => setCapacityUnit(e.target.value)}
+                  onChange={(e) => { setCapacityUnit(e.target.value); setManualConfig({}) }}
                   className="border border-gray-300 rounded-md px-3 py-2"
                 >
                   <option value="TiB">TiB</option>
@@ -231,7 +248,7 @@ function StorplanApp() {
                 <input
                   type="number"
                   value={downloadBWValue}
-                  onChange={(e) => setDownloadBWValue(e.target.value)}
+                  onChange={(e) => { setDownloadBWValue(e.target.value); setManualConfig({}) }}
                   placeholder="20"
                   className="flex-1 border border-gray-300 rounded-md px-3 py-2"
                   min="0"
@@ -239,7 +256,7 @@ function StorplanApp() {
                 />
                 <select
                   value={bwUnit}
-                  onChange={(e) => setBwUnit(e.target.value)}
+                  onChange={(e) => { setBwUnit(e.target.value); setManualConfig({}) }}
                   className="border border-gray-300 rounded-md px-3 py-2"
                 >
                   <option value="MB/s">MB/s</option>
@@ -255,7 +272,7 @@ function StorplanApp() {
                 <input
                   type="number"
                   value={uploadBWValue}
-                  onChange={(e) => setUploadBWValue(e.target.value)}
+                  onChange={(e) => { setUploadBWValue(e.target.value); setManualConfig({}) }}
                   placeholder="10"
                   className="flex-1 border border-gray-300 rounded-md px-3 py-2"
                   min="0"
@@ -263,7 +280,7 @@ function StorplanApp() {
                 />
                 <select
                   value={bwUnit}
-                  onChange={(e) => setBwUnit(e.target.value)}
+                  onChange={(e) => { setBwUnit(e.target.value); setManualConfig({}) }}
                   className="border border-gray-300 rounded-md px-3 py-2"
                 >
                   <option value="MB/s">MB/s</option>
@@ -410,9 +427,13 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onEcChange }: { d
               <dt className="text-gray-500">纠删码方案</dt>
               <dd>
                 <select value={data.ecScheme} onChange={(e) => { const s = XEOS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
-                  {XEOS_EC_SCHEMES.map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}（容忍 {s.tolerance} 节点离线）</option>)}
+                  {XEOS_EC_SCHEMES.map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}</option>)}
                 </select>
               </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">容错能力</dt>
+              <dd>容忍 {data.tolerance} 台节点离线</dd>
             </div>
           </dl>
         </div>
@@ -601,9 +622,13 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange }: 
               <dt className="text-gray-500">纠删码方案</dt>
               <dd>
                 <select value={data.ecScheme} onChange={(e) => { const s = GPFS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
-                  {GPFS_EC_SCHEMES.map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}（容忍 {s.tolerance} 节点离线）</option>)}
+                  {GPFS_EC_SCHEMES.map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}</option>)}
                 </select>
               </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">容错能力</dt>
+              <dd>容忍 {data.tolerance} 台节点离线</dd>
             </div>
           </dl>
         </div>
