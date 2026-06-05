@@ -25,6 +25,54 @@ function convertTibToUnit(tib: number, unit: string): string {
   }
 }
 
+function NumberInput({ value, onChange, min, max, disabled, className }: {
+  value: number;
+  onChange: (n: number) => void;
+  min?: number;
+  max?: number;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const [localValue, setLocalValue] = useState(String(value))
+
+  useEffect(() => {
+    setLocalValue(String(value))
+  }, [value])
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalValue(e.target.value)
+  }
+
+  const handleBlur = () => {
+    const n = Number(localValue)
+    if (!isNaN(n) && n >= (min ?? 0) && (max === undefined || n <= max)) {
+      onChange(n)
+    } else {
+      setLocalValue(String(value))
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleBlur()
+    }
+  }
+
+  return (
+    <input
+      type="number"
+      value={localValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      min={min}
+      max={max}
+      disabled={disabled}
+      className={className}
+    />
+  )
+}
+
 function StorplanApp() {
   const [selectedStorages, setSelectedStorages] = useState<Set<string>>(new Set(['vastdata']))
   const [capacityValue, setCapacityValue] = useState('')
@@ -415,10 +463,9 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onEcChange }: { d
               <dt className="text-gray-500">服务器台数</dt>
               <dd className="flex items-center gap-1">
                 <button onClick={() => onServerCountChange(data.serverCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.serverCount <= 3}>−</button>
-                <input
-                  type="number"
+                <NumberInput
                   value={data.serverCount}
-                  onChange={(e) => onServerCountChange(Number(e.target.value))}
+                  onChange={onServerCountChange}
                   min={3}
                   className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
                 />
@@ -533,10 +580,9 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
               <dt className="text-gray-500">EBox 数量</dt>
               <dd className="flex items-center gap-1">
                 <button onClick={() => onEboxCountChange(data.eboxCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.eboxCount <= 11}>−</button>
-                <input
-                  type="number"
+                <NumberInput
                   value={data.eboxCount}
-                  onChange={(e) => onEboxCountChange(Number(e.target.value))}
+                  onChange={onEboxCountChange}
                   min={11}
                   max={250}
                   className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
@@ -627,10 +673,9 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange }: 
               <dt className="text-gray-500">服务器台数</dt>
               <dd className="flex items-center gap-1">
                 <button onClick={() => onServerCountChange(data.serverCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.serverCount <= 3}>−</button>
-                <input
-                  type="number"
+                <NumberInput
                   value={data.serverCount}
-                  onChange={(e) => onServerCountChange(Number(e.target.value))}
+                  onChange={onServerCountChange}
                   min={3}
                   className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
                 />
