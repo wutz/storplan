@@ -48,14 +48,15 @@ export const CONSTANTS = {
 
 export const EC_SCHEMES = [
   { scheme: 'EC4+2P', efficiency: CONSTANTS.EC4_2P_EFFICIENCY, minServers: 3 },
-  { scheme: 'EC8+2P', efficiency: CONSTANTS.EC8_2P_EFFICIENCY, minServers: 10 },
-  { scheme: 'EC8+3P', efficiency: CONSTANTS.EC8_3P_EFFICIENCY, minServers: 11 },
+  { scheme: 'EC8+3P', efficiency: CONSTANTS.EC8_3P_EFFICIENCY, minServers: 4 },
+  { scheme: 'EC8+2P', efficiency: CONSTANTS.EC8_2P_EFFICIENCY, minServers: 5 },
 ] as const;
 
-export function getGPFSTolerance(serverCount: number, scheme: string): number {
-  if (scheme === 'EC4+2P') return serverCount >= 6 ? 2 : 1;
-  if (scheme === 'EC8+2P') return 2;
-  if (scheme === 'EC8+3P') return 3;
+export function getGPFSTolerance(serverCount: number, _scheme: string): number {
+  if (serverCount === 3) return 1;
+  if (serverCount === 4) return 1;
+  if (serverCount >= 5 && serverCount <= 9) return 1;
+  if (serverCount >= 10) return 2;
   return 1;
 }
 
@@ -70,16 +71,16 @@ interface ECScheme {
 }
 
 export function getECScheme(serverCount: number): ECScheme {
-  if (serverCount >= 11) {
-    return { scheme: 'EC8+3P', efficiency: CONSTANTS.EC8_3P_EFFICIENCY, tolerance: 3 };
+  if (serverCount <= 3) {
+    return { scheme: 'EC4+2P', efficiency: CONSTANTS.EC4_2P_EFFICIENCY, tolerance: 1 };
   }
-  if (serverCount >= 10) {
-    return { scheme: 'EC8+2P', efficiency: CONSTANTS.EC8_2P_EFFICIENCY, tolerance: 2 };
+  if (serverCount === 4) {
+    return { scheme: 'EC8+3P', efficiency: CONSTANTS.EC8_3P_EFFICIENCY, tolerance: 1 };
   }
-  if (serverCount >= 6) {
-    return { scheme: 'EC4+2P', efficiency: CONSTANTS.EC4_2P_EFFICIENCY, tolerance: 2 };
+  if (serverCount <= 9) {
+    return { scheme: 'EC8+2P', efficiency: CONSTANTS.EC8_2P_EFFICIENCY, tolerance: 1 };
   }
-  return { scheme: 'EC4+2P', efficiency: CONSTANTS.EC4_2P_EFFICIENCY, tolerance: 1 };
+  return { scheme: 'EC8+2P', efficiency: CONSTANTS.EC8_2P_EFFICIENCY, tolerance: 2 };
 }
 
 function calculateCapacity(serverCount: number, ssdSizeTB: number, ecEfficiency: number): number {
