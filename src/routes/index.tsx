@@ -75,7 +75,7 @@ function NumberInput({ value, onChange, min, max, disabled, className }: {
 
 function StorplanApp() {
   const [selectedStorages, setSelectedStorages] = useState<Set<string>>(new Set(['vastdata']))
-  const [capacityValue, setCapacityValue] = useState('')
+  const [capacityValue, setCapacityValue] = useState('1024')
   const [capacityUnit, setCapacityUnit] = useState('TiB')
   const [downloadBWValue, setDownloadBWValue] = useState('')
   const [bwUnit, setBwUnit] = useState('GB/s')
