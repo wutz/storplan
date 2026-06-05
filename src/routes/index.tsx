@@ -630,8 +630,20 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
         <div>
           <h3 className="font-semibold text-gray-700 mb-2">每台 EBox 配置</h3>
           <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">处理器</dt>
+              <dd>AMD 9454P 2.75GHz 290W</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">内存</dt>
+              <dd>12 × 32GB DDR5-5600 RDIMM（共 384GB）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">系统盘</dt>
+              <dd>2 × 960GB M.2 SATA SSD</dd>
+            </div>
             <div className="flex justify-between items-center">
-              <dt className="text-gray-500">磁盘配置</dt>
+              <dt className="text-gray-500">数据盘</dt>
               <dd>
                 <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
                   {VAST_CONSTANTS.EBOX_CONFIGS.map(c => <option key={c.diskSize} value={c.diskSize}>{c.label}</option>)}
