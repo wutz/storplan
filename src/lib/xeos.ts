@@ -65,7 +65,8 @@ interface ECScheme {
 
 export function getEcScheme(serverCount: number): ECScheme {
   if (serverCount <= 4) return { scheme: 'EC4+2:1', efficiency: CONSTANTS.EC4_2_EFFICIENCY, tolerance: 1 };
-  if (serverCount <= 9) return { scheme: 'EC8+2:1', efficiency: CONSTANTS.EC8_2_EFFICIENCY, tolerance: 1 };
+  if (serverCount === 5) return { scheme: 'EC8+2:1', efficiency: CONSTANTS.EC8_2_EFFICIENCY, tolerance: 1 };
+  if (serverCount <= 9) return { scheme: 'EC4+2', efficiency: CONSTANTS.EC4_2_EFFICIENCY, tolerance: 2 };
   return { scheme: 'EC8+2', efficiency: CONSTANTS.EC8_2_EFFICIENCY, tolerance: 2 };
 }
 
@@ -152,7 +153,7 @@ export function planXEOS(req: XEOSPlanRequest): XEOSPlanResult {
   if (req.uploadOps) perfReq.uploadOps = req.uploadOps;
   if (req.downloadOps) perfReq.downloadOps = req.downloadOps;
 
-  if (bandwidthUnitType === null) bandwidthUnitType = 'decimal-byte';
+  if (bandwidthUnitType === null) bandwidthUnitType = 'decimal-bit';
 
   const minServersForPerf = calculateMinServersForPerf(perfReq);
 
