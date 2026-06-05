@@ -53,16 +53,13 @@ export const EC_SCHEMES = [
   { scheme: 'EC8+2', efficiency: CONSTANTS.EC8_2_EFFICIENCY, tolerance: 2, minServers: 10 },
 ] as const;
 
-export function getAllowedEcSchemes(serverCount: number) {
+export function getAllowedEcSchemes(serverCount: number): typeof EC_SCHEMES[number][] {
   if (serverCount <= 4) {
-    // 3-4 nodes: only EC4+2:1
     return [EC_SCHEMES[0]]; // EC4+2:1
   }
   if (serverCount <= 9) {
-    // 5-9 nodes: EC8+2:1 (default) and EC4+2
     return [EC_SCHEMES[1], EC_SCHEMES[2]]; // EC8+2:1, EC4+2
   }
-  // 10+ nodes: EC8+2 (default) and EC4+2
   return [EC_SCHEMES[3], EC_SCHEMES[2]]; // EC8+2, EC4+2
 }
 

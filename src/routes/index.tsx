@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { planXEOS, buildXEOSResult, getEcScheme, getAllowedEcSchemes, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity } from '#/lib/xeos'
+import { planXEOS, buildXEOSResult, getAllowedEcSchemes, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity } from '#/lib/xeos'
 import type { XEOSPlanResult } from '#/lib/xeos'
 import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calculateCapacityTiB as vastCapacity } from '#/lib/vastdata'
 import type { VastDataPlanResult } from '#/lib/vastdata'
 import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, getAllowedECSchemes, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
+import { formatBandwidth } from '#/lib/utils'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
 
@@ -101,17 +102,23 @@ function StorplanApp() {
     try {
       const capacity = capacityValue ? `${capacityValue}${capacityUnit}` : `0${capacityUnit}`
       const isBinary = capacityUnit === 'TiB' || capacityUnit === 'PiB'
+      const bandwidthUnitType = bwUnit.includes('iB') ? 'binary' : bwUnit.includes('bps') ? 'decimal-bit' : 'decimal-byte'
 
       if (selectedStorages.has('xeos')) {
         try {
           if (manualConfig.xeos) {
             const mc = manualConfig.xeos
-            const ec = getEcScheme(mc.serverCount)
-            newResults.xeos = buildXEOSResult(mc.serverCount, mc.diskSize, ec.scheme, ec.efficiency, ec.tolerance, isBinary, bwUnit.includes('iB') ? 'binary' : bwUnit.includes('bps') ? 'decimal-bit' : 'decimal-byte')
+            const allowedSchemes = getAllowedEcSchemes(mc.serverCount)
+            const ec = allowedSchemes.find((s: any) => s.efficiency === mc.ecEfficiency) || allowedSchemes[0]
+            newResults.xeos = buildXEOSResult(mc.serverCount, mc.diskSize, ec.scheme, ec.efficiency, ec.tolerance, isBinary, bandwidthUnitType)
           } else {
             const uploadBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
             const downloadBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
-            newResults.xeos = planXEOS({ capacity, uploadBandwidth: uploadBW || undefined, downloadBandwidth: downloadBW || undefined })
+            const result = planXEOS({ capacity, uploadBandwidth: uploadBW || undefined, downloadBandwidth: downloadBW || undefined })
+            // Override bandwidth formatting to match input unit
+            result.formatted.uploadBandwidth = formatBandwidth(result.performance.uploadBandwidth, bandwidthUnitType)
+            result.formatted.downloadBandwidth = formatBandwidth(result.performance.downloadBandwidth, bandwidthUnitType)
+            newResults.xeos = result
           }
         } catch (err) {
           newErrors.xeos = err instanceof Error ? err.message : 'Unknown error'
@@ -123,11 +130,15 @@ function StorplanApp() {
           if (manualConfig.vastdata) {
             const mc = manualConfig.vastdata
             const config = VAST_CONSTANTS.EBOX_CONFIGS.find(c => c.diskSize === mc.diskSize)!
-            newResults.vastdata = buildVastDataResult(mc.eboxCount, mc.diskSize, config.label, isBinary, bwUnit.includes('iB') ? 'binary' : bwUnit.includes('bps') ? 'decimal-bit' : 'decimal-byte')
+            newResults.vastdata = buildVastDataResult(mc.eboxCount, mc.diskSize, config.label, isBinary, bandwidthUnitType)
           } else {
             const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
             const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
-            newResults.vastdata = planVastData({ capacity, readBandwidth: readBW || undefined, writeBandwidth: writeBW || undefined })
+            const result = planVastData({ capacity, readBandwidth: readBW || undefined, writeBandwidth: writeBW || undefined })
+            result.formatted.readBandwidth = formatBandwidth(result.performance.readBandwidth, bandwidthUnitType)
+            result.formatted.writeBandwidth = formatBandwidth(result.performance.writeBandwidth, bandwidthUnitType)
+            result.formatted.burstWriteBandwidth = formatBandwidth(result.performance.burstWriteBandwidth, bandwidthUnitType)
+            newResults.vastdata = result
           }
         } catch (err) {
           newErrors.vastdata = err instanceof Error ? err.message : 'Unknown error'
@@ -138,12 +149,15 @@ function StorplanApp() {
         try {
           if (manualConfig['gpfs-ece']) {
             const mc = manualConfig['gpfs-ece']
-            const ec = GPFS_EC_SCHEMES.find(s => s.efficiency === mc.ecEfficiency)!
-            newResults['gpfs-ece'] = buildGPFSECEResult(mc.serverCount, mc.ssdSize, ec.scheme, ec.efficiency, getGPFSTolerance(mc.serverCount, ec.scheme), isBinary, bwUnit.includes('iB') ? 'binary' : bwUnit.includes('bps') ? 'decimal-bit' : 'decimal-byte')
+            const ec = GPFS_EC_SCHEMES.find((s: any) => s.efficiency === mc.ecEfficiency)!
+            newResults['gpfs-ece'] = buildGPFSECEResult(mc.serverCount, mc.ssdSize, ec.scheme, ec.efficiency, getGPFSTolerance(mc.serverCount, ec.scheme), isBinary, bandwidthUnitType)
           } else {
             const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
             const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
-            newResults['gpfs-ece'] = planGPFSECE({ capacity, readBandwidth: readBW || undefined, writeBandwidth: writeBW || undefined })
+            const result = planGPFSECE({ capacity, readBandwidth: readBW || undefined, writeBandwidth: writeBW || undefined })
+            result.formatted.readBandwidth = formatBandwidth(result.performance.readBandwidth, bandwidthUnitType)
+            result.formatted.writeBandwidth = formatBandwidth(result.performance.writeBandwidth, bandwidthUnitType)
+            newResults['gpfs-ece'] = result
           }
         } catch (err) {
           newErrors['gpfs-ece'] = err instanceof Error ? err.message : 'Unknown error'
@@ -176,7 +190,8 @@ function StorplanApp() {
   const handleXeosServerCountChange = (newCount: number) => {
     if (!results.xeos || newCount < 3) return
     const { diskSize } = results.xeos
-    const ec = getEcScheme(newCount)
+    const allowedSchemes = getAllowedEcSchemes(newCount)
+    const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(newCount, diskSize, ec.efficiency)
     setManualConfig(prev => ({ ...prev, xeos: { serverCount: newCount, diskSize, ecEfficiency: ec.efficiency } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
@@ -185,7 +200,8 @@ function StorplanApp() {
   const handleXeosDiskChange = (newDiskSize: number) => {
     if (!results.xeos) return
     const { serverCount } = results.xeos
-    const ec = getEcScheme(serverCount)
+    const allowedSchemes = getAllowedEcSchemes(serverCount)
+    const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(serverCount, newDiskSize, ec.efficiency)
     setManualConfig(prev => ({ ...prev, xeos: { serverCount, diskSize: newDiskSize, ecEfficiency: ec.efficiency } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
