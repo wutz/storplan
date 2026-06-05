@@ -70,9 +70,9 @@ function getPerformance(eboxCount: number) {
   const perf = EBOX_PERFORMANCE_DATA.find((p: EboxPerformanceEntry) => p.ebox_count === eboxCount);
   if (!perf) throw new Error(`No performance data for ${eboxCount} EBox`);
   return {
-    readBandwidth: perf.read_bw_gbs * 1000,
-    writeBandwidth: perf.sustained_write_bw_gbs * 1000,
-    burstWriteBandwidth: perf.burst_write_bw_gbs * 1000,
+    readBandwidth: perf.read_bw_gbs * 1000 / 1.024,
+    writeBandwidth: perf.sustained_write_bw_gbs * 1000 / 1.024,
+    burstWriteBandwidth: perf.burst_write_bw_gbs * 1000 / 1.024,
     readIOPS: perf.read_iops_k * 1000,
     writeIOPS: perf.write_iops_k * 1000,
   };
@@ -137,11 +137,11 @@ export function planVastData(req: VastDataPlanRequest): VastDataPlanResult {
 
   if (req.readBandwidth) {
     const bwInfo = parseBandwidth(req.readBandwidth);
-    readBwGbs = bwInfo.mibps / 1000;
+    readBwGbs = bwInfo.mibps * 1.024 / 1000;
   }
   if (req.writeBandwidth) {
     const bwInfo = parseBandwidth(req.writeBandwidth);
-    writeBwGbs = bwInfo.mibps / 1000;
+    writeBwGbs = bwInfo.mibps * 1.024 / 1000;
   }
 
   let bestConfig = null;
