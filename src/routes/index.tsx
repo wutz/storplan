@@ -590,7 +590,7 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
-            <h3 className="font-semibold text-gray-700 mb-2">配置</h3>
+            <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
             <dl className="space-y-1 text-sm">
             <div className="flex justify-between items-center">
               <dt className="text-gray-500">EBox 数量</dt>
@@ -611,18 +611,6 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
               <dt className="text-gray-500">容错能力</dt>
               <dd>容忍 2 台节点离线</dd>
             </div>
-            <div className="flex justify-between items-center">
-              <dt className="text-gray-500">磁盘配置</dt>
-              <dd>
-                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
-                  {VAST_CONSTANTS.EBOX_CONFIGS.map(c => <option key={c.diskSize} value={c.diskSize}>{c.label}</option>)}
-                </select>
-              </dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">网络配置</dt>
-              <dd>2 × 双口 200Gb RoCE/IB/ETH NIC</dd>
-            </div>
           </dl>
         </div>
         <div>
@@ -638,6 +626,23 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
             </div>
           </dl>
         </div>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">每台 EBox 配置</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between items-center">
+              <dt className="text-gray-500">磁盘配置</dt>
+              <dd>
+                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {VAST_CONSTANTS.EBOX_CONFIGS.map(c => <option key={c.diskSize} value={c.diskSize}>{c.label}</option>)}
+                </select>
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">网络</dt>
+              <dd>2 × 双口 200Gb RoCE/IB/ETH NIC</dd>
+            </div>
+          </dl>
         </div>
         <div>
           <h3 className="font-semibold text-gray-700 mb-2">性能（厂商数据）</h3>
