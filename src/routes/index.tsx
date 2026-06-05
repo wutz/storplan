@@ -48,7 +48,7 @@ function StorplanApp() {
         try {
           if (manualConfig.xeos) {
             const mc = manualConfig.xeos
-            const ec = XEOS_EC_SCHEMES.find(s => s.efficiency === mc.ecEfficiency)!
+            const ec = getEcScheme(mc.serverCount)
             newResults.xeos = buildXEOSResult(mc.serverCount, mc.diskSize, ec.scheme, ec.efficiency, ec.tolerance, isBinary, bwUnit.includes('iB') ? 'binary' : bwUnit.includes('bps') ? 'decimal-bit' : 'decimal-byte')
           } else {
             const uploadBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
@@ -145,10 +145,9 @@ function StorplanApp() {
   }
 
   const handleVastDataEboxCountChange = (newCount: number) => {
-    if (!results.vastdata || newCount < 11) return
+    if (!results.vastdata || newCount < VAST_CONSTANTS.MIN_EBOX || newCount > VAST_CONSTANTS.MAX_EBOX) return
     const { diskSize } = results.vastdata
-    const config = VAST_CONSTANTS.EBOX_CONFIGS.find(c => c.diskSize === diskSize)!
-    const newCapacityTiB = vastCapacity(newCount, config.rawPerEbox)
+    const newCapacityTiB = vastCapacity(newCount, diskSize)
     setManualConfig(prev => ({ ...prev, vastdata: { eboxCount: newCount, diskSize } }))
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
@@ -157,8 +156,7 @@ function StorplanApp() {
   const handleVastDataDiskChange = (newDiskSize: number) => {
     if (!results.vastdata) return
     const { eboxCount } = results.vastdata
-    const config = VAST_CONSTANTS.EBOX_CONFIGS.find(c => c.diskSize === newDiskSize)!
-    const newCapacityTiB = vastCapacity(eboxCount, config.rawPerEbox)
+    const newCapacityTiB = vastCapacity(eboxCount, newDiskSize)
     setManualConfig(prev => ({ ...prev, vastdata: { eboxCount, diskSize: newDiskSize } }))
     setCapacityValue(newCapacityTiB.toFixed(2))
     setCapacityUnit('TiB')
@@ -528,7 +526,7 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
               <dd className="flex items-center gap-1">
                 <button onClick={() => onEboxCountChange(data.eboxCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.eboxCount <= 11}>−</button>
                 <span className="min-w-[2rem] text-center">{data.eboxCount}</span>
-                <button onClick={() => onEboxCountChange(data.eboxCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
+                <button onClick={() => onEboxCountChange(data.eboxCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.eboxCount >= 250}>+</button>
                 <span className="ml-0.5">台</span>
               </dd>
             </div>
