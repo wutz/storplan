@@ -1,2903 +1,3617 @@
 // Auto-generated from infra-skills reference data
-// DO NOT EDIT MANUALLY - regenerate from source data
+// DO NOT EDIT MANUALLY
 
-export const EBOX_CAPACITY_DATA: Record<number, Array<{ ebox_count: number; usable_tib: number }>> = {
+export const EBOX_CAPACITY_DATA: Record<number, Array<{ ebox_count: number; usable_tib: number; raw_per_ebox_tib: number }>> = {
   15.36: [
-    {
-      "ebox_count": 11,
-      "usable_tib": 893.2482662399999
-    },
-    {
-      "ebox_count": 12,
-      "usable_tib": 996.5688422400001
-    },
-    {
-      "ebox_count": 13,
-      "usable_tib": 1099.6548526079998
-    },
-    {
-      "ebox_count": 14,
-      "usable_tib": 1202.383429632
-    },
-    {
-      "ebox_count": 15,
-      "usable_tib": 1305.02264832
-    },
-    {
-      "ebox_count": 16,
-      "usable_tib": 1407.393792
-    },
-    {
-      "ebox_count": 17,
-      "usable_tib": 1509.787275264
-    },
-    {
-      "ebox_count": 18,
-      "usable_tib": 1612.069060608
-    },
-    {
-      "ebox_count": 19,
-      "usable_tib": 1714.149789696
-    },
-    {
-      "ebox_count": 20,
-      "usable_tib": 1816.4315750399999
-    },
-    {
-      "ebox_count": 21,
-      "usable_tib": 1918.2777384960002
-    },
-    {
-      "ebox_count": 22,
-      "usable_tib": 2020.436656128
-    },
-    {
-      "ebox_count": 23,
-      "usable_tib": 2122.293989376
-    },
-    {
-      "ebox_count": 24,
-      "usable_tib": 2224.2183413760004
-    },
-    {
-      "ebox_count": 25,
-      "usable_tib": 2326.109184
-    },
-    {
-      "ebox_count": 26,
-      "usable_tib": 2427.86598912
-    },
-    {
-      "ebox_count": 27,
-      "usable_tib": 2529.6898129919996
-    },
-    {
-      "ebox_count": 28,
-      "usable_tib": 2631.5136368640005
-    },
-    {
-      "ebox_count": 29,
-      "usable_tib": 2733.270441984
-    },
-    {
-      "ebox_count": 30,
-      "usable_tib": 2834.8932096
-    },
-    {
-      "ebox_count": 31,
-      "usable_tib": 2936.661184512
-    },
-    {
-      "ebox_count": 32,
-      "usable_tib": 3038.540857344
-    },
-    {
-      "ebox_count": 33,
-      "usable_tib": 3140.130115584
-    },
-    {
-      "ebox_count": 34,
-      "usable_tib": 3241.741713408
-    },
-    {
-      "ebox_count": 35,
-      "usable_tib": 3343.73308416
-    },
-    {
-      "ebox_count": 36,
-      "usable_tib": 3445.300002816
-    },
-    {
-      "ebox_count": 37,
-      "usable_tib": 3546.7887329279997
-    },
-    {
-      "ebox_count": 38,
-      "usable_tib": 3648.590217216
-    },
-    {
-      "ebox_count": 39,
-      "usable_tib": 3750.268833792
-    },
-    {
-      "ebox_count": 40,
-      "usable_tib": 3851.7910732799996
-    },
-    {
-      "ebox_count": 41,
-      "usable_tib": 3953.5813877759997
-    },
-    {
-      "ebox_count": 42,
-      "usable_tib": 4055.170646016001
-    },
-    {
-      "ebox_count": 43,
-      "usable_tib": 4156.525338624
-    },
-    {
-      "ebox_count": 44,
-      "usable_tib": 4258.103427072
-    },
-    {
-      "ebox_count": 45,
-      "usable_tib": 4359.90491136
-    },
-    {
-      "ebox_count": 46,
-      "usable_tib": 4461.4159810559995
-    },
-    {
-      "ebox_count": 47,
-      "usable_tib": 4563.1281070079995
-    },
-    {
-      "ebox_count": 48,
-      "usable_tib": 4664.5051392
-    },
-    {
-      "ebox_count": 49,
-      "usable_tib": 4766.060888064
-    },
-    {
-      "ebox_count": 50,
-      "usable_tib": 4867.7953535999995
-    },
-    {
-      "ebox_count": 51,
-      "usable_tib": 4969.708535808
-    },
-    {
-      "ebox_count": 52,
-      "usable_tib": 5071.219605503999
-    },
-    {
-      "ebox_count": 53,
-      "usable_tib": 5172.887052288
-    },
-    {
-      "ebox_count": 54,
-      "usable_tib": 5274.1077073920005
-    },
-    {
-      "ebox_count": 55,
-      "usable_tib": 5375.462399999999
-    },
-    {
-      "ebox_count": 56,
-      "usable_tib": 5477.576638464
-    },
-    {
-      "ebox_count": 57,
-      "usable_tib": 5579.210575872
-    },
-    {
-      "ebox_count": 58,
-      "usable_tib": 5680.330702847999
-    },
-    {
-      "ebox_count": 59,
-      "usable_tib": 5782.221545472
-    },
-    {
-      "ebox_count": 60,
-      "usable_tib": 5883.57623808
-    },
-    {
-      "ebox_count": 61,
-      "usable_tib": 5985.042628608
-    },
-    {
-      "ebox_count": 62,
-      "usable_tib": 6086.620717055999
-    },
-    {
-      "ebox_count": 63,
-      "usable_tib": 6188.310503424001
-    },
-    {
-      "ebox_count": 64,
-      "usable_tib": 6290.111987712
-    },
-    {
-      "ebox_count": 65,
-      "usable_tib": 6391.299133439999
-    },
-    {
-      "ebox_count": 66,
-      "usable_tib": 6492.575637504
-    },
-    {
-      "ebox_count": 67,
-      "usable_tib": 6594.689875968
-    },
-    {
-      "ebox_count": 68,
-      "usable_tib": 6696.156266496
-    },
-    {
-      "ebox_count": 69,
-      "usable_tib": 6797.71201536
-    },
-    {
-      "ebox_count": 70,
-      "usable_tib": 6899.35712256
-    },
-    {
-      "ebox_count": 71,
-      "usable_tib": 7000.298532864
-    },
-    {
-      "ebox_count": 72,
-      "usable_tib": 7102.111186944
-    },
-    {
-      "ebox_count": 73,
-      "usable_tib": 7204.01319936
-    },
-    {
-      "ebox_count": 74,
-      "usable_tib": 7305.178005504
-    },
-    {
-      "ebox_count": 75,
-      "usable_tib": 7406.4098304
-    },
-    {
-      "ebox_count": 76,
-      "usable_tib": 7508.55757824
-    },
-    {
-      "ebox_count": 77,
-      "usable_tib": 7607.35438848
-    },
-    {
-      "ebox_count": 78,
-      "usable_tib": 7706.15119872
-    },
-    {
-      "ebox_count": 79,
-      "usable_tib": 7804.948008959999
-    },
-    {
-      "ebox_count": 80,
-      "usable_tib": 7903.744819199999
-    },
-    {
-      "ebox_count": 81,
-      "usable_tib": 8002.541629439999
-    },
-    {
-      "ebox_count": 82,
-      "usable_tib": 8101.338439679999
-    },
-    {
-      "ebox_count": 83,
-      "usable_tib": 8200.13524992
-    },
-    {
-      "ebox_count": 84,
-      "usable_tib": 8298.932060160001
-    },
-    {
-      "ebox_count": 85,
-      "usable_tib": 8397.7288704
-    },
-    {
-      "ebox_count": 86,
-      "usable_tib": 8496.525680640001
-    },
-    {
-      "ebox_count": 87,
-      "usable_tib": 8595.32249088
-    },
-    {
-      "ebox_count": 88,
-      "usable_tib": 8694.119301120001
-    },
-    {
-      "ebox_count": 89,
-      "usable_tib": 8792.91611136
-    },
-    {
-      "ebox_count": 90,
-      "usable_tib": 8891.7129216
-    },
-    {
-      "ebox_count": 91,
-      "usable_tib": 8990.50973184
-    },
-    {
-      "ebox_count": 92,
-      "usable_tib": 9089.30654208
-    },
-    {
-      "ebox_count": 93,
-      "usable_tib": 9188.10335232
-    },
-    {
-      "ebox_count": 94,
-      "usable_tib": 9286.90016256
-    },
-    {
-      "ebox_count": 95,
-      "usable_tib": 9385.6969728
-    },
-    {
-      "ebox_count": 96,
-      "usable_tib": 9484.49378304
-    },
-    {
-      "ebox_count": 97,
-      "usable_tib": 9583.29059328
-    },
-    {
-      "ebox_count": 98,
-      "usable_tib": 9682.08740352
-    },
-    {
-      "ebox_count": 99,
-      "usable_tib": 9780.884213759999
-    },
-    {
-      "ebox_count": 100,
-      "usable_tib": 9879.681024
-    },
-    {
-      "ebox_count": 101,
-      "usable_tib": 9978.47783424
-    },
-    {
-      "ebox_count": 102,
-      "usable_tib": 10077.274644480001
-    },
-    {
-      "ebox_count": 103,
-      "usable_tib": 10176.07145472
-    },
-    {
-      "ebox_count": 104,
-      "usable_tib": 10274.868264960001
-    },
-    {
-      "ebox_count": 105,
-      "usable_tib": 10373.6650752
-    },
-    {
-      "ebox_count": 106,
-      "usable_tib": 10472.46188544
-    },
-    {
-      "ebox_count": 107,
-      "usable_tib": 10571.25869568
-    },
-    {
-      "ebox_count": 108,
-      "usable_tib": 10670.05550592
-    },
-    {
-      "ebox_count": 109,
-      "usable_tib": 10768.85231616
-    },
-    {
-      "ebox_count": 110,
-      "usable_tib": 10867.6491264
-    },
-    {
-      "ebox_count": 111,
-      "usable_tib": 10966.44593664
-    },
-    {
-      "ebox_count": 112,
-      "usable_tib": 11065.24274688
-    },
-    {
-      "ebox_count": 113,
-      "usable_tib": 11164.03955712
-    },
-    {
-      "ebox_count": 114,
-      "usable_tib": 11262.83636736
-    },
-    {
-      "ebox_count": 115,
-      "usable_tib": 11361.633177599999
-    },
-    {
-      "ebox_count": 116,
-      "usable_tib": 11460.42998784
-    },
-    {
-      "ebox_count": 117,
-      "usable_tib": 11559.226798079999
-    },
-    {
-      "ebox_count": 118,
-      "usable_tib": 11658.02360832
-    },
-    {
-      "ebox_count": 119,
-      "usable_tib": 11756.82041856
-    },
-    {
-      "ebox_count": 120,
-      "usable_tib": 11855.617228800002
-    },
-    {
-      "ebox_count": 121,
-      "usable_tib": 11954.41403904
-    },
-    {
-      "ebox_count": 122,
-      "usable_tib": 12053.210849280002
-    },
-    {
-      "ebox_count": 123,
-      "usable_tib": 12152.00765952
-    },
-    {
-      "ebox_count": 124,
-      "usable_tib": 12250.80446976
-    },
-    {
-      "ebox_count": 125,
-      "usable_tib": 12349.60128
-    },
-    {
-      "ebox_count": 126,
-      "usable_tib": 12448.39809024
-    },
-    {
-      "ebox_count": 127,
-      "usable_tib": 12547.19490048
-    },
-    {
-      "ebox_count": 128,
-      "usable_tib": 12645.99171072
-    },
-    {
-      "ebox_count": 129,
-      "usable_tib": 12744.78852096
-    },
-    {
-      "ebox_count": 130,
-      "usable_tib": 12843.5853312
-    },
-    {
-      "ebox_count": 131,
-      "usable_tib": 12942.38214144
-    },
-    {
-      "ebox_count": 132,
-      "usable_tib": 13041.17895168
-    },
-    {
-      "ebox_count": 133,
-      "usable_tib": 13139.975761919999
-    },
-    {
-      "ebox_count": 134,
-      "usable_tib": 13238.77257216
-    },
-    {
-      "ebox_count": 135,
-      "usable_tib": 13337.569382399999
-    },
-    {
-      "ebox_count": 136,
-      "usable_tib": 13436.36619264
-    },
-    {
-      "ebox_count": 137,
-      "usable_tib": 13535.16300288
-    },
-    {
-      "ebox_count": 138,
-      "usable_tib": 13633.959813120002
-    },
-    {
-      "ebox_count": 139,
-      "usable_tib": 13732.756623360001
-    },
-    {
-      "ebox_count": 140,
-      "usable_tib": 13831.5534336
-    },
-    {
-      "ebox_count": 141,
-      "usable_tib": 13930.350243840001
-    },
-    {
-      "ebox_count": 142,
-      "usable_tib": 14029.14705408
-    },
-    {
-      "ebox_count": 143,
-      "usable_tib": 14127.943864320001
-    },
-    {
-      "ebox_count": 144,
-      "usable_tib": 14226.74067456
-    },
-    {
-      "ebox_count": 145,
-      "usable_tib": 14325.537484800001
-    },
-    {
-      "ebox_count": 146,
-      "usable_tib": 14424.33429504
-    },
-    {
-      "ebox_count": 147,
-      "usable_tib": 14523.131105280001
-    },
-    {
-      "ebox_count": 148,
-      "usable_tib": 14621.92791552
-    },
-    {
-      "ebox_count": 149,
-      "usable_tib": 14720.72472576
-    },
-    {
-      "ebox_count": 150,
-      "usable_tib": 14819.521536
-    },
-    {
-      "ebox_count": 151,
-      "usable_tib": 14918.31834624
-    },
-    {
-      "ebox_count": 152,
-      "usable_tib": 15017.11515648
-    },
-    {
-      "ebox_count": 153,
-      "usable_tib": 15115.91196672
-    },
-    {
-      "ebox_count": 154,
-      "usable_tib": 15214.70877696
-    },
-    {
-      "ebox_count": 155,
-      "usable_tib": 15313.5055872
-    },
-    {
-      "ebox_count": 156,
-      "usable_tib": 15412.30239744
-    },
-    {
-      "ebox_count": 157,
-      "usable_tib": 15511.09920768
-    },
-    {
-      "ebox_count": 158,
-      "usable_tib": 15609.896017919998
-    },
-    {
-      "ebox_count": 159,
-      "usable_tib": 15708.69282816
-    },
-    {
-      "ebox_count": 160,
-      "usable_tib": 15807.489638399999
-    },
-    {
-      "ebox_count": 161,
-      "usable_tib": 15906.28644864
-    },
-    {
-      "ebox_count": 162,
-      "usable_tib": 16005.083258879999
-    },
-    {
-      "ebox_count": 163,
-      "usable_tib": 16103.88006912
-    },
-    {
-      "ebox_count": 164,
-      "usable_tib": 16202.676879359999
-    },
-    {
-      "ebox_count": 165,
-      "usable_tib": 16301.473689600001
-    },
-    {
-      "ebox_count": 166,
-      "usable_tib": 16400.27049984
-    },
-    {
-      "ebox_count": 167,
-      "usable_tib": 16499.06731008
-    },
-    {
-      "ebox_count": 168,
-      "usable_tib": 16597.864120320002
-    },
-    {
-      "ebox_count": 169,
-      "usable_tib": 16696.660930560003
-    },
-    {
-      "ebox_count": 170,
-      "usable_tib": 16795.4577408
-    },
-    {
-      "ebox_count": 171,
-      "usable_tib": 16894.25455104
-    },
-    {
-      "ebox_count": 172,
-      "usable_tib": 16993.051361280002
-    },
-    {
-      "ebox_count": 173,
-      "usable_tib": 17091.84817152
-    },
-    {
-      "ebox_count": 174,
-      "usable_tib": 17190.64498176
-    },
-    {
-      "ebox_count": 175,
-      "usable_tib": 17289.441792
-    },
-    {
-      "ebox_count": 176,
-      "usable_tib": 17388.238602240002
-    },
-    {
-      "ebox_count": 177,
-      "usable_tib": 17487.03541248
-    },
-    {
-      "ebox_count": 178,
-      "usable_tib": 17585.83222272
-    },
-    {
-      "ebox_count": 179,
-      "usable_tib": 17684.62903296
-    },
-    {
-      "ebox_count": 180,
-      "usable_tib": 17783.4258432
-    },
-    {
-      "ebox_count": 181,
-      "usable_tib": 17882.22265344
-    },
-    {
-      "ebox_count": 182,
-      "usable_tib": 17981.01946368
-    },
-    {
-      "ebox_count": 183,
-      "usable_tib": 18079.81627392
-    },
-    {
-      "ebox_count": 184,
-      "usable_tib": 18178.61308416
-    },
-    {
-      "ebox_count": 185,
-      "usable_tib": 18277.4098944
-    },
-    {
-      "ebox_count": 186,
-      "usable_tib": 18376.20670464
-    },
-    {
-      "ebox_count": 187,
-      "usable_tib": 18475.00351488
-    },
-    {
-      "ebox_count": 188,
-      "usable_tib": 18573.80032512
-    },
-    {
-      "ebox_count": 189,
-      "usable_tib": 18672.59713536
-    },
-    {
-      "ebox_count": 190,
-      "usable_tib": 18771.3939456
-    },
-    {
-      "ebox_count": 191,
-      "usable_tib": 18870.190755839998
-    },
-    {
-      "ebox_count": 192,
-      "usable_tib": 18968.98756608
-    },
-    {
-      "ebox_count": 193,
-      "usable_tib": 19067.78437632
-    },
-    {
-      "ebox_count": 194,
-      "usable_tib": 19166.58118656
-    },
-    {
-      "ebox_count": 195,
-      "usable_tib": 19265.377996799998
-    },
-    {
-      "ebox_count": 196,
-      "usable_tib": 19364.17480704
-    },
-    {
-      "ebox_count": 197,
-      "usable_tib": 19462.97161728
-    },
-    {
-      "ebox_count": 198,
-      "usable_tib": 19561.768427519997
-    },
-    {
-      "ebox_count": 199,
-      "usable_tib": 19660.565237759998
-    },
-    {
-      "ebox_count": 200,
-      "usable_tib": 19759.362048
-    },
-    {
-      "ebox_count": 201,
-      "usable_tib": 19858.15885824
-    },
-    {
-      "ebox_count": 202,
-      "usable_tib": 19956.95566848
-    },
-    {
-      "ebox_count": 203,
-      "usable_tib": 20055.75247872
-    },
-    {
-      "ebox_count": 204,
-      "usable_tib": 20154.549288960003
-    },
-    {
-      "ebox_count": 205,
-      "usable_tib": 20253.3460992
-    },
-    {
-      "ebox_count": 206,
-      "usable_tib": 20352.14290944
-    },
-    {
-      "ebox_count": 207,
-      "usable_tib": 20450.939719680002
-    },
-    {
-      "ebox_count": 208,
-      "usable_tib": 20549.736529920003
-    },
-    {
-      "ebox_count": 209,
-      "usable_tib": 20648.53334016
-    },
-    {
-      "ebox_count": 210,
-      "usable_tib": 20747.3301504
-    },
-    {
-      "ebox_count": 211,
-      "usable_tib": 20846.126960640002
-    },
-    {
-      "ebox_count": 212,
-      "usable_tib": 20944.92377088
-    },
-    {
-      "ebox_count": 213,
-      "usable_tib": 21043.72058112
-    },
-    {
-      "ebox_count": 214,
-      "usable_tib": 21142.51739136
-    },
-    {
-      "ebox_count": 215,
-      "usable_tib": 21241.314201600002
-    },
-    {
-      "ebox_count": 216,
-      "usable_tib": 21340.11101184
-    },
-    {
-      "ebox_count": 217,
-      "usable_tib": 21438.90782208
-    },
-    {
-      "ebox_count": 218,
-      "usable_tib": 21537.70463232
-    },
-    {
-      "ebox_count": 219,
-      "usable_tib": 21636.501442560002
-    },
-    {
-      "ebox_count": 220,
-      "usable_tib": 21735.2982528
-    },
-    {
-      "ebox_count": 221,
-      "usable_tib": 21834.09506304
-    },
-    {
-      "ebox_count": 222,
-      "usable_tib": 21932.89187328
-    },
-    {
-      "ebox_count": 223,
-      "usable_tib": 22031.68868352
-    },
-    {
-      "ebox_count": 224,
-      "usable_tib": 22130.48549376
-    },
-    {
-      "ebox_count": 225,
-      "usable_tib": 22229.282304
-    },
-    {
-      "ebox_count": 226,
-      "usable_tib": 22328.07911424
-    },
-    {
-      "ebox_count": 227,
-      "usable_tib": 22426.87592448
-    },
-    {
-      "ebox_count": 228,
-      "usable_tib": 22525.67273472
-    },
-    {
-      "ebox_count": 229,
-      "usable_tib": 22624.46954496
-    },
-    {
-      "ebox_count": 230,
-      "usable_tib": 22723.266355199998
-    },
-    {
-      "ebox_count": 231,
-      "usable_tib": 22822.06316544
-    },
-    {
-      "ebox_count": 232,
-      "usable_tib": 22920.85997568
-    },
-    {
-      "ebox_count": 233,
-      "usable_tib": 23019.65678592
-    },
-    {
-      "ebox_count": 234,
-      "usable_tib": 23118.453596159998
-    },
-    {
-      "ebox_count": 235,
-      "usable_tib": 23217.2504064
-    },
-    {
-      "ebox_count": 236,
-      "usable_tib": 23316.04721664
-    },
-    {
-      "ebox_count": 237,
-      "usable_tib": 23414.84402688
-    },
-    {
-      "ebox_count": 238,
-      "usable_tib": 23513.64083712
-    },
-    {
-      "ebox_count": 239,
-      "usable_tib": 23612.437647360002
-    },
-    {
-      "ebox_count": 240,
-      "usable_tib": 23711.234457600003
-    },
-    {
-      "ebox_count": 241,
-      "usable_tib": 23810.03126784
-    },
-    {
-      "ebox_count": 242,
-      "usable_tib": 23908.82807808
-    },
-    {
-      "ebox_count": 243,
-      "usable_tib": 24007.624888320002
-    },
-    {
-      "ebox_count": 244,
-      "usable_tib": 24106.421698560003
-    },
-    {
-      "ebox_count": 245,
-      "usable_tib": 24205.2185088
-    },
-    {
-      "ebox_count": 246,
-      "usable_tib": 24304.01531904
-    },
-    {
-      "ebox_count": 247,
-      "usable_tib": 24402.812129280002
-    },
-    {
-      "ebox_count": 248,
-      "usable_tib": 24501.60893952
-    },
-    {
-      "ebox_count": 249,
-      "usable_tib": 24600.40574976
-    },
-    {
-      "ebox_count": 250,
-      "usable_tib": 24699.20256
-    }
+      {
+          "ebox_count": 11,
+          "usable_tib": 893.2482662399999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 12,
+          "usable_tib": 996.5688422400001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 13,
+          "usable_tib": 1099.6548526079998,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 14,
+          "usable_tib": 1202.383429632,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 15,
+          "usable_tib": 1305.02264832,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 16,
+          "usable_tib": 1407.393792,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 17,
+          "usable_tib": 1509.787275264,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 18,
+          "usable_tib": 1612.069060608,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 19,
+          "usable_tib": 1714.149789696,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 20,
+          "usable_tib": 1816.4315750399999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 21,
+          "usable_tib": 1918.2777384960002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 22,
+          "usable_tib": 2020.436656128,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 23,
+          "usable_tib": 2122.293989376,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 24,
+          "usable_tib": 2224.2183413760004,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 25,
+          "usable_tib": 2326.109184,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 26,
+          "usable_tib": 2427.86598912,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 27,
+          "usable_tib": 2529.6898129919996,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 28,
+          "usable_tib": 2631.5136368640005,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 29,
+          "usable_tib": 2733.270441984,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 30,
+          "usable_tib": 2834.8932096,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 31,
+          "usable_tib": 2936.661184512,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 32,
+          "usable_tib": 3038.540857344,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 33,
+          "usable_tib": 3140.130115584,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 34,
+          "usable_tib": 3241.741713408,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 35,
+          "usable_tib": 3343.73308416,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 36,
+          "usable_tib": 3445.300002816,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 37,
+          "usable_tib": 3546.7887329279997,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 38,
+          "usable_tib": 3648.590217216,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 39,
+          "usable_tib": 3750.268833792,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 40,
+          "usable_tib": 3851.7910732799996,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 41,
+          "usable_tib": 3953.5813877759997,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 42,
+          "usable_tib": 4055.170646016001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 43,
+          "usable_tib": 4156.525338624,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 44,
+          "usable_tib": 4258.103427072,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 45,
+          "usable_tib": 4359.90491136,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 46,
+          "usable_tib": 4461.4159810559995,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 47,
+          "usable_tib": 4563.1281070079995,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 48,
+          "usable_tib": 4664.5051392,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 49,
+          "usable_tib": 4766.060888064,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 50,
+          "usable_tib": 4867.7953535999995,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 51,
+          "usable_tib": 4969.708535808,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 52,
+          "usable_tib": 5071.219605503999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 53,
+          "usable_tib": 5172.887052288,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 54,
+          "usable_tib": 5274.1077073920005,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 55,
+          "usable_tib": 5375.462399999999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 56,
+          "usable_tib": 5477.576638464,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 57,
+          "usable_tib": 5579.210575872,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 58,
+          "usable_tib": 5680.330702847999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 59,
+          "usable_tib": 5782.221545472,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 60,
+          "usable_tib": 5883.57623808,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 61,
+          "usable_tib": 5985.042628608,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 62,
+          "usable_tib": 6086.620717055999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 63,
+          "usable_tib": 6188.310503424001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 64,
+          "usable_tib": 6290.111987712,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 65,
+          "usable_tib": 6391.299133439999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 66,
+          "usable_tib": 6492.575637504,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 67,
+          "usable_tib": 6594.689875968,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 68,
+          "usable_tib": 6696.156266496,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 69,
+          "usable_tib": 6797.71201536,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 70,
+          "usable_tib": 6899.35712256,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 71,
+          "usable_tib": 7000.298532864,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 72,
+          "usable_tib": 7102.111186944,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 73,
+          "usable_tib": 7204.01319936,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 74,
+          "usable_tib": 7305.178005504,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 75,
+          "usable_tib": 7406.4098304,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 76,
+          "usable_tib": 7508.55757824,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 77,
+          "usable_tib": 7607.35438848,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 78,
+          "usable_tib": 7706.15119872,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 79,
+          "usable_tib": 7804.948008959999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 80,
+          "usable_tib": 7903.744819199999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 81,
+          "usable_tib": 8002.541629439999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 82,
+          "usable_tib": 8101.338439679999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 83,
+          "usable_tib": 8200.13524992,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 84,
+          "usable_tib": 8298.932060160001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 85,
+          "usable_tib": 8397.7288704,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 86,
+          "usable_tib": 8496.525680640001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 87,
+          "usable_tib": 8595.32249088,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 88,
+          "usable_tib": 8694.119301120001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 89,
+          "usable_tib": 8792.91611136,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 90,
+          "usable_tib": 8891.7129216,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 91,
+          "usable_tib": 8990.50973184,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 92,
+          "usable_tib": 9089.30654208,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 93,
+          "usable_tib": 9188.10335232,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 94,
+          "usable_tib": 9286.90016256,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 95,
+          "usable_tib": 9385.6969728,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 96,
+          "usable_tib": 9484.49378304,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 97,
+          "usable_tib": 9583.29059328,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 98,
+          "usable_tib": 9682.08740352,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 99,
+          "usable_tib": 9780.884213759999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 100,
+          "usable_tib": 9879.681024,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 101,
+          "usable_tib": 9978.47783424,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 102,
+          "usable_tib": 10077.274644480001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 103,
+          "usable_tib": 10176.07145472,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 104,
+          "usable_tib": 10274.868264960001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 105,
+          "usable_tib": 10373.6650752,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 106,
+          "usable_tib": 10472.46188544,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 107,
+          "usable_tib": 10571.25869568,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 108,
+          "usable_tib": 10670.05550592,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 109,
+          "usable_tib": 10768.85231616,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 110,
+          "usable_tib": 10867.6491264,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 111,
+          "usable_tib": 10966.44593664,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 112,
+          "usable_tib": 11065.24274688,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 113,
+          "usable_tib": 11164.03955712,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 114,
+          "usable_tib": 11262.83636736,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 115,
+          "usable_tib": 11361.633177599999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 116,
+          "usable_tib": 11460.42998784,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 117,
+          "usable_tib": 11559.226798079999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 118,
+          "usable_tib": 11658.02360832,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 119,
+          "usable_tib": 11756.82041856,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 120,
+          "usable_tib": 11855.617228800002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 121,
+          "usable_tib": 11954.41403904,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 122,
+          "usable_tib": 12053.210849280002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 123,
+          "usable_tib": 12152.00765952,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 124,
+          "usable_tib": 12250.80446976,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 125,
+          "usable_tib": 12349.60128,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 126,
+          "usable_tib": 12448.39809024,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 127,
+          "usable_tib": 12547.19490048,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 128,
+          "usable_tib": 12645.99171072,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 129,
+          "usable_tib": 12744.78852096,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 130,
+          "usable_tib": 12843.5853312,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 131,
+          "usable_tib": 12942.38214144,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 132,
+          "usable_tib": 13041.17895168,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 133,
+          "usable_tib": 13139.975761919999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 134,
+          "usable_tib": 13238.77257216,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 135,
+          "usable_tib": 13337.569382399999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 136,
+          "usable_tib": 13436.36619264,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 137,
+          "usable_tib": 13535.16300288,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 138,
+          "usable_tib": 13633.959813120002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 139,
+          "usable_tib": 13732.756623360001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 140,
+          "usable_tib": 13831.5534336,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 141,
+          "usable_tib": 13930.350243840001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 142,
+          "usable_tib": 14029.14705408,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 143,
+          "usable_tib": 14127.943864320001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 144,
+          "usable_tib": 14226.74067456,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 145,
+          "usable_tib": 14325.537484800001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 146,
+          "usable_tib": 14424.33429504,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 147,
+          "usable_tib": 14523.131105280001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 148,
+          "usable_tib": 14621.92791552,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 149,
+          "usable_tib": 14720.72472576,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 150,
+          "usable_tib": 14819.521536,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 151,
+          "usable_tib": 14918.31834624,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 152,
+          "usable_tib": 15017.11515648,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 153,
+          "usable_tib": 15115.91196672,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 154,
+          "usable_tib": 15214.70877696,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 155,
+          "usable_tib": 15313.5055872,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 156,
+          "usable_tib": 15412.30239744,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 157,
+          "usable_tib": 15511.09920768,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 158,
+          "usable_tib": 15609.896017919998,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 159,
+          "usable_tib": 15708.69282816,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 160,
+          "usable_tib": 15807.489638399999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 161,
+          "usable_tib": 15906.28644864,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 162,
+          "usable_tib": 16005.083258879999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 163,
+          "usable_tib": 16103.88006912,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 164,
+          "usable_tib": 16202.676879359999,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 165,
+          "usable_tib": 16301.473689600001,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 166,
+          "usable_tib": 16400.27049984,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 167,
+          "usable_tib": 16499.06731008,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 168,
+          "usable_tib": 16597.864120320002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 169,
+          "usable_tib": 16696.660930560003,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 170,
+          "usable_tib": 16795.4577408,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 171,
+          "usable_tib": 16894.25455104,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 172,
+          "usable_tib": 16993.051361280002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 173,
+          "usable_tib": 17091.84817152,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 174,
+          "usable_tib": 17190.64498176,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 175,
+          "usable_tib": 17289.441792,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 176,
+          "usable_tib": 17388.238602240002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 177,
+          "usable_tib": 17487.03541248,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 178,
+          "usable_tib": 17585.83222272,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 179,
+          "usable_tib": 17684.62903296,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 180,
+          "usable_tib": 17783.4258432,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 181,
+          "usable_tib": 17882.22265344,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 182,
+          "usable_tib": 17981.01946368,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 183,
+          "usable_tib": 18079.81627392,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 184,
+          "usable_tib": 18178.61308416,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 185,
+          "usable_tib": 18277.4098944,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 186,
+          "usable_tib": 18376.20670464,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 187,
+          "usable_tib": 18475.00351488,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 188,
+          "usable_tib": 18573.80032512,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 189,
+          "usable_tib": 18672.59713536,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 190,
+          "usable_tib": 18771.3939456,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 191,
+          "usable_tib": 18870.190755839998,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 192,
+          "usable_tib": 18968.98756608,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 193,
+          "usable_tib": 19067.78437632,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 194,
+          "usable_tib": 19166.58118656,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 195,
+          "usable_tib": 19265.377996799998,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 196,
+          "usable_tib": 19364.17480704,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 197,
+          "usable_tib": 19462.97161728,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 198,
+          "usable_tib": 19561.768427519997,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 199,
+          "usable_tib": 19660.565237759998,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 200,
+          "usable_tib": 19759.362048,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 201,
+          "usable_tib": 19858.15885824,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 202,
+          "usable_tib": 19956.95566848,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 203,
+          "usable_tib": 20055.75247872,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 204,
+          "usable_tib": 20154.549288960003,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 205,
+          "usable_tib": 20253.3460992,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 206,
+          "usable_tib": 20352.14290944,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 207,
+          "usable_tib": 20450.939719680002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 208,
+          "usable_tib": 20549.736529920003,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 209,
+          "usable_tib": 20648.53334016,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 210,
+          "usable_tib": 20747.3301504,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 211,
+          "usable_tib": 20846.126960640002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 212,
+          "usable_tib": 20944.92377088,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 213,
+          "usable_tib": 21043.72058112,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 214,
+          "usable_tib": 21142.51739136,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 215,
+          "usable_tib": 21241.314201600002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 216,
+          "usable_tib": 21340.11101184,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 217,
+          "usable_tib": 21438.90782208,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 218,
+          "usable_tib": 21537.70463232,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 219,
+          "usable_tib": 21636.501442560002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 220,
+          "usable_tib": 21735.2982528,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 221,
+          "usable_tib": 21834.09506304,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 222,
+          "usable_tib": 21932.89187328,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 223,
+          "usable_tib": 22031.68868352,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 224,
+          "usable_tib": 22130.48549376,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 225,
+          "usable_tib": 22229.282304,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 226,
+          "usable_tib": 22328.07911424,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 227,
+          "usable_tib": 22426.87592448,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 228,
+          "usable_tib": 22525.67273472,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 229,
+          "usable_tib": 22624.46954496,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 230,
+          "usable_tib": 22723.266355199998,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 231,
+          "usable_tib": 22822.06316544,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 232,
+          "usable_tib": 22920.85997568,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 233,
+          "usable_tib": 23019.65678592,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 234,
+          "usable_tib": 23118.453596159998,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 235,
+          "usable_tib": 23217.2504064,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 236,
+          "usable_tib": 23316.04721664,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 237,
+          "usable_tib": 23414.84402688,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 238,
+          "usable_tib": 23513.64083712,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 239,
+          "usable_tib": 23612.437647360002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 240,
+          "usable_tib": 23711.234457600003,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 241,
+          "usable_tib": 23810.03126784,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 242,
+          "usable_tib": 23908.82807808,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 243,
+          "usable_tib": 24007.624888320002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 244,
+          "usable_tib": 24106.421698560003,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 245,
+          "usable_tib": 24205.2185088,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 246,
+          "usable_tib": 24304.01531904,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 247,
+          "usable_tib": 24402.812129280002,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 248,
+          "usable_tib": 24501.60893952,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 249,
+          "usable_tib": 24600.40574976,
+          "raw_per_ebox_tib": 111.69792
+      },
+      {
+          "ebox_count": 250,
+          "usable_tib": 24699.20256,
+          "raw_per_ebox_tib": 111.69792
+      }
   ],
   30.72: [
-    {
-      "ebox_count": 11,
-      "usable_tib": 1786.4965324799998
-    },
-    {
-      "ebox_count": 12,
-      "usable_tib": 1993.1376844800002
-    },
-    {
-      "ebox_count": 13,
-      "usable_tib": 2199.3097052159997
-    },
-    {
-      "ebox_count": 14,
-      "usable_tib": 2404.766859264
-    },
-    {
-      "ebox_count": 15,
-      "usable_tib": 2610.04529664
-    },
-    {
-      "ebox_count": 16,
-      "usable_tib": 2814.787584
-    },
-    {
-      "ebox_count": 17,
-      "usable_tib": 3019.574550528
-    },
-    {
-      "ebox_count": 18,
-      "usable_tib": 3224.138121216
-    },
-    {
-      "ebox_count": 19,
-      "usable_tib": 3428.299579392
-    },
-    {
-      "ebox_count": 20,
-      "usable_tib": 3632.8631500799997
-    },
-    {
-      "ebox_count": 21,
-      "usable_tib": 3836.5554769920004
-    },
-    {
-      "ebox_count": 22,
-      "usable_tib": 4040.873312256
-    },
-    {
-      "ebox_count": 23,
-      "usable_tib": 4244.587978752
-    },
-    {
-      "ebox_count": 24,
-      "usable_tib": 4448.436682752001
-    },
-    {
-      "ebox_count": 25,
-      "usable_tib": 4652.218368
-    },
-    {
-      "ebox_count": 26,
-      "usable_tib": 4855.73197824
-    },
-    {
-      "ebox_count": 27,
-      "usable_tib": 5059.379625983999
-    },
-    {
-      "ebox_count": 28,
-      "usable_tib": 5263.027273728001
-    },
-    {
-      "ebox_count": 29,
-      "usable_tib": 5466.540883968
-    },
-    {
-      "ebox_count": 30,
-      "usable_tib": 5669.7864192
-    },
-    {
-      "ebox_count": 31,
-      "usable_tib": 5873.322369024
-    },
-    {
-      "ebox_count": 32,
-      "usable_tib": 6077.081714688
-    },
-    {
-      "ebox_count": 33,
-      "usable_tib": 6280.260231168
-    },
-    {
-      "ebox_count": 34,
-      "usable_tib": 6483.483426816
-    },
-    {
-      "ebox_count": 35,
-      "usable_tib": 6687.46616832
-    },
-    {
-      "ebox_count": 36,
-      "usable_tib": 6890.600005632
-    },
-    {
-      "ebox_count": 37,
-      "usable_tib": 7093.577465855999
-    },
-    {
-      "ebox_count": 38,
-      "usable_tib": 7297.180434432
-    },
-    {
-      "ebox_count": 39,
-      "usable_tib": 7500.537667584
-    },
-    {
-      "ebox_count": 40,
-      "usable_tib": 7703.582146559999
-    },
-    {
-      "ebox_count": 41,
-      "usable_tib": 7907.162775551999
-    },
-    {
-      "ebox_count": 42,
-      "usable_tib": 8110.341292032002
-    },
-    {
-      "ebox_count": 43,
-      "usable_tib": 8313.050677248
-    },
-    {
-      "ebox_count": 44,
-      "usable_tib": 8516.206854144
-    },
-    {
-      "ebox_count": 45,
-      "usable_tib": 8719.80982272
-    },
-    {
-      "ebox_count": 46,
-      "usable_tib": 8922.831962111999
-    },
-    {
-      "ebox_count": 47,
-      "usable_tib": 9126.256214015999
-    },
-    {
-      "ebox_count": 48,
-      "usable_tib": 9329.0102784
-    },
-    {
-      "ebox_count": 49,
-      "usable_tib": 9532.121776128
-    },
-    {
-      "ebox_count": 50,
-      "usable_tib": 9735.590707199999
-    },
-    {
-      "ebox_count": 51,
-      "usable_tib": 9939.417071616
-    },
-    {
-      "ebox_count": 52,
-      "usable_tib": 10142.439211007999
-    },
-    {
-      "ebox_count": 53,
-      "usable_tib": 10345.774104576
-    },
-    {
-      "ebox_count": 54,
-      "usable_tib": 10548.215414784001
-    },
-    {
-      "ebox_count": 55,
-      "usable_tib": 10750.924799999999
-    },
-    {
-      "ebox_count": 56,
-      "usable_tib": 10955.153276928
-    },
-    {
-      "ebox_count": 57,
-      "usable_tib": 11158.421151744
-    },
-    {
-      "ebox_count": 58,
-      "usable_tib": 11360.661405695999
-    },
-    {
-      "ebox_count": 59,
-      "usable_tib": 11564.443090944
-    },
-    {
-      "ebox_count": 60,
-      "usable_tib": 11767.15247616
-    },
-    {
-      "ebox_count": 61,
-      "usable_tib": 11970.085257216
-    },
-    {
-      "ebox_count": 62,
-      "usable_tib": 12173.241434111998
-    },
-    {
-      "ebox_count": 63,
-      "usable_tib": 12376.621006848001
-    },
-    {
-      "ebox_count": 64,
-      "usable_tib": 12580.223975424
-    },
-    {
-      "ebox_count": 65,
-      "usable_tib": 12782.598266879999
-    },
-    {
-      "ebox_count": 66,
-      "usable_tib": 12985.151275008
-    },
-    {
-      "ebox_count": 67,
-      "usable_tib": 13189.379751936
-    },
-    {
-      "ebox_count": 68,
-      "usable_tib": 13392.312532992
-    },
-    {
-      "ebox_count": 69,
-      "usable_tib": 13595.42403072
-    },
-    {
-      "ebox_count": 70,
-      "usable_tib": 13798.71424512
-    },
-    {
-      "ebox_count": 71,
-      "usable_tib": 14000.597065728
-    },
-    {
-      "ebox_count": 72,
-      "usable_tib": 14204.222373888
-    },
-    {
-      "ebox_count": 73,
-      "usable_tib": 14408.02639872
-    },
-    {
-      "ebox_count": 74,
-      "usable_tib": 14610.356011008
-    },
-    {
-      "ebox_count": 75,
-      "usable_tib": 14812.8196608
-    },
-    {
-      "ebox_count": 76,
-      "usable_tib": 15017.11515648
-    },
-    {
-      "ebox_count": 77,
-      "usable_tib": 15214.70877696
-    },
-    {
-      "ebox_count": 78,
-      "usable_tib": 15412.30239744
-    },
-    {
-      "ebox_count": 79,
-      "usable_tib": 15609.896017919998
-    },
-    {
-      "ebox_count": 80,
-      "usable_tib": 15807.489638399999
-    },
-    {
-      "ebox_count": 81,
-      "usable_tib": 16005.083258879999
-    },
-    {
-      "ebox_count": 82,
-      "usable_tib": 16202.676879359999
-    },
-    {
-      "ebox_count": 83,
-      "usable_tib": 16400.27049984
-    },
-    {
-      "ebox_count": 84,
-      "usable_tib": 16597.864120320002
-    },
-    {
-      "ebox_count": 85,
-      "usable_tib": 16795.4577408
-    },
-    {
-      "ebox_count": 86,
-      "usable_tib": 16993.051361280002
-    },
-    {
-      "ebox_count": 87,
-      "usable_tib": 17190.64498176
-    },
-    {
-      "ebox_count": 88,
-      "usable_tib": 17388.238602240002
-    },
-    {
-      "ebox_count": 89,
-      "usable_tib": 17585.83222272
-    },
-    {
-      "ebox_count": 90,
-      "usable_tib": 17783.4258432
-    },
-    {
-      "ebox_count": 91,
-      "usable_tib": 17981.01946368
-    },
-    {
-      "ebox_count": 92,
-      "usable_tib": 18178.61308416
-    },
-    {
-      "ebox_count": 93,
-      "usable_tib": 18376.20670464
-    },
-    {
-      "ebox_count": 94,
-      "usable_tib": 18573.80032512
-    },
-    {
-      "ebox_count": 95,
-      "usable_tib": 18771.3939456
-    },
-    {
-      "ebox_count": 96,
-      "usable_tib": 18968.98756608
-    },
-    {
-      "ebox_count": 97,
-      "usable_tib": 19166.58118656
-    },
-    {
-      "ebox_count": 98,
-      "usable_tib": 19364.17480704
-    },
-    {
-      "ebox_count": 99,
-      "usable_tib": 19561.768427519997
-    },
-    {
-      "ebox_count": 100,
-      "usable_tib": 19759.362048
-    },
-    {
-      "ebox_count": 101,
-      "usable_tib": 19956.95566848
-    },
-    {
-      "ebox_count": 102,
-      "usable_tib": 20154.549288960003
-    },
-    {
-      "ebox_count": 103,
-      "usable_tib": 20352.14290944
-    },
-    {
-      "ebox_count": 104,
-      "usable_tib": 20549.736529920003
-    },
-    {
-      "ebox_count": 105,
-      "usable_tib": 20747.3301504
-    },
-    {
-      "ebox_count": 106,
-      "usable_tib": 20944.92377088
-    },
-    {
-      "ebox_count": 107,
-      "usable_tib": 21142.51739136
-    },
-    {
-      "ebox_count": 108,
-      "usable_tib": 21340.11101184
-    },
-    {
-      "ebox_count": 109,
-      "usable_tib": 21537.70463232
-    },
-    {
-      "ebox_count": 110,
-      "usable_tib": 21735.2982528
-    },
-    {
-      "ebox_count": 111,
-      "usable_tib": 21932.89187328
-    },
-    {
-      "ebox_count": 112,
-      "usable_tib": 22130.48549376
-    },
-    {
-      "ebox_count": 113,
-      "usable_tib": 22328.07911424
-    },
-    {
-      "ebox_count": 114,
-      "usable_tib": 22525.67273472
-    },
-    {
-      "ebox_count": 115,
-      "usable_tib": 22723.266355199998
-    },
-    {
-      "ebox_count": 116,
-      "usable_tib": 22920.85997568
-    },
-    {
-      "ebox_count": 117,
-      "usable_tib": 23118.453596159998
-    },
-    {
-      "ebox_count": 118,
-      "usable_tib": 23316.04721664
-    },
-    {
-      "ebox_count": 119,
-      "usable_tib": 23513.64083712
-    },
-    {
-      "ebox_count": 120,
-      "usable_tib": 23711.234457600003
-    },
-    {
-      "ebox_count": 121,
-      "usable_tib": 23908.82807808
-    },
-    {
-      "ebox_count": 122,
-      "usable_tib": 24106.421698560003
-    },
-    {
-      "ebox_count": 123,
-      "usable_tib": 24304.01531904
-    },
-    {
-      "ebox_count": 124,
-      "usable_tib": 24501.60893952
-    },
-    {
-      "ebox_count": 125,
-      "usable_tib": 24699.20256
-    },
-    {
-      "ebox_count": 126,
-      "usable_tib": 24896.79618048
-    },
-    {
-      "ebox_count": 127,
-      "usable_tib": 25094.38980096
-    },
-    {
-      "ebox_count": 128,
-      "usable_tib": 25291.98342144
-    },
-    {
-      "ebox_count": 129,
-      "usable_tib": 25489.57704192
-    },
-    {
-      "ebox_count": 130,
-      "usable_tib": 25687.1706624
-    },
-    {
-      "ebox_count": 131,
-      "usable_tib": 25884.76428288
-    },
-    {
-      "ebox_count": 132,
-      "usable_tib": 26082.35790336
-    },
-    {
-      "ebox_count": 133,
-      "usable_tib": 26279.951523839998
-    },
-    {
-      "ebox_count": 134,
-      "usable_tib": 26477.54514432
-    },
-    {
-      "ebox_count": 135,
-      "usable_tib": 26675.138764799998
-    },
-    {
-      "ebox_count": 136,
-      "usable_tib": 26872.73238528
-    },
-    {
-      "ebox_count": 137,
-      "usable_tib": 27070.32600576
-    },
-    {
-      "ebox_count": 138,
-      "usable_tib": 27267.919626240004
-    },
-    {
-      "ebox_count": 139,
-      "usable_tib": 27465.513246720002
-    },
-    {
-      "ebox_count": 140,
-      "usable_tib": 27663.1068672
-    },
-    {
-      "ebox_count": 141,
-      "usable_tib": 27860.700487680002
-    },
-    {
-      "ebox_count": 142,
-      "usable_tib": 28058.29410816
-    },
-    {
-      "ebox_count": 143,
-      "usable_tib": 28255.887728640002
-    },
-    {
-      "ebox_count": 144,
-      "usable_tib": 28453.48134912
-    },
-    {
-      "ebox_count": 145,
-      "usable_tib": 28651.074969600002
-    },
-    {
-      "ebox_count": 146,
-      "usable_tib": 28848.66859008
-    },
-    {
-      "ebox_count": 147,
-      "usable_tib": 29046.262210560002
-    },
-    {
-      "ebox_count": 148,
-      "usable_tib": 29243.85583104
-    },
-    {
-      "ebox_count": 149,
-      "usable_tib": 29441.44945152
-    },
-    {
-      "ebox_count": 150,
-      "usable_tib": 29639.043072
-    },
-    {
-      "ebox_count": 151,
-      "usable_tib": 29836.63669248
-    },
-    {
-      "ebox_count": 152,
-      "usable_tib": 30034.23031296
-    },
-    {
-      "ebox_count": 153,
-      "usable_tib": 30231.82393344
-    },
-    {
-      "ebox_count": 154,
-      "usable_tib": 30429.41755392
-    },
-    {
-      "ebox_count": 155,
-      "usable_tib": 30627.0111744
-    },
-    {
-      "ebox_count": 156,
-      "usable_tib": 30824.60479488
-    },
-    {
-      "ebox_count": 157,
-      "usable_tib": 31022.19841536
-    },
-    {
-      "ebox_count": 158,
-      "usable_tib": 31219.792035839997
-    },
-    {
-      "ebox_count": 159,
-      "usable_tib": 31417.38565632
-    },
-    {
-      "ebox_count": 160,
-      "usable_tib": 31614.979276799997
-    },
-    {
-      "ebox_count": 161,
-      "usable_tib": 31812.57289728
-    },
-    {
-      "ebox_count": 162,
-      "usable_tib": 32010.166517759997
-    },
-    {
-      "ebox_count": 163,
-      "usable_tib": 32207.76013824
-    },
-    {
-      "ebox_count": 164,
-      "usable_tib": 32405.353758719997
-    },
-    {
-      "ebox_count": 165,
-      "usable_tib": 32602.947379200003
-    },
-    {
-      "ebox_count": 166,
-      "usable_tib": 32800.54099968
-    },
-    {
-      "ebox_count": 167,
-      "usable_tib": 32998.13462016
-    },
-    {
-      "ebox_count": 168,
-      "usable_tib": 33195.728240640005
-    },
-    {
-      "ebox_count": 169,
-      "usable_tib": 33393.321861120006
-    },
-    {
-      "ebox_count": 170,
-      "usable_tib": 33590.9154816
-    },
-    {
-      "ebox_count": 171,
-      "usable_tib": 33788.50910208
-    },
-    {
-      "ebox_count": 172,
-      "usable_tib": 33986.102722560005
-    },
-    {
-      "ebox_count": 173,
-      "usable_tib": 34183.69634304
-    },
-    {
-      "ebox_count": 174,
-      "usable_tib": 34381.28996352
-    },
-    {
-      "ebox_count": 175,
-      "usable_tib": 34578.883584
-    },
-    {
-      "ebox_count": 176,
-      "usable_tib": 34776.477204480005
-    },
-    {
-      "ebox_count": 177,
-      "usable_tib": 34974.07082496
-    },
-    {
-      "ebox_count": 178,
-      "usable_tib": 35171.66444544
-    },
-    {
-      "ebox_count": 179,
-      "usable_tib": 35369.25806592
-    },
-    {
-      "ebox_count": 180,
-      "usable_tib": 35566.8516864
-    },
-    {
-      "ebox_count": 181,
-      "usable_tib": 35764.44530688
-    },
-    {
-      "ebox_count": 182,
-      "usable_tib": 35962.03892736
-    },
-    {
-      "ebox_count": 183,
-      "usable_tib": 36159.63254784
-    },
-    {
-      "ebox_count": 184,
-      "usable_tib": 36357.22616832
-    },
-    {
-      "ebox_count": 185,
-      "usable_tib": 36554.8197888
-    },
-    {
-      "ebox_count": 186,
-      "usable_tib": 36752.41340928
-    },
-    {
-      "ebox_count": 187,
-      "usable_tib": 36950.00702976
-    },
-    {
-      "ebox_count": 188,
-      "usable_tib": 37147.60065024
-    },
-    {
-      "ebox_count": 189,
-      "usable_tib": 37345.19427072
-    },
-    {
-      "ebox_count": 190,
-      "usable_tib": 37542.7878912
-    },
-    {
-      "ebox_count": 191,
-      "usable_tib": 37740.381511679996
-    },
-    {
-      "ebox_count": 192,
-      "usable_tib": 37937.97513216
-    },
-    {
-      "ebox_count": 193,
-      "usable_tib": 38135.56875264
-    },
-    {
-      "ebox_count": 194,
-      "usable_tib": 38333.16237312
-    },
-    {
-      "ebox_count": 195,
-      "usable_tib": 38530.755993599996
-    },
-    {
-      "ebox_count": 196,
-      "usable_tib": 38728.34961408
-    },
-    {
-      "ebox_count": 197,
-      "usable_tib": 38925.94323456
-    },
-    {
-      "ebox_count": 198,
-      "usable_tib": 39123.536855039994
-    },
-    {
-      "ebox_count": 199,
-      "usable_tib": 39321.130475519996
-    },
-    {
-      "ebox_count": 200,
-      "usable_tib": 39518.724096
-    },
-    {
-      "ebox_count": 201,
-      "usable_tib": 39716.31771648
-    },
-    {
-      "ebox_count": 202,
-      "usable_tib": 39913.91133696
-    },
-    {
-      "ebox_count": 203,
-      "usable_tib": 40111.50495744
-    },
-    {
-      "ebox_count": 204,
-      "usable_tib": 40309.098577920005
-    },
-    {
-      "ebox_count": 205,
-      "usable_tib": 40506.6921984
-    },
-    {
-      "ebox_count": 206,
-      "usable_tib": 40704.28581888
-    },
-    {
-      "ebox_count": 207,
-      "usable_tib": 40901.879439360004
-    },
-    {
-      "ebox_count": 208,
-      "usable_tib": 41099.473059840006
-    },
-    {
-      "ebox_count": 209,
-      "usable_tib": 41297.06668032
-    },
-    {
-      "ebox_count": 210,
-      "usable_tib": 41494.6603008
-    },
-    {
-      "ebox_count": 211,
-      "usable_tib": 41692.253921280004
-    },
-    {
-      "ebox_count": 212,
-      "usable_tib": 41889.84754176
-    },
-    {
-      "ebox_count": 213,
-      "usable_tib": 42087.44116224
-    },
-    {
-      "ebox_count": 214,
-      "usable_tib": 42285.03478272
-    },
-    {
-      "ebox_count": 215,
-      "usable_tib": 42482.628403200004
-    },
-    {
-      "ebox_count": 216,
-      "usable_tib": 42680.22202368
-    },
-    {
-      "ebox_count": 217,
-      "usable_tib": 42877.81564416
-    },
-    {
-      "ebox_count": 218,
-      "usable_tib": 43075.40926464
-    },
-    {
-      "ebox_count": 219,
-      "usable_tib": 43273.002885120004
-    },
-    {
-      "ebox_count": 220,
-      "usable_tib": 43470.5965056
-    },
-    {
-      "ebox_count": 221,
-      "usable_tib": 43668.19012608
-    },
-    {
-      "ebox_count": 222,
-      "usable_tib": 43865.78374656
-    },
-    {
-      "ebox_count": 223,
-      "usable_tib": 44063.37736704
-    },
-    {
-      "ebox_count": 224,
-      "usable_tib": 44260.97098752
-    },
-    {
-      "ebox_count": 225,
-      "usable_tib": 44458.564608
-    },
-    {
-      "ebox_count": 226,
-      "usable_tib": 44656.15822848
-    },
-    {
-      "ebox_count": 227,
-      "usable_tib": 44853.75184896
-    },
-    {
-      "ebox_count": 228,
-      "usable_tib": 45051.34546944
-    },
-    {
-      "ebox_count": 229,
-      "usable_tib": 45248.93908992
-    },
-    {
-      "ebox_count": 230,
-      "usable_tib": 45446.532710399995
-    },
-    {
-      "ebox_count": 231,
-      "usable_tib": 45644.12633088
-    },
-    {
-      "ebox_count": 232,
-      "usable_tib": 45841.71995136
-    },
-    {
-      "ebox_count": 233,
-      "usable_tib": 46039.31357184
-    },
-    {
-      "ebox_count": 234,
-      "usable_tib": 46236.907192319995
-    },
-    {
-      "ebox_count": 235,
-      "usable_tib": 46434.5008128
-    },
-    {
-      "ebox_count": 236,
-      "usable_tib": 46632.09443328
-    },
-    {
-      "ebox_count": 237,
-      "usable_tib": 46829.68805376
-    },
-    {
-      "ebox_count": 238,
-      "usable_tib": 47027.28167424
-    },
-    {
-      "ebox_count": 239,
-      "usable_tib": 47224.875294720005
-    },
-    {
-      "ebox_count": 240,
-      "usable_tib": 47422.46891520001
-    },
-    {
-      "ebox_count": 241,
-      "usable_tib": 47620.06253568
-    },
-    {
-      "ebox_count": 242,
-      "usable_tib": 47817.65615616
-    },
-    {
-      "ebox_count": 243,
-      "usable_tib": 48015.249776640005
-    },
-    {
-      "ebox_count": 244,
-      "usable_tib": 48212.84339712001
-    },
-    {
-      "ebox_count": 245,
-      "usable_tib": 48410.4370176
-    },
-    {
-      "ebox_count": 246,
-      "usable_tib": 48608.03063808
-    },
-    {
-      "ebox_count": 247,
-      "usable_tib": 48805.624258560005
-    },
-    {
-      "ebox_count": 248,
-      "usable_tib": 49003.21787904
-    },
-    {
-      "ebox_count": 249,
-      "usable_tib": 49200.81149952
-    },
-    {
-      "ebox_count": 250,
-      "usable_tib": 49398.40512
-    }
+      {
+          "ebox_count": 11,
+          "usable_tib": 1786.4965324799998,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 12,
+          "usable_tib": 1993.1376844800002,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 13,
+          "usable_tib": 2199.3097052159997,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 14,
+          "usable_tib": 2404.766859264,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 15,
+          "usable_tib": 2610.04529664,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 16,
+          "usable_tib": 2814.787584,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 17,
+          "usable_tib": 3019.574550528,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 18,
+          "usable_tib": 3224.138121216,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 19,
+          "usable_tib": 3428.299579392,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 20,
+          "usable_tib": 3632.8631500799997,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 21,
+          "usable_tib": 3836.5554769920004,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 22,
+          "usable_tib": 4040.873312256,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 23,
+          "usable_tib": 4244.587978752,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 24,
+          "usable_tib": 4448.436682752001,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 25,
+          "usable_tib": 4652.218368,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 26,
+          "usable_tib": 4855.73197824,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 27,
+          "usable_tib": 5059.379625983999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 28,
+          "usable_tib": 5263.027273728001,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 29,
+          "usable_tib": 5466.540883968,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 30,
+          "usable_tib": 5669.7864192,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 31,
+          "usable_tib": 5873.322369024,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 32,
+          "usable_tib": 6077.081714688,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 33,
+          "usable_tib": 6280.260231168,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 34,
+          "usable_tib": 6483.483426816,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 35,
+          "usable_tib": 6687.46616832,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 36,
+          "usable_tib": 6890.600005632,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 37,
+          "usable_tib": 7093.577465855999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 38,
+          "usable_tib": 7297.180434432,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 39,
+          "usable_tib": 7500.537667584,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 40,
+          "usable_tib": 7703.582146559999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 41,
+          "usable_tib": 7907.162775551999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 42,
+          "usable_tib": 8110.341292032002,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 43,
+          "usable_tib": 8313.050677248,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 44,
+          "usable_tib": 8516.206854144,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 45,
+          "usable_tib": 8719.80982272,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 46,
+          "usable_tib": 8922.831962111999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 47,
+          "usable_tib": 9126.256214015999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 48,
+          "usable_tib": 9329.0102784,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 49,
+          "usable_tib": 9532.121776128,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 50,
+          "usable_tib": 9735.590707199999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 51,
+          "usable_tib": 9939.417071616,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 52,
+          "usable_tib": 10142.439211007999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 53,
+          "usable_tib": 10345.774104576,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 54,
+          "usable_tib": 10548.215414784001,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 55,
+          "usable_tib": 10750.924799999999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 56,
+          "usable_tib": 10955.153276928,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 57,
+          "usable_tib": 11158.421151744,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 58,
+          "usable_tib": 11360.661405695999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 59,
+          "usable_tib": 11564.443090944,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 60,
+          "usable_tib": 11767.15247616,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 61,
+          "usable_tib": 11970.085257216,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 62,
+          "usable_tib": 12173.241434111998,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 63,
+          "usable_tib": 12376.621006848001,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 64,
+          "usable_tib": 12580.223975424,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 65,
+          "usable_tib": 12782.598266879999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 66,
+          "usable_tib": 12985.151275008,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 67,
+          "usable_tib": 13189.379751936,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 68,
+          "usable_tib": 13392.312532992,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 69,
+          "usable_tib": 13595.42403072,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 70,
+          "usable_tib": 13798.71424512,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 71,
+          "usable_tib": 14000.597065728,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 72,
+          "usable_tib": 14204.222373888,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 73,
+          "usable_tib": 14408.02639872,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 74,
+          "usable_tib": 14610.356011008,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 75,
+          "usable_tib": 14812.8196608,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 76,
+          "usable_tib": 15017.11515648,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 77,
+          "usable_tib": 15214.70877696,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 78,
+          "usable_tib": 15412.30239744,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 79,
+          "usable_tib": 15609.896017919998,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 80,
+          "usable_tib": 15807.489638399999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 81,
+          "usable_tib": 16005.083258879999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 82,
+          "usable_tib": 16202.676879359999,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 83,
+          "usable_tib": 16400.27049984,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 84,
+          "usable_tib": 16597.864120320002,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 85,
+          "usable_tib": 16795.4577408,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 86,
+          "usable_tib": 16993.051361280002,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 87,
+          "usable_tib": 17190.64498176,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 88,
+          "usable_tib": 17388.238602240002,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 89,
+          "usable_tib": 17585.83222272,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 90,
+          "usable_tib": 17783.4258432,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 91,
+          "usable_tib": 17981.01946368,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 92,
+          "usable_tib": 18178.61308416,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 93,
+          "usable_tib": 18376.20670464,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 94,
+          "usable_tib": 18573.80032512,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 95,
+          "usable_tib": 18771.3939456,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 96,
+          "usable_tib": 18968.98756608,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 97,
+          "usable_tib": 19166.58118656,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 98,
+          "usable_tib": 19364.17480704,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 99,
+          "usable_tib": 19561.768427519997,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 100,
+          "usable_tib": 19759.362048,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 101,
+          "usable_tib": 19956.95566848,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 102,
+          "usable_tib": 20154.549288960003,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 103,
+          "usable_tib": 20352.14290944,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 104,
+          "usable_tib": 20549.736529920003,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 105,
+          "usable_tib": 20747.3301504,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 106,
+          "usable_tib": 20944.92377088,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 107,
+          "usable_tib": 21142.51739136,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 108,
+          "usable_tib": 21340.11101184,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 109,
+          "usable_tib": 21537.70463232,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 110,
+          "usable_tib": 21735.2982528,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 111,
+          "usable_tib": 21932.89187328,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 112,
+          "usable_tib": 22130.48549376,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 113,
+          "usable_tib": 22328.07911424,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 114,
+          "usable_tib": 22525.67273472,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 115,
+          "usable_tib": 22723.266355199998,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 116,
+          "usable_tib": 22920.85997568,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 117,
+          "usable_tib": 23118.453596159998,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 118,
+          "usable_tib": 23316.04721664,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 119,
+          "usable_tib": 23513.64083712,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 120,
+          "usable_tib": 23711.234457600003,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 121,
+          "usable_tib": 23908.82807808,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 122,
+          "usable_tib": 24106.421698560003,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 123,
+          "usable_tib": 24304.01531904,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 124,
+          "usable_tib": 24501.60893952,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 125,
+          "usable_tib": 24699.20256,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 126,
+          "usable_tib": 24896.79618048,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 127,
+          "usable_tib": 25094.38980096,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 128,
+          "usable_tib": 25291.98342144,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 129,
+          "usable_tib": 25489.57704192,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 130,
+          "usable_tib": 25687.1706624,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 131,
+          "usable_tib": 25884.76428288,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 132,
+          "usable_tib": 26082.35790336,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 133,
+          "usable_tib": 26279.951523839998,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 134,
+          "usable_tib": 26477.54514432,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 135,
+          "usable_tib": 26675.138764799998,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 136,
+          "usable_tib": 26872.73238528,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 137,
+          "usable_tib": 27070.32600576,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 138,
+          "usable_tib": 27267.919626240004,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 139,
+          "usable_tib": 27465.513246720002,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 140,
+          "usable_tib": 27663.1068672,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 141,
+          "usable_tib": 27860.700487680002,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 142,
+          "usable_tib": 28058.29410816,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 143,
+          "usable_tib": 28255.887728640002,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 144,
+          "usable_tib": 28453.48134912,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 145,
+          "usable_tib": 28651.074969600002,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 146,
+          "usable_tib": 28848.66859008,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 147,
+          "usable_tib": 29046.262210560002,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 148,
+          "usable_tib": 29243.85583104,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 149,
+          "usable_tib": 29441.44945152,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 150,
+          "usable_tib": 29639.043072,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 151,
+          "usable_tib": 29836.63669248,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 152,
+          "usable_tib": 30034.23031296,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 153,
+          "usable_tib": 30231.82393344,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 154,
+          "usable_tib": 30429.41755392,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 155,
+          "usable_tib": 30627.0111744,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 156,
+          "usable_tib": 30824.60479488,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 157,
+          "usable_tib": 31022.19841536,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 158,
+          "usable_tib": 31219.792035839997,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 159,
+          "usable_tib": 31417.38565632,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 160,
+          "usable_tib": 31614.979276799997,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 161,
+          "usable_tib": 31812.57289728,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 162,
+          "usable_tib": 32010.166517759997,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 163,
+          "usable_tib": 32207.76013824,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 164,
+          "usable_tib": 32405.353758719997,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 165,
+          "usable_tib": 32602.947379200003,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 166,
+          "usable_tib": 32800.54099968,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 167,
+          "usable_tib": 32998.13462016,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 168,
+          "usable_tib": 33195.728240640005,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 169,
+          "usable_tib": 33393.321861120006,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 170,
+          "usable_tib": 33590.9154816,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 171,
+          "usable_tib": 33788.50910208,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 172,
+          "usable_tib": 33986.102722560005,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 173,
+          "usable_tib": 34183.69634304,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 174,
+          "usable_tib": 34381.28996352,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 175,
+          "usable_tib": 34578.883584,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 176,
+          "usable_tib": 34776.477204480005,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 177,
+          "usable_tib": 34974.07082496,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 178,
+          "usable_tib": 35171.66444544,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 179,
+          "usable_tib": 35369.25806592,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 180,
+          "usable_tib": 35566.8516864,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 181,
+          "usable_tib": 35764.44530688,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 182,
+          "usable_tib": 35962.03892736,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 183,
+          "usable_tib": 36159.63254784,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 184,
+          "usable_tib": 36357.22616832,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 185,
+          "usable_tib": 36554.8197888,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 186,
+          "usable_tib": 36752.41340928,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 187,
+          "usable_tib": 36950.00702976,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 188,
+          "usable_tib": 37147.60065024,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 189,
+          "usable_tib": 37345.19427072,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 190,
+          "usable_tib": 37542.7878912,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 191,
+          "usable_tib": 37740.381511679996,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 192,
+          "usable_tib": 37937.97513216,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 193,
+          "usable_tib": 38135.56875264,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 194,
+          "usable_tib": 38333.16237312,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 195,
+          "usable_tib": 38530.755993599996,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 196,
+          "usable_tib": 38728.34961408,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 197,
+          "usable_tib": 38925.94323456,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 198,
+          "usable_tib": 39123.536855039994,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 199,
+          "usable_tib": 39321.130475519996,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 200,
+          "usable_tib": 39518.724096,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 201,
+          "usable_tib": 39716.31771648,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 202,
+          "usable_tib": 39913.91133696,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 203,
+          "usable_tib": 40111.50495744,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 204,
+          "usable_tib": 40309.098577920005,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 205,
+          "usable_tib": 40506.6921984,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 206,
+          "usable_tib": 40704.28581888,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 207,
+          "usable_tib": 40901.879439360004,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 208,
+          "usable_tib": 41099.473059840006,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 209,
+          "usable_tib": 41297.06668032,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 210,
+          "usable_tib": 41494.6603008,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 211,
+          "usable_tib": 41692.253921280004,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 212,
+          "usable_tib": 41889.84754176,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 213,
+          "usable_tib": 42087.44116224,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 214,
+          "usable_tib": 42285.03478272,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 215,
+          "usable_tib": 42482.628403200004,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 216,
+          "usable_tib": 42680.22202368,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 217,
+          "usable_tib": 42877.81564416,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 218,
+          "usable_tib": 43075.40926464,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 219,
+          "usable_tib": 43273.002885120004,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 220,
+          "usable_tib": 43470.5965056,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 221,
+          "usable_tib": 43668.19012608,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 222,
+          "usable_tib": 43865.78374656,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 223,
+          "usable_tib": 44063.37736704,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 224,
+          "usable_tib": 44260.97098752,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 225,
+          "usable_tib": 44458.564608,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 226,
+          "usable_tib": 44656.15822848,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 227,
+          "usable_tib": 44853.75184896,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 228,
+          "usable_tib": 45051.34546944,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 229,
+          "usable_tib": 45248.93908992,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 230,
+          "usable_tib": 45446.532710399995,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 231,
+          "usable_tib": 45644.12633088,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 232,
+          "usable_tib": 45841.71995136,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 233,
+          "usable_tib": 46039.31357184,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 234,
+          "usable_tib": 46236.907192319995,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 235,
+          "usable_tib": 46434.5008128,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 236,
+          "usable_tib": 46632.09443328,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 237,
+          "usable_tib": 46829.68805376,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 238,
+          "usable_tib": 47027.28167424,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 239,
+          "usable_tib": 47224.875294720005,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 240,
+          "usable_tib": 47422.46891520001,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 241,
+          "usable_tib": 47620.06253568,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 242,
+          "usable_tib": 47817.65615616,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 243,
+          "usable_tib": 48015.249776640005,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 244,
+          "usable_tib": 48212.84339712001,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 245,
+          "usable_tib": 48410.4370176,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 246,
+          "usable_tib": 48608.03063808,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 247,
+          "usable_tib": 48805.624258560005,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 248,
+          "usable_tib": 49003.21787904,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 249,
+          "usable_tib": 49200.81149952,
+          "raw_per_ebox_tib": 223.39584
+      },
+      {
+          "ebox_count": 250,
+          "usable_tib": 49398.40512,
+          "raw_per_ebox_tib": 223.39584
+      }
   ],
   61.44: [
-    {
-      "ebox_count": 11,
-      "usable_tib": 3126.36893184
-    },
-    {
-      "ebox_count": 12,
-      "usable_tib": 3487.99094784
-    },
-    {
-      "ebox_count": 13,
-      "usable_tib": 3848.7919841279995
-    },
-    {
-      "ebox_count": 14,
-      "usable_tib": 4208.3420037119995
-    },
-    {
-      "ebox_count": 15,
-      "usable_tib": 4567.57926912
-    },
-    {
-      "ebox_count": 16,
-      "usable_tib": 4925.878272
-    },
-    {
-      "ebox_count": 17,
-      "usable_tib": 5284.255463424
-    },
-    {
-      "ebox_count": 18,
-      "usable_tib": 5642.241712128
-    },
-    {
-      "ebox_count": 19,
-      "usable_tib": 5999.524263935999
-    },
-    {
-      "ebox_count": 20,
-      "usable_tib": 6357.510512639999
-    },
-    {
-      "ebox_count": 21,
-      "usable_tib": 6713.972084736
-    },
-    {
-      "ebox_count": 22,
-      "usable_tib": 7071.528296448
-    },
-    {
-      "ebox_count": 23,
-      "usable_tib": 7428.028962816001
-    },
-    {
-      "ebox_count": 24,
-      "usable_tib": 7784.764194815999
-    },
-    {
-      "ebox_count": 25,
-      "usable_tib": 8141.382143999999
-    },
-    {
-      "ebox_count": 26,
-      "usable_tib": 8497.53096192
-    },
-    {
-      "ebox_count": 27,
-      "usable_tib": 8853.914345472
-    },
-    {
-      "ebox_count": 28,
-      "usable_tib": 9210.297729024
-    },
-    {
-      "ebox_count": 29,
-      "usable_tib": 9566.446546944
-    },
-    {
-      "ebox_count": 30,
-      "usable_tib": 9922.1262336
-    },
-    {
-      "ebox_count": 31,
-      "usable_tib": 10278.314145792
-    },
-    {
-      "ebox_count": 32,
-      "usable_tib": 10634.893000704
-    },
-    {
-      "ebox_count": 33,
-      "usable_tib": 10990.455404544002
-    },
-    {
-      "ebox_count": 34,
-      "usable_tib": 11346.095996928001
-    },
-    {
-      "ebox_count": 35,
-      "usable_tib": 11703.065794560001
-    },
-    {
-      "ebox_count": 36,
-      "usable_tib": 12058.550009856
-    },
-    {
-      "ebox_count": 37,
-      "usable_tib": 12413.760565248
-    },
-    {
-      "ebox_count": 38,
-      "usable_tib": 12770.065760256
-    },
-    {
-      "ebox_count": 39,
-      "usable_tib": 13125.940918272
-    },
-    {
-      "ebox_count": 40,
-      "usable_tib": 13481.268756480002
-    },
-    {
-      "ebox_count": 41,
-      "usable_tib": 13837.534857215998
-    },
-    {
-      "ebox_count": 42,
-      "usable_tib": 14193.097261056
-    },
-    {
-      "ebox_count": 43,
-      "usable_tib": 14547.838685184
-    },
-    {
-      "ebox_count": 44,
-      "usable_tib": 14903.361994752
-    },
-    {
-      "ebox_count": 45,
-      "usable_tib": 15259.66718976
-    },
-    {
-      "ebox_count": 46,
-      "usable_tib": 15614.955933696
-    },
-    {
-      "ebox_count": 47,
-      "usable_tib": 15970.948374528
-    },
-    {
-      "ebox_count": 48,
-      "usable_tib": 16325.7679872
-    },
-    {
-      "ebox_count": 49,
-      "usable_tib": 16681.213108224
-    },
-    {
-      "ebox_count": 50,
-      "usable_tib": 17037.2837376
-    },
-    {
-      "ebox_count": 51,
-      "usable_tib": 17393.979875328
-    },
-    {
-      "ebox_count": 52,
-      "usable_tib": 17749.268619264
-    },
-    {
-      "ebox_count": 53,
-      "usable_tib": 18105.104683008
-    },
-    {
-      "ebox_count": 54,
-      "usable_tib": 18459.376975872
-    },
-    {
-      "ebox_count": 55,
-      "usable_tib": 18814.1184
-    },
-    {
-      "ebox_count": 56,
-      "usable_tib": 19171.518234624
-    },
-    {
-      "ebox_count": 57,
-      "usable_tib": 19527.237015552
-    },
-    {
-      "ebox_count": 58,
-      "usable_tib": 19881.157459968
-    },
-    {
-      "ebox_count": 59,
-      "usable_tib": 20237.775409152
-    },
-    {
-      "ebox_count": 60,
-      "usable_tib": 20592.51683328
-    },
-    {
-      "ebox_count": 61,
-      "usable_tib": 20947.649200128
-    },
-    {
-      "ebox_count": 62,
-      "usable_tib": 21303.172509696
-    },
-    {
-      "ebox_count": 63,
-      "usable_tib": 21659.086761984003
-    },
-    {
-      "ebox_count": 64,
-      "usable_tib": 22015.391956992
-    },
-    {
-      "ebox_count": 65,
-      "usable_tib": 22369.54696704
-    },
-    {
-      "ebox_count": 66,
-      "usable_tib": 22724.014731264
-    },
-    {
-      "ebox_count": 67,
-      "usable_tib": 23081.414565888
-    },
-    {
-      "ebox_count": 68,
-      "usable_tib": 23436.546932736
-    },
-    {
-      "ebox_count": 69,
-      "usable_tib": 23791.99205376
-    },
-    {
-      "ebox_count": 70,
-      "usable_tib": 24147.749928960002
-    },
-    {
-      "ebox_count": 71,
-      "usable_tib": 24501.044865024
-    },
-    {
-      "ebox_count": 72,
-      "usable_tib": 24857.389154303997
-    },
-    {
-      "ebox_count": 73,
-      "usable_tib": 25214.046197760003
-    },
-    {
-      "ebox_count": 74,
-      "usable_tib": 25568.123019264
-    },
-    {
-      "ebox_count": 75,
-      "usable_tib": 25922.4344064
-    },
-    {
-      "ebox_count": 76,
-      "usable_tib": 26279.951523839998
-    },
-    {
-      "ebox_count": 77,
-      "usable_tib": 26625.74035968
-    },
-    {
-      "ebox_count": 78,
-      "usable_tib": 26971.529195519997
-    },
-    {
-      "ebox_count": 79,
-      "usable_tib": 27317.31803136
-    },
-    {
-      "ebox_count": 80,
-      "usable_tib": 27663.1068672
-    },
-    {
-      "ebox_count": 81,
-      "usable_tib": 28008.895703039998
-    },
-    {
-      "ebox_count": 82,
-      "usable_tib": 28354.68453888
-    },
-    {
-      "ebox_count": 83,
-      "usable_tib": 28700.47337472
-    },
-    {
-      "ebox_count": 84,
-      "usable_tib": 29046.262210560002
-    },
-    {
-      "ebox_count": 85,
-      "usable_tib": 29392.0510464
-    },
-    {
-      "ebox_count": 86,
-      "usable_tib": 29737.83988224
-    },
-    {
-      "ebox_count": 87,
-      "usable_tib": 30083.62871808
-    },
-    {
-      "ebox_count": 88,
-      "usable_tib": 30429.41755392
-    },
-    {
-      "ebox_count": 89,
-      "usable_tib": 30775.206389760002
-    },
-    {
-      "ebox_count": 90,
-      "usable_tib": 31120.995225600003
-    },
-    {
-      "ebox_count": 91,
-      "usable_tib": 31466.784061440005
-    },
-    {
-      "ebox_count": 92,
-      "usable_tib": 31812.57289728
-    },
-    {
-      "ebox_count": 93,
-      "usable_tib": 32158.36173312
-    },
-    {
-      "ebox_count": 94,
-      "usable_tib": 32504.15056896
-    },
-    {
-      "ebox_count": 95,
-      "usable_tib": 32849.9394048
-    },
-    {
-      "ebox_count": 96,
-      "usable_tib": 33195.72824064
-    },
-    {
-      "ebox_count": 97,
-      "usable_tib": 33541.51707648
-    },
-    {
-      "ebox_count": 98,
-      "usable_tib": 33887.30591232
-    },
-    {
-      "ebox_count": 99,
-      "usable_tib": 34233.09474816
-    },
-    {
-      "ebox_count": 100,
-      "usable_tib": 34578.883584
-    },
-    {
-      "ebox_count": 101,
-      "usable_tib": 34924.67241984
-    },
-    {
-      "ebox_count": 102,
-      "usable_tib": 35270.46125568
-    },
-    {
-      "ebox_count": 103,
-      "usable_tib": 35616.25009152
-    },
-    {
-      "ebox_count": 104,
-      "usable_tib": 35962.03892736
-    },
-    {
-      "ebox_count": 105,
-      "usable_tib": 36307.8277632
-    },
-    {
-      "ebox_count": 106,
-      "usable_tib": 36653.61659904
-    },
-    {
-      "ebox_count": 107,
-      "usable_tib": 36999.40543488
-    },
-    {
-      "ebox_count": 108,
-      "usable_tib": 37345.19427072
-    },
-    {
-      "ebox_count": 109,
-      "usable_tib": 37690.98310656
-    },
-    {
-      "ebox_count": 110,
-      "usable_tib": 38036.7719424
-    },
-    {
-      "ebox_count": 111,
-      "usable_tib": 38382.56077824
-    },
-    {
-      "ebox_count": 112,
-      "usable_tib": 38728.34961408
-    },
-    {
-      "ebox_count": 113,
-      "usable_tib": 39074.13844992
-    },
-    {
-      "ebox_count": 114,
-      "usable_tib": 39419.92728576
-    },
-    {
-      "ebox_count": 115,
-      "usable_tib": 39765.7161216
-    },
-    {
-      "ebox_count": 116,
-      "usable_tib": 40111.504957439996
-    },
-    {
-      "ebox_count": 117,
-      "usable_tib": 40457.29379328
-    },
-    {
-      "ebox_count": 118,
-      "usable_tib": 40803.08262912
-    },
-    {
-      "ebox_count": 119,
-      "usable_tib": 41148.87146496
-    },
-    {
-      "ebox_count": 120,
-      "usable_tib": 41494.6603008
-    },
-    {
-      "ebox_count": 121,
-      "usable_tib": 41840.449136639996
-    },
-    {
-      "ebox_count": 122,
-      "usable_tib": 42186.23797248
-    },
-    {
-      "ebox_count": 123,
-      "usable_tib": 42532.02680832
-    },
-    {
-      "ebox_count": 124,
-      "usable_tib": 42877.81564416
-    },
-    {
-      "ebox_count": 125,
-      "usable_tib": 43223.60448
-    },
-    {
-      "ebox_count": 126,
-      "usable_tib": 43569.393315839996
-    },
-    {
-      "ebox_count": 127,
-      "usable_tib": 43915.18215168
-    },
-    {
-      "ebox_count": 128,
-      "usable_tib": 44260.97098752
-    },
-    {
-      "ebox_count": 129,
-      "usable_tib": 44606.75982336
-    },
-    {
-      "ebox_count": 130,
-      "usable_tib": 44952.5486592
-    },
-    {
-      "ebox_count": 131,
-      "usable_tib": 45298.337495039996
-    },
-    {
-      "ebox_count": 132,
-      "usable_tib": 45644.12633088
-    },
-    {
-      "ebox_count": 133,
-      "usable_tib": 45989.91516672
-    },
-    {
-      "ebox_count": 134,
-      "usable_tib": 46335.70400256
-    },
-    {
-      "ebox_count": 135,
-      "usable_tib": 46681.4928384
-    },
-    {
-      "ebox_count": 136,
-      "usable_tib": 47027.281674239995
-    },
-    {
-      "ebox_count": 137,
-      "usable_tib": 47373.07051008
-    },
-    {
-      "ebox_count": 138,
-      "usable_tib": 47718.85934592
-    },
-    {
-      "ebox_count": 139,
-      "usable_tib": 48064.64818176
-    },
-    {
-      "ebox_count": 140,
-      "usable_tib": 48410.4370176
-    },
-    {
-      "ebox_count": 141,
-      "usable_tib": 48756.225853439995
-    },
-    {
-      "ebox_count": 142,
-      "usable_tib": 49102.01468928
-    },
-    {
-      "ebox_count": 143,
-      "usable_tib": 49447.80352512
-    },
-    {
-      "ebox_count": 144,
-      "usable_tib": 49793.59236096
-    },
-    {
-      "ebox_count": 145,
-      "usable_tib": 50139.3811968
-    },
-    {
-      "ebox_count": 146,
-      "usable_tib": 50485.170032639995
-    },
-    {
-      "ebox_count": 147,
-      "usable_tib": 50830.95886848
-    },
-    {
-      "ebox_count": 148,
-      "usable_tib": 51176.74770432
-    },
-    {
-      "ebox_count": 149,
-      "usable_tib": 51522.53654016
-    },
-    {
-      "ebox_count": 150,
-      "usable_tib": 51868.325376
-    },
-    {
-      "ebox_count": 151,
-      "usable_tib": 52214.114211839995
-    },
-    {
-      "ebox_count": 152,
-      "usable_tib": 52559.903047679996
-    },
-    {
-      "ebox_count": 153,
-      "usable_tib": 52905.69188352
-    },
-    {
-      "ebox_count": 154,
-      "usable_tib": 53251.48071936
-    },
-    {
-      "ebox_count": 155,
-      "usable_tib": 53597.2695552
-    },
-    {
-      "ebox_count": 156,
-      "usable_tib": 53943.058391039995
-    },
-    {
-      "ebox_count": 157,
-      "usable_tib": 54288.847226879996
-    },
-    {
-      "ebox_count": 158,
-      "usable_tib": 54634.63606272
-    },
-    {
-      "ebox_count": 159,
-      "usable_tib": 54980.42489856
-    },
-    {
-      "ebox_count": 160,
-      "usable_tib": 55326.2137344
-    },
-    {
-      "ebox_count": 161,
-      "usable_tib": 55672.002570239994
-    },
-    {
-      "ebox_count": 162,
-      "usable_tib": 56017.791406079996
-    },
-    {
-      "ebox_count": 163,
-      "usable_tib": 56363.58024192
-    },
-    {
-      "ebox_count": 164,
-      "usable_tib": 56709.36907776
-    },
-    {
-      "ebox_count": 165,
-      "usable_tib": 57055.1579136
-    },
-    {
-      "ebox_count": 166,
-      "usable_tib": 57400.94674944
-    },
-    {
-      "ebox_count": 167,
-      "usable_tib": 57746.73558528
-    },
-    {
-      "ebox_count": 168,
-      "usable_tib": 58092.524421120004
-    },
-    {
-      "ebox_count": 169,
-      "usable_tib": 58438.313256960006
-    },
-    {
-      "ebox_count": 170,
-      "usable_tib": 58784.1020928
-    },
-    {
-      "ebox_count": 171,
-      "usable_tib": 59129.89092864
-    },
-    {
-      "ebox_count": 172,
-      "usable_tib": 59475.67976448
-    },
-    {
-      "ebox_count": 173,
-      "usable_tib": 59821.468600320004
-    },
-    {
-      "ebox_count": 174,
-      "usable_tib": 60167.25743616
-    },
-    {
-      "ebox_count": 175,
-      "usable_tib": 60513.04627200001
-    },
-    {
-      "ebox_count": 176,
-      "usable_tib": 60858.83510784
-    },
-    {
-      "ebox_count": 177,
-      "usable_tib": 61204.62394368001
-    },
-    {
-      "ebox_count": 178,
-      "usable_tib": 61550.412779520004
-    },
-    {
-      "ebox_count": 179,
-      "usable_tib": 61896.20161536
-    },
-    {
-      "ebox_count": 180,
-      "usable_tib": 62241.99045120001
-    },
-    {
-      "ebox_count": 181,
-      "usable_tib": 62587.77928704
-    },
-    {
-      "ebox_count": 182,
-      "usable_tib": 62933.56812288001
-    },
-    {
-      "ebox_count": 183,
-      "usable_tib": 63279.35695872
-    },
-    {
-      "ebox_count": 184,
-      "usable_tib": 63625.14579456
-    },
-    {
-      "ebox_count": 185,
-      "usable_tib": 63970.93463040001
-    },
-    {
-      "ebox_count": 186,
-      "usable_tib": 64316.72346624
-    },
-    {
-      "ebox_count": 187,
-      "usable_tib": 64662.51230208001
-    },
-    {
-      "ebox_count": 188,
-      "usable_tib": 65008.30113792
-    },
-    {
-      "ebox_count": 189,
-      "usable_tib": 65354.08997376
-    },
-    {
-      "ebox_count": 190,
-      "usable_tib": 65699.8788096
-    },
-    {
-      "ebox_count": 191,
-      "usable_tib": 66045.66764544
-    },
-    {
-      "ebox_count": 192,
-      "usable_tib": 66391.45648128
-    },
-    {
-      "ebox_count": 193,
-      "usable_tib": 66737.24531712
-    },
-    {
-      "ebox_count": 194,
-      "usable_tib": 67083.03415296
-    },
-    {
-      "ebox_count": 195,
-      "usable_tib": 67428.8229888
-    },
-    {
-      "ebox_count": 196,
-      "usable_tib": 67774.61182464
-    },
-    {
-      "ebox_count": 197,
-      "usable_tib": 68120.40066048
-    },
-    {
-      "ebox_count": 198,
-      "usable_tib": 68466.18949632
-    },
-    {
-      "ebox_count": 199,
-      "usable_tib": 68811.97833216
-    },
-    {
-      "ebox_count": 200,
-      "usable_tib": 69157.767168
-    },
-    {
-      "ebox_count": 201,
-      "usable_tib": 69503.55600384
-    },
-    {
-      "ebox_count": 202,
-      "usable_tib": 69849.34483968
-    },
-    {
-      "ebox_count": 203,
-      "usable_tib": 70195.13367552
-    },
-    {
-      "ebox_count": 204,
-      "usable_tib": 70540.92251136
-    },
-    {
-      "ebox_count": 205,
-      "usable_tib": 70886.7113472
-    },
-    {
-      "ebox_count": 206,
-      "usable_tib": 71232.50018304
-    },
-    {
-      "ebox_count": 207,
-      "usable_tib": 71578.28901888
-    },
-    {
-      "ebox_count": 208,
-      "usable_tib": 71924.07785472
-    },
-    {
-      "ebox_count": 209,
-      "usable_tib": 72269.86669056
-    },
-    {
-      "ebox_count": 210,
-      "usable_tib": 72615.6555264
-    },
-    {
-      "ebox_count": 211,
-      "usable_tib": 72961.44436224
-    },
-    {
-      "ebox_count": 212,
-      "usable_tib": 73307.23319808
-    },
-    {
-      "ebox_count": 213,
-      "usable_tib": 73653.02203392
-    },
-    {
-      "ebox_count": 214,
-      "usable_tib": 73998.81086976
-    },
-    {
-      "ebox_count": 215,
-      "usable_tib": 74344.5997056
-    },
-    {
-      "ebox_count": 216,
-      "usable_tib": 74690.38854144
-    },
-    {
-      "ebox_count": 217,
-      "usable_tib": 75036.17737728
-    },
-    {
-      "ebox_count": 218,
-      "usable_tib": 75381.96621312
-    },
-    {
-      "ebox_count": 219,
-      "usable_tib": 75727.75504896
-    },
-    {
-      "ebox_count": 220,
-      "usable_tib": 76073.5438848
-    },
-    {
-      "ebox_count": 221,
-      "usable_tib": 76419.33272064
-    },
-    {
-      "ebox_count": 222,
-      "usable_tib": 76765.12155648
-    },
-    {
-      "ebox_count": 223,
-      "usable_tib": 77110.91039232
-    },
-    {
-      "ebox_count": 224,
-      "usable_tib": 77456.69922816
-    },
-    {
-      "ebox_count": 225,
-      "usable_tib": 77802.488064
-    },
-    {
-      "ebox_count": 226,
-      "usable_tib": 78148.27689984
-    },
-    {
-      "ebox_count": 227,
-      "usable_tib": 78494.06573568
-    },
-    {
-      "ebox_count": 228,
-      "usable_tib": 78839.85457152
-    },
-    {
-      "ebox_count": 229,
-      "usable_tib": 79185.64340736
-    },
-    {
-      "ebox_count": 230,
-      "usable_tib": 79531.4322432
-    },
-    {
-      "ebox_count": 231,
-      "usable_tib": 79877.22107904
-    },
-    {
-      "ebox_count": 232,
-      "usable_tib": 80223.00991487999
-    },
-    {
-      "ebox_count": 233,
-      "usable_tib": 80568.79875072
-    },
-    {
-      "ebox_count": 234,
-      "usable_tib": 80914.58758656
-    },
-    {
-      "ebox_count": 235,
-      "usable_tib": 81260.3764224
-    },
-    {
-      "ebox_count": 236,
-      "usable_tib": 81606.16525824
-    },
-    {
-      "ebox_count": 237,
-      "usable_tib": 81951.95409407999
-    },
-    {
-      "ebox_count": 238,
-      "usable_tib": 82297.74292992
-    },
-    {
-      "ebox_count": 239,
-      "usable_tib": 82643.53176576
-    },
-    {
-      "ebox_count": 240,
-      "usable_tib": 82989.3206016
-    },
-    {
-      "ebox_count": 241,
-      "usable_tib": 83335.10943744
-    },
-    {
-      "ebox_count": 242,
-      "usable_tib": 83680.89827327999
-    },
-    {
-      "ebox_count": 243,
-      "usable_tib": 84026.68710912
-    },
-    {
-      "ebox_count": 244,
-      "usable_tib": 84372.47594496
-    },
-    {
-      "ebox_count": 245,
-      "usable_tib": 84718.2647808
-    },
-    {
-      "ebox_count": 246,
-      "usable_tib": 85064.05361664
-    },
-    {
-      "ebox_count": 247,
-      "usable_tib": 85409.84245247999
-    },
-    {
-      "ebox_count": 248,
-      "usable_tib": 85755.63128832
-    },
-    {
-      "ebox_count": 249,
-      "usable_tib": 86101.42012416
-    },
-    {
-      "ebox_count": 250,
-      "usable_tib": 86447.20896
-    }
+      {
+          "ebox_count": 11,
+          "usable_tib": 3126.36893184,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 12,
+          "usable_tib": 3487.99094784,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 13,
+          "usable_tib": 3848.7919841279995,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 14,
+          "usable_tib": 4208.3420037119995,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 15,
+          "usable_tib": 4567.57926912,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 16,
+          "usable_tib": 4925.878272,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 17,
+          "usable_tib": 5284.255463424,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 18,
+          "usable_tib": 5642.241712128,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 19,
+          "usable_tib": 5999.524263935999,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 20,
+          "usable_tib": 6357.510512639999,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 21,
+          "usable_tib": 6713.972084736,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 22,
+          "usable_tib": 7071.528296448,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 23,
+          "usable_tib": 7428.028962816001,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 24,
+          "usable_tib": 7784.764194815999,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 25,
+          "usable_tib": 8141.382143999999,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 26,
+          "usable_tib": 8497.53096192,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 27,
+          "usable_tib": 8853.914345472,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 28,
+          "usable_tib": 9210.297729024,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 29,
+          "usable_tib": 9566.446546944,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 30,
+          "usable_tib": 9922.1262336,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 31,
+          "usable_tib": 10278.314145792,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 32,
+          "usable_tib": 10634.893000704,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 33,
+          "usable_tib": 10990.455404544002,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 34,
+          "usable_tib": 11346.095996928001,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 35,
+          "usable_tib": 11703.065794560001,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 36,
+          "usable_tib": 12058.550009856,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 37,
+          "usable_tib": 12413.760565248,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 38,
+          "usable_tib": 12770.065760256,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 39,
+          "usable_tib": 13125.940918272,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 40,
+          "usable_tib": 13481.268756480002,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 41,
+          "usable_tib": 13837.534857215998,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 42,
+          "usable_tib": 14193.097261056,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 43,
+          "usable_tib": 14547.838685184,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 44,
+          "usable_tib": 14903.361994752,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 45,
+          "usable_tib": 15259.66718976,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 46,
+          "usable_tib": 15614.955933696,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 47,
+          "usable_tib": 15970.948374528,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 48,
+          "usable_tib": 16325.7679872,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 49,
+          "usable_tib": 16681.213108224,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 50,
+          "usable_tib": 17037.2837376,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 51,
+          "usable_tib": 17393.979875328,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 52,
+          "usable_tib": 17749.268619264,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 53,
+          "usable_tib": 18105.104683008,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 54,
+          "usable_tib": 18459.376975872,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 55,
+          "usable_tib": 18814.1184,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 56,
+          "usable_tib": 19171.518234624,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 57,
+          "usable_tib": 19527.237015552,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 58,
+          "usable_tib": 19881.157459968,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 59,
+          "usable_tib": 20237.775409152,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 60,
+          "usable_tib": 20592.51683328,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 61,
+          "usable_tib": 20947.649200128,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 62,
+          "usable_tib": 21303.172509696,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 63,
+          "usable_tib": 21659.086761984003,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 64,
+          "usable_tib": 22015.391956992,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 65,
+          "usable_tib": 22369.54696704,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 66,
+          "usable_tib": 22724.014731264,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 67,
+          "usable_tib": 23081.414565888,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 68,
+          "usable_tib": 23436.546932736,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 69,
+          "usable_tib": 23791.99205376,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 70,
+          "usable_tib": 24147.749928960002,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 71,
+          "usable_tib": 24501.044865024,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 72,
+          "usable_tib": 24857.389154303997,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 73,
+          "usable_tib": 25214.046197760003,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 74,
+          "usable_tib": 25568.123019264,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 75,
+          "usable_tib": 25922.4344064,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 76,
+          "usable_tib": 26279.951523839998,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 77,
+          "usable_tib": 26625.74035968,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 78,
+          "usable_tib": 26971.529195519997,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 79,
+          "usable_tib": 27317.31803136,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 80,
+          "usable_tib": 27663.1068672,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 81,
+          "usable_tib": 28008.895703039998,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 82,
+          "usable_tib": 28354.68453888,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 83,
+          "usable_tib": 28700.47337472,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 84,
+          "usable_tib": 29046.262210560002,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 85,
+          "usable_tib": 29392.0510464,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 86,
+          "usable_tib": 29737.83988224,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 87,
+          "usable_tib": 30083.62871808,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 88,
+          "usable_tib": 30429.41755392,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 89,
+          "usable_tib": 30775.206389760002,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 90,
+          "usable_tib": 31120.995225600003,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 91,
+          "usable_tib": 31466.784061440005,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 92,
+          "usable_tib": 31812.57289728,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 93,
+          "usable_tib": 32158.36173312,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 94,
+          "usable_tib": 32504.15056896,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 95,
+          "usable_tib": 32849.9394048,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 96,
+          "usable_tib": 33195.72824064,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 97,
+          "usable_tib": 33541.51707648,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 98,
+          "usable_tib": 33887.30591232,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 99,
+          "usable_tib": 34233.09474816,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 100,
+          "usable_tib": 34578.883584,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 101,
+          "usable_tib": 34924.67241984,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 102,
+          "usable_tib": 35270.46125568,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 103,
+          "usable_tib": 35616.25009152,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 104,
+          "usable_tib": 35962.03892736,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 105,
+          "usable_tib": 36307.8277632,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 106,
+          "usable_tib": 36653.61659904,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 107,
+          "usable_tib": 36999.40543488,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 108,
+          "usable_tib": 37345.19427072,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 109,
+          "usable_tib": 37690.98310656,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 110,
+          "usable_tib": 38036.7719424,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 111,
+          "usable_tib": 38382.56077824,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 112,
+          "usable_tib": 38728.34961408,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 113,
+          "usable_tib": 39074.13844992,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 114,
+          "usable_tib": 39419.92728576,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 115,
+          "usable_tib": 39765.7161216,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 116,
+          "usable_tib": 40111.504957439996,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 117,
+          "usable_tib": 40457.29379328,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 118,
+          "usable_tib": 40803.08262912,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 119,
+          "usable_tib": 41148.87146496,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 120,
+          "usable_tib": 41494.6603008,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 121,
+          "usable_tib": 41840.449136639996,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 122,
+          "usable_tib": 42186.23797248,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 123,
+          "usable_tib": 42532.02680832,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 124,
+          "usable_tib": 42877.81564416,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 125,
+          "usable_tib": 43223.60448,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 126,
+          "usable_tib": 43569.393315839996,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 127,
+          "usable_tib": 43915.18215168,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 128,
+          "usable_tib": 44260.97098752,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 129,
+          "usable_tib": 44606.75982336,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 130,
+          "usable_tib": 44952.5486592,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 131,
+          "usable_tib": 45298.337495039996,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 132,
+          "usable_tib": 45644.12633088,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 133,
+          "usable_tib": 45989.91516672,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 134,
+          "usable_tib": 46335.70400256,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 135,
+          "usable_tib": 46681.4928384,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 136,
+          "usable_tib": 47027.281674239995,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 137,
+          "usable_tib": 47373.07051008,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 138,
+          "usable_tib": 47718.85934592,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 139,
+          "usable_tib": 48064.64818176,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 140,
+          "usable_tib": 48410.4370176,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 141,
+          "usable_tib": 48756.225853439995,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 142,
+          "usable_tib": 49102.01468928,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 143,
+          "usable_tib": 49447.80352512,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 144,
+          "usable_tib": 49793.59236096,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 145,
+          "usable_tib": 50139.3811968,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 146,
+          "usable_tib": 50485.170032639995,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 147,
+          "usable_tib": 50830.95886848,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 148,
+          "usable_tib": 51176.74770432,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 149,
+          "usable_tib": 51522.53654016,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 150,
+          "usable_tib": 51868.325376,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 151,
+          "usable_tib": 52214.114211839995,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 152,
+          "usable_tib": 52559.903047679996,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 153,
+          "usable_tib": 52905.69188352,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 154,
+          "usable_tib": 53251.48071936,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 155,
+          "usable_tib": 53597.2695552,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 156,
+          "usable_tib": 53943.058391039995,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 157,
+          "usable_tib": 54288.847226879996,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 158,
+          "usable_tib": 54634.63606272,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 159,
+          "usable_tib": 54980.42489856,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 160,
+          "usable_tib": 55326.2137344,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 161,
+          "usable_tib": 55672.002570239994,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 162,
+          "usable_tib": 56017.791406079996,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 163,
+          "usable_tib": 56363.58024192,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 164,
+          "usable_tib": 56709.36907776,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 165,
+          "usable_tib": 57055.1579136,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 166,
+          "usable_tib": 57400.94674944,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 167,
+          "usable_tib": 57746.73558528,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 168,
+          "usable_tib": 58092.524421120004,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 169,
+          "usable_tib": 58438.313256960006,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 170,
+          "usable_tib": 58784.1020928,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 171,
+          "usable_tib": 59129.89092864,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 172,
+          "usable_tib": 59475.67976448,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 173,
+          "usable_tib": 59821.468600320004,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 174,
+          "usable_tib": 60167.25743616,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 175,
+          "usable_tib": 60513.04627200001,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 176,
+          "usable_tib": 60858.83510784,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 177,
+          "usable_tib": 61204.62394368001,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 178,
+          "usable_tib": 61550.412779520004,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 179,
+          "usable_tib": 61896.20161536,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 180,
+          "usable_tib": 62241.99045120001,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 181,
+          "usable_tib": 62587.77928704,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 182,
+          "usable_tib": 62933.56812288001,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 183,
+          "usable_tib": 63279.35695872,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 184,
+          "usable_tib": 63625.14579456,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 185,
+          "usable_tib": 63970.93463040001,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 186,
+          "usable_tib": 64316.72346624,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 187,
+          "usable_tib": 64662.51230208001,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 188,
+          "usable_tib": 65008.30113792,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 189,
+          "usable_tib": 65354.08997376,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 190,
+          "usable_tib": 65699.8788096,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 191,
+          "usable_tib": 66045.66764544,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 192,
+          "usable_tib": 66391.45648128,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 193,
+          "usable_tib": 66737.24531712,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 194,
+          "usable_tib": 67083.03415296,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 195,
+          "usable_tib": 67428.8229888,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 196,
+          "usable_tib": 67774.61182464,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 197,
+          "usable_tib": 68120.40066048,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 198,
+          "usable_tib": 68466.18949632,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 199,
+          "usable_tib": 68811.97833216,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 200,
+          "usable_tib": 69157.767168,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 201,
+          "usable_tib": 69503.55600384,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 202,
+          "usable_tib": 69849.34483968,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 203,
+          "usable_tib": 70195.13367552,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 204,
+          "usable_tib": 70540.92251136,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 205,
+          "usable_tib": 70886.7113472,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 206,
+          "usable_tib": 71232.50018304,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 207,
+          "usable_tib": 71578.28901888,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 208,
+          "usable_tib": 71924.07785472,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 209,
+          "usable_tib": 72269.86669056,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 210,
+          "usable_tib": 72615.6555264,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 211,
+          "usable_tib": 72961.44436224,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 212,
+          "usable_tib": 73307.23319808,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 213,
+          "usable_tib": 73653.02203392,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 214,
+          "usable_tib": 73998.81086976,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 215,
+          "usable_tib": 74344.5997056,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 216,
+          "usable_tib": 74690.38854144,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 217,
+          "usable_tib": 75036.17737728,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 218,
+          "usable_tib": 75381.96621312,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 219,
+          "usable_tib": 75727.75504896,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 220,
+          "usable_tib": 76073.5438848,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 221,
+          "usable_tib": 76419.33272064,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 222,
+          "usable_tib": 76765.12155648,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 223,
+          "usable_tib": 77110.91039232,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 224,
+          "usable_tib": 77456.69922816,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 225,
+          "usable_tib": 77802.488064,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 226,
+          "usable_tib": 78148.27689984,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 227,
+          "usable_tib": 78494.06573568,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 228,
+          "usable_tib": 78839.85457152,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 229,
+          "usable_tib": 79185.64340736,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 230,
+          "usable_tib": 79531.4322432,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 231,
+          "usable_tib": 79877.22107904,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 232,
+          "usable_tib": 80223.00991487999,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 233,
+          "usable_tib": 80568.79875072,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 234,
+          "usable_tib": 80914.58758656,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 235,
+          "usable_tib": 81260.3764224,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 236,
+          "usable_tib": 81606.16525824,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 237,
+          "usable_tib": 81951.95409407999,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 238,
+          "usable_tib": 82297.74292992,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 239,
+          "usable_tib": 82643.53176576,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 240,
+          "usable_tib": 82989.3206016,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 241,
+          "usable_tib": 83335.10943744,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 242,
+          "usable_tib": 83680.89827327999,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 243,
+          "usable_tib": 84026.68710912,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 244,
+          "usable_tib": 84372.47594496,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 245,
+          "usable_tib": 84718.2647808,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 246,
+          "usable_tib": 85064.05361664,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 247,
+          "usable_tib": 85409.84245247999,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 248,
+          "usable_tib": 85755.63128832,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 249,
+          "usable_tib": 86101.42012416,
+          "raw_per_ebox_tib": 390.94272
+      },
+      {
+          "ebox_count": 250,
+          "usable_tib": 86447.20896,
+          "raw_per_ebox_tib": 390.94272
+      }
   ],
 };
 
-export const EBOX_PERFORMANCE_DATA: Array<{
-  ebox_count: number;
-  read_bw_gbs: number;
-  sustained_write_bw_gbs: number;
-  burst_write_bw_gbs: number;
-  read_iops_k: number;
-  write_iops_k: number;
-}> = [
+export const EBOX_PERFORMANCE_DATA: Array<{ ebox_count: number; read_bw_gbs: number; sustained_write_bw_gbs: number; burst_write_bw_gbs: number; read_iops_k: number; write_iops_k: number }> = 
+[
   {
     "ebox_count": 11,
     "read_bw_gbs": 231,

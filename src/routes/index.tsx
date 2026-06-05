@@ -15,6 +15,16 @@ type PlanResults = {
   'gpfs-ece'?: GPFSECEPlanResult
 }
 
+function convertTibToUnit(tib: number, unit: string): string {
+  switch (unit) {
+    case 'TiB': return tib.toFixed(2)
+    case 'PiB': return (tib / 1024).toFixed(2)
+    case 'TB': return (tib / 0.909).toFixed(2)
+    case 'PB': return (tib / 0.909 / 1000).toFixed(2)
+    default: return tib.toFixed(2)
+  }
+}
+
 function StorplanApp() {
   const [selectedStorages, setSelectedStorages] = useState<Set<string>>(new Set(['vastdata']))
   const [capacityValue, setCapacityValue] = useState('')
@@ -121,8 +131,7 @@ function StorplanApp() {
     const ec = getEcScheme(newCount)
     const newCapacityTiB = xeosCapacity(newCount, diskSize, ec.efficiency)
     setManualConfig(prev => ({ ...prev, xeos: { serverCount: newCount, diskSize, ecEfficiency: ec.efficiency } }))
-    setCapacityValue(newCapacityTiB.toFixed(2))
-    setCapacityUnit('TiB')
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleXeosDiskChange = (newDiskSize: number) => {
@@ -131,8 +140,7 @@ function StorplanApp() {
     const ec = getEcScheme(serverCount)
     const newCapacityTiB = xeosCapacity(serverCount, newDiskSize, ec.efficiency)
     setManualConfig(prev => ({ ...prev, xeos: { serverCount, diskSize: newDiskSize, ecEfficiency: ec.efficiency } }))
-    setCapacityValue(newCapacityTiB.toFixed(2))
-    setCapacityUnit('TiB')
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleXeosEcChange = (ecEfficiency: number) => {
@@ -140,8 +148,7 @@ function StorplanApp() {
     const { serverCount, diskSize } = results.xeos
     const newCapacityTiB = xeosCapacity(serverCount, diskSize, ecEfficiency)
     setManualConfig(prev => ({ ...prev, xeos: { serverCount, diskSize, ecEfficiency } }))
-    setCapacityValue(newCapacityTiB.toFixed(2))
-    setCapacityUnit('TiB')
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleVastDataEboxCountChange = (newCount: number) => {
@@ -149,8 +156,7 @@ function StorplanApp() {
     const { diskSize } = results.vastdata
     const newCapacityTiB = vastCapacity(newCount, diskSize)
     setManualConfig(prev => ({ ...prev, vastdata: { eboxCount: newCount, diskSize } }))
-    setCapacityValue(newCapacityTiB.toFixed(2))
-    setCapacityUnit('TiB')
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleVastDataDiskChange = (newDiskSize: number) => {
@@ -158,8 +164,7 @@ function StorplanApp() {
     const { eboxCount } = results.vastdata
     const newCapacityTiB = vastCapacity(eboxCount, newDiskSize)
     setManualConfig(prev => ({ ...prev, vastdata: { eboxCount, diskSize: newDiskSize } }))
-    setCapacityValue(newCapacityTiB.toFixed(2))
-    setCapacityUnit('TiB')
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleGpfsServerCountChange = (newCount: number) => {
@@ -168,8 +173,7 @@ function StorplanApp() {
     const ec = getGpfsEcScheme(newCount)
     const newCapacityTiB = gpfsCapacity(newCount, ssdSize, ec.efficiency)
     setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount: newCount, ssdSize, ecEfficiency: ec.efficiency } }))
-    setCapacityValue(newCapacityTiB.toFixed(2))
-    setCapacityUnit('TiB')
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleGpfsDiskChange = (newSsdSize: number) => {
@@ -178,8 +182,7 @@ function StorplanApp() {
     const ec = getGpfsEcScheme(serverCount)
     const newCapacityTiB = gpfsCapacity(serverCount, newSsdSize, ec.efficiency)
     setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize: newSsdSize, ecEfficiency: ec.efficiency } }))
-    setCapacityValue(newCapacityTiB.toFixed(2))
-    setCapacityUnit('TiB')
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleGpfsEcChange = (ecEfficiency: number) => {
@@ -187,8 +190,7 @@ function StorplanApp() {
     const { serverCount, ssdSize } = results['gpfs-ece']
     const newCapacityTiB = gpfsCapacity(serverCount, ssdSize, ecEfficiency)
     setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize, ecEfficiency } }))
-    setCapacityValue(newCapacityTiB.toFixed(2))
-    setCapacityUnit('TiB')
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   return (
@@ -413,7 +415,13 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onEcChange }: { d
               <dt className="text-gray-500">服务器台数</dt>
               <dd className="flex items-center gap-1">
                 <button onClick={() => onServerCountChange(data.serverCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.serverCount <= 3}>−</button>
-                <span className="min-w-[2rem] text-center">{data.serverCount}</span>
+                <input
+                  type="number"
+                  value={data.serverCount}
+                  onChange={(e) => onServerCountChange(Number(e.target.value))}
+                  min={3}
+                  className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                />
                 <button onClick={() => onServerCountChange(data.serverCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
                 <span className="ml-0.5">台</span>
               </dd>
@@ -525,7 +533,14 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
               <dt className="text-gray-500">EBox 数量</dt>
               <dd className="flex items-center gap-1">
                 <button onClick={() => onEboxCountChange(data.eboxCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.eboxCount <= 11}>−</button>
-                <span className="min-w-[2rem] text-center">{data.eboxCount}</span>
+                <input
+                  type="number"
+                  value={data.eboxCount}
+                  onChange={(e) => onEboxCountChange(Number(e.target.value))}
+                  min={11}
+                  max={250}
+                  className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                />
                 <button onClick={() => onEboxCountChange(data.eboxCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.eboxCount >= 250}>+</button>
                 <span className="ml-0.5">台</span>
               </dd>
@@ -612,7 +627,13 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange }: 
               <dt className="text-gray-500">服务器台数</dt>
               <dd className="flex items-center gap-1">
                 <button onClick={() => onServerCountChange(data.serverCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.serverCount <= 3}>−</button>
-                <span className="min-w-[2rem] text-center">{data.serverCount}</span>
+                <input
+                  type="number"
+                  value={data.serverCount}
+                  onChange={(e) => onServerCountChange(Number(e.target.value))}
+                  min={3}
+                  className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                />
                 <button onClick={() => onServerCountChange(data.serverCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
                 <span className="ml-0.5">台</span>
               </dd>

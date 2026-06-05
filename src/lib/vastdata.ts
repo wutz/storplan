@@ -4,6 +4,7 @@ import { EBOX_CAPACITY_DATA, EBOX_PERFORMANCE_DATA } from './vastdata-data';
 interface EboxCapacityEntry {
   ebox_count: number;
   usable_tib: number;
+  raw_per_ebox_tib: number;
 }
 
 interface EboxPerformanceEntry {
@@ -83,14 +84,12 @@ function calculateEboxConfig(eboxCount: number, diskConfig: typeof CONSTANTS.EBO
   const capEntry = capacityData.find((e: EboxCapacityEntry) => e.ebox_count === eboxCount);
   if (!capEntry) throw new Error(`No capacity data for ${eboxCount} EBox`);
 
-  const rawTB = eboxCount * diskConfig.rawPerEbox;
-
   return {
     eboxCount,
     diskSize: diskConfig.diskSize,
     diskConfig: diskConfig.label,
     actualCapacity: capEntry.usable_tib,
-    rawCapacity: rawTB * CONSTANTS.TB_TO_TIB,
+    rawCapacity: eboxCount * capEntry.raw_per_ebox_tib,
     performance: getPerformance(eboxCount),
   };
 }
@@ -102,13 +101,11 @@ export function buildVastDataResult(
   isBinary: boolean,
   bandwidthUnitType: string
 ): VastDataPlanResult {
-  const config = CONSTANTS.EBOX_CONFIGS.find(c => c.diskSize === diskSize)!;
   const capacityData = EBOX_CAPACITY_DATA[diskSize];
   if (!capacityData) throw new Error(`Unknown disk size: ${diskSize}`);
   const capEntry = capacityData.find((e: EboxCapacityEntry) => e.ebox_count === eboxCount);
   if (!capEntry) throw new Error(`No capacity data for ${eboxCount} EBox`);
 
-  const rawTB = eboxCount * config.rawPerEbox;
   const performance = getPerformance(eboxCount);
 
   return {
@@ -117,11 +114,11 @@ export function buildVastDataResult(
     diskSize,
     diskConfig,
     actualCapacity: capEntry.usable_tib,
-    rawCapacity: rawTB * CONSTANTS.TB_TO_TIB,
+    rawCapacity: eboxCount * capEntry.raw_per_ebox_tib,
     performance,
     formatted: {
       capacity: formatCapacity(capEntry.usable_tib, isBinary),
-      rawCapacity: formatCapacity(rawTB * CONSTANTS.TB_TO_TIB, isBinary),
+      rawCapacity: formatCapacity(eboxCount * capEntry.raw_per_ebox_tib, isBinary),
       readBandwidth: formatBandwidth(performance.readBandwidth, bandwidthUnitType),
       writeBandwidth: formatBandwidth(performance.writeBandwidth, bandwidthUnitType),
       burstWriteBandwidth: formatBandwidth(performance.burstWriteBandwidth, bandwidthUnitType),
