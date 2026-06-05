@@ -1,4 +1,19 @@
 import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth } from './utils';
+import { EBOX_CAPACITY_DATA, EBOX_PERFORMANCE_DATA } from './vastdata-data';
+
+interface EboxCapacityEntry {
+  ebox_count: number;
+  usable_tib: number;
+}
+
+interface EboxPerformanceEntry {
+  ebox_count: number;
+  read_bw_gbs: number;
+  sustained_write_bw_gbs: number;
+  burst_write_bw_gbs: number;
+  read_iops_k: number;
+  write_iops_k: number;
+}
 
 export interface VastDataPlanRequest {
   capacity: string;
@@ -40,35 +55,43 @@ export const CONSTANTS = {
     { diskSize: 30.72, label: '2×1.6TB SCM + 8×30.72TB NVMe', rawPerEbox: 245.76 },
     { diskSize: 61.44, label: '3×1.6TB SCM + 7×61.44TB NVMe', rawPerEbox: 430.08 },
   ] as { diskSize: number; label: string; rawPerEbox: number }[],
-  READ_BW_PER_EBOX: 21,
-  SUSTAINED_WRITE_BW_PER_EBOX: 2.6,
-  BURST_WRITE_BW_PER_EBOX: 10,
-  READ_IOPS_PER_EBOX: 180000,
-  WRITE_IOPS_PER_EBOX: 23750,
-  USABLE_RATIO: 0.728,
 };
 
-export function calculateCapacityTiB(eboxCount: number, rawPerEbox: number): number {
-  return eboxCount * rawPerEbox * CONSTANTS.TB_TO_TIB * CONSTANTS.USABLE_RATIO;
+export function calculateCapacityTiB(eboxCount: number, diskSize: number): number {
+  const data = EBOX_CAPACITY_DATA[diskSize];
+  if (!data) throw new Error(`Unknown disk size: ${diskSize}`);
+  const entry = data.find((e: EboxCapacityEntry) => e.ebox_count === eboxCount);
+  if (!entry) throw new Error(`No capacity data for ${eboxCount} EBox`);
+  return entry.usable_tib;
+}
+
+function getPerformance(eboxCount: number) {
+  const perf = EBOX_PERFORMANCE_DATA.find((p: EboxPerformanceEntry) => p.ebox_count === eboxCount);
+  if (!perf) throw new Error(`No performance data for ${eboxCount} EBox`);
+  return {
+    readBandwidth: perf.read_bw_gbs * 1000,
+    writeBandwidth: perf.sustained_write_bw_gbs * 1000,
+    burstWriteBandwidth: perf.burst_write_bw_gbs * 1000,
+    readIOPS: perf.read_iops_k * 1000,
+    writeIOPS: perf.write_iops_k * 1000,
+  };
 }
 
 function calculateEboxConfig(eboxCount: number, diskConfig: typeof CONSTANTS.EBOX_CONFIGS[0]) {
+  const capacityData = EBOX_CAPACITY_DATA[diskConfig.diskSize];
+  if (!capacityData) throw new Error(`Unknown disk size: ${diskConfig.diskSize}`);
+  const capEntry = capacityData.find((e: EboxCapacityEntry) => e.ebox_count === eboxCount);
+  if (!capEntry) throw new Error(`No capacity data for ${eboxCount} EBox`);
+
   const rawTB = eboxCount * diskConfig.rawPerEbox;
-  const usableTiB = rawTB * CONSTANTS.TB_TO_TIB * CONSTANTS.USABLE_RATIO;
 
   return {
     eboxCount,
     diskSize: diskConfig.diskSize,
     diskConfig: diskConfig.label,
-    actualCapacity: usableTiB,
+    actualCapacity: capEntry.usable_tib,
     rawCapacity: rawTB * CONSTANTS.TB_TO_TIB,
-    performance: {
-      readBandwidth: eboxCount * CONSTANTS.READ_BW_PER_EBOX * 1000, // MiB/s
-      writeBandwidth: eboxCount * CONSTANTS.SUSTAINED_WRITE_BW_PER_EBOX * 1000,
-      burstWriteBandwidth: eboxCount * CONSTANTS.BURST_WRITE_BW_PER_EBOX * 1000,
-      readIOPS: eboxCount * CONSTANTS.READ_IOPS_PER_EBOX,
-      writeIOPS: eboxCount * CONSTANTS.WRITE_IOPS_PER_EBOX,
-    },
+    performance: getPerformance(eboxCount),
   };
 }
 
@@ -80,30 +103,30 @@ export function buildVastDataResult(
   bandwidthUnitType: string
 ): VastDataPlanResult {
   const config = CONSTANTS.EBOX_CONFIGS.find(c => c.diskSize === diskSize)!;
+  const capacityData = EBOX_CAPACITY_DATA[diskSize];
+  if (!capacityData) throw new Error(`Unknown disk size: ${diskSize}`);
+  const capEntry = capacityData.find((e: EboxCapacityEntry) => e.ebox_count === eboxCount);
+  if (!capEntry) throw new Error(`No capacity data for ${eboxCount} EBox`);
+
   const rawTB = eboxCount * config.rawPerEbox;
-  const usableTiB = rawTB * CONSTANTS.TB_TO_TIB * CONSTANTS.USABLE_RATIO;
+  const performance = getPerformance(eboxCount);
+
   return {
     mode: 'ebox',
     eboxCount,
     diskSize,
     diskConfig,
-    actualCapacity: usableTiB,
+    actualCapacity: capEntry.usable_tib,
     rawCapacity: rawTB * CONSTANTS.TB_TO_TIB,
-    performance: {
-      readBandwidth: eboxCount * CONSTANTS.READ_BW_PER_EBOX * 1000,
-      writeBandwidth: eboxCount * CONSTANTS.SUSTAINED_WRITE_BW_PER_EBOX * 1000,
-      burstWriteBandwidth: eboxCount * CONSTANTS.BURST_WRITE_BW_PER_EBOX * 1000,
-      readIOPS: eboxCount * CONSTANTS.READ_IOPS_PER_EBOX,
-      writeIOPS: eboxCount * CONSTANTS.WRITE_IOPS_PER_EBOX,
-    },
+    performance,
     formatted: {
-      capacity: formatCapacity(usableTiB, isBinary),
+      capacity: formatCapacity(capEntry.usable_tib, isBinary),
       rawCapacity: formatCapacity(rawTB * CONSTANTS.TB_TO_TIB, isBinary),
-      readBandwidth: formatBandwidth(eboxCount * CONSTANTS.READ_BW_PER_EBOX * 1000, bandwidthUnitType),
-      writeBandwidth: formatBandwidth(eboxCount * CONSTANTS.SUSTAINED_WRITE_BW_PER_EBOX * 1000, bandwidthUnitType),
-      burstWriteBandwidth: formatBandwidth(eboxCount * CONSTANTS.BURST_WRITE_BW_PER_EBOX * 1000, bandwidthUnitType),
-      readIOPS: `${(eboxCount * CONSTANTS.READ_IOPS_PER_EBOX).toLocaleString()}`,
-      writeIOPS: `${(eboxCount * CONSTANTS.WRITE_IOPS_PER_EBOX).toLocaleString()}`,
+      readBandwidth: formatBandwidth(performance.readBandwidth, bandwidthUnitType),
+      writeBandwidth: formatBandwidth(performance.writeBandwidth, bandwidthUnitType),
+      burstWriteBandwidth: formatBandwidth(performance.burstWriteBandwidth, bandwidthUnitType),
+      readIOPS: `${performance.readIOPS.toLocaleString()}`,
+      writeIOPS: `${performance.writeIOPS.toLocaleString()}`,
     },
   };
 }
@@ -112,27 +135,36 @@ export function planVastData(req: VastDataPlanRequest): VastDataPlanResult {
   const capacityInfo = parseCapacity(req.capacity);
   const capacityTiB = capacityInfo.tib;
 
-  let minEboxForPerf = CONSTANTS.MIN_EBOX;
+  let readBwGbs: number | undefined;
+  let writeBwGbs: number | undefined;
 
   if (req.readBandwidth) {
     const bwInfo = parseBandwidth(req.readBandwidth);
-    const needed = Math.ceil(bwInfo.mibps / (CONSTANTS.READ_BW_PER_EBOX * 1000));
-    minEboxForPerf = Math.max(minEboxForPerf, needed);
+    readBwGbs = bwInfo.mibps / 1000;
   }
   if (req.writeBandwidth) {
     const bwInfo = parseBandwidth(req.writeBandwidth);
-    const needed = Math.ceil(bwInfo.mibps / (CONSTANTS.SUSTAINED_WRITE_BW_PER_EBOX * 1000));
-    minEboxForPerf = Math.max(minEboxForPerf, needed);
+    writeBwGbs = bwInfo.mibps / 1000;
   }
 
-  // Find smallest config that meets requirements
   let bestConfig = null;
   for (const diskConfig of CONSTANTS.EBOX_CONFIGS) {
-    for (let ebox = minEboxForPerf; ebox <= CONSTANTS.MAX_EBOX; ebox++) {
-      const config = calculateEboxConfig(ebox, diskConfig);
-      if (config.actualCapacity >= capacityTiB) {
+    const capacityData = EBOX_CAPACITY_DATA[diskConfig.diskSize];
+    if (!capacityData) continue;
+
+    for (let ebox = CONSTANTS.MIN_EBOX; ebox <= CONSTANTS.MAX_EBOX; ebox++) {
+      const capEntry = capacityData.find((e: EboxCapacityEntry) => e.ebox_count === ebox);
+      const perfEntry = EBOX_PERFORMANCE_DATA.find((p: EboxPerformanceEntry) => p.ebox_count === ebox);
+      if (!capEntry || !perfEntry) continue;
+
+      const ok =
+        capEntry.usable_tib >= capacityTiB &&
+        (!readBwGbs || perfEntry.read_bw_gbs >= readBwGbs) &&
+        (!writeBwGbs || perfEntry.sustained_write_bw_gbs >= writeBwGbs);
+
+      if (ok) {
         if (!bestConfig || ebox < bestConfig.eboxCount) {
-          bestConfig = config;
+          bestConfig = calculateEboxConfig(ebox, diskConfig);
         }
         break;
       }
@@ -143,7 +175,7 @@ export function planVastData(req: VastDataPlanRequest): VastDataPlanResult {
     throw new Error('无法找到满足需求的配置（超出 250 EBox 限制）');
   }
 
-  const bandwidthUnitType = req.readBandwidth || req.writeBandwidth ? 'decimal-byte' : 'decimal-byte';
+  const bandwidthUnitType = 'decimal-byte';
 
   return {
     mode: 'ebox',
