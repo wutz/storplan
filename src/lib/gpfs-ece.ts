@@ -52,11 +52,15 @@ export const EC_SCHEMES = [
   { scheme: 'EC8+2P', efficiency: CONSTANTS.EC8_2P_EFFICIENCY, minServers: 5 },
 ] as const;
 
-export function getGPFSTolerance(serverCount: number, _scheme: string): number {
+export function getGPFSTolerance(serverCount: number, scheme: string): number {
   if (serverCount === 3) return 1;
   if (serverCount === 4) return 1;
   if (serverCount >= 5 && serverCount <= 9) return 1;
-  if (serverCount >= 10) return 2;
+  if (serverCount >= 10) {
+    // EC8+3P with 11+ nodes tolerates 3 nodes offline
+    if (scheme === 'EC8+3P' && serverCount >= 11) return 3;
+    return 2;
+  }
   return 1;
 }
 
