@@ -128,13 +128,14 @@ function getReadBWPerServer(serverCount: number): number {
   return Math.max(CONSTANTS.READ_BW_FLOOR, Math.min(CONSTANTS.READ_BW_BASE, bw));
 }
 
-function calculatePerformance(serverCount: number) {
+function calculatePerformance(serverCount: number, ssdCount: number = CONSTANTS.SSDS_PER_SERVER) {
   const readBWPerServer = getReadBWPerServer(serverCount);
+  const ssdFactor = ssdCount / CONSTANTS.SSDS_PER_SERVER;
   return {
-    readBandwidth: serverCount * readBWPerServer,
-    writeBandwidth: serverCount * CONSTANTS.WRITE_BW_PER_SERVER,
-    readIOPS: serverCount * CONSTANTS.READ_IOPS_PER_SERVER,
-    writeIOPS: serverCount * CONSTANTS.WRITE_IOPS_PER_SERVER,
+    readBandwidth: serverCount * readBWPerServer * ssdFactor,
+    writeBandwidth: serverCount * CONSTANTS.WRITE_BW_PER_SERVER * ssdFactor,
+    readIOPS: serverCount * CONSTANTS.READ_IOPS_PER_SERVER * ssdFactor,
+    writeIOPS: serverCount * CONSTANTS.WRITE_IOPS_PER_SERVER * ssdFactor,
   };
 }
 
@@ -150,7 +151,7 @@ export function buildGPFSECEResult(
 ): GPFSECEPlanResult {
   const actualCapacity = calculateCapacityTiB(serverCount, ssdSize, ecEfficiency, ssdCount);
   const rawCapacity = serverCount * ssdCount * ssdSize * CONSTANTS.TB_TO_TIB;
-  const performance = calculatePerformance(serverCount);
+  const performance = calculatePerformance(serverCount, ssdCount);
   return {
     serverCount, ssdCount, ecScheme, tolerance, ssdConfig: `${ssdCount} × ${ssdSize}TB NVMe SSD`, ssdSize,
     actualCapacity, rawCapacity, performance,
