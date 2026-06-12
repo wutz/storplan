@@ -8,6 +8,7 @@ export interface GPFSECEPlanRequest {
 
 export interface GPFSECEPlanResult {
   serverCount: number;
+  ssdCount: number;
   ecScheme: string;
   tolerance: number;
   ssdConfig: string;
@@ -31,6 +32,7 @@ export interface GPFSECEPlanResult {
 }
 
 export const CONSTANTS = {
+  SSD_COUNTS: [4, 8, 12, 16, 20, 24] as const,
   SSDS_PER_SERVER: 24,
   TB_TO_TIB: 0.909,
   METADATA_RESERVED: 0.9,
@@ -90,8 +92,8 @@ export function getGPFSTolerance(serverCount: number, scheme: string): number {
   return 1;
 }
 
-export function calculateCapacityTiB(serverCount: number, ssdSizeTB: number, ecEfficiency: number): number {
-  return serverCount * CONSTANTS.SSDS_PER_SERVER * ssdSizeTB * CONSTANTS.TB_TO_TIB * ecEfficiency * CONSTANTS.METADATA_RESERVED;
+export function calculateCapacityTiB(serverCount: number, ssdSizeTB: number, ecEfficiency: number, ssdCount: number = CONSTANTS.SSDS_PER_SERVER): number {
+  return serverCount * ssdCount * ssdSizeTB * CONSTANTS.TB_TO_TIB * ecEfficiency * CONSTANTS.METADATA_RESERVED;
 }
 
 interface ECScheme {
@@ -116,8 +118,8 @@ export function getECScheme(serverCount: number): ECScheme {
   return { scheme: 'EC8+2P', efficiency: CONSTANTS.EC8_2P_EFFICIENCY, tolerance: 2 };
 }
 
-function calculateCapacity(serverCount: number, ssdSizeTB: number, ecEfficiency: number): number {
-  return serverCount * CONSTANTS.SSDS_PER_SERVER * ssdSizeTB *
+function calculateCapacity(serverCount: number, ssdSizeTB: number, ecEfficiency: number, ssdCount: number = CONSTANTS.SSDS_PER_SERVER): number {
+  return serverCount * ssdCount * ssdSizeTB *
          CONSTANTS.TB_TO_TIB * ecEfficiency * CONSTANTS.METADATA_RESERVED;
 }
 
@@ -143,13 +145,14 @@ export function buildGPFSECEResult(
   ecEfficiency: number,
   tolerance: number,
   isBinary: boolean,
-  bandwidthUnitType: string
+  bandwidthUnitType: string,
+  ssdCount: number = CONSTANTS.SSDS_PER_SERVER
 ): GPFSECEPlanResult {
-  const actualCapacity = calculateCapacityTiB(serverCount, ssdSize, ecEfficiency);
-  const rawCapacity = serverCount * CONSTANTS.SSDS_PER_SERVER * ssdSize * CONSTANTS.TB_TO_TIB;
+  const actualCapacity = calculateCapacityTiB(serverCount, ssdSize, ecEfficiency, ssdCount);
+  const rawCapacity = serverCount * ssdCount * ssdSize * CONSTANTS.TB_TO_TIB;
   const performance = calculatePerformance(serverCount);
   return {
-    serverCount, ecScheme, tolerance, ssdConfig: `24 × ${ssdSize}TB NVMe SSD`, ssdSize,
+    serverCount, ssdCount, ecScheme, tolerance, ssdConfig: `${ssdCount} × ${ssdSize}TB NVMe SSD`, ssdSize,
     actualCapacity, rawCapacity, performance,
     formatted: {
       capacity: formatCapacity(actualCapacity, isBinary),
@@ -225,6 +228,7 @@ export function planGPFSECE(req: GPFSECEPlanRequest): GPFSECEPlanResult {
 
   return {
     serverCount: best.serverCount,
+    ssdCount: CONSTANTS.SSDS_PER_SERVER,
     ecScheme: best.ecScheme,
     tolerance: best.tolerance,
     ssdConfig: `24 × ${best.ssdSize}TB NVMe SSD`,

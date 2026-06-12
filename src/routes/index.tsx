@@ -86,7 +86,7 @@ function StorplanApp() {
   const [manualConfig, setManualConfig] = useState<{
     xeos?: { serverCount: number; diskSize: number; ecEfficiency: number };
     vastdata?: { eboxCount: number; diskSize: number };
-    'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number };
+    'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number };
   }>({})
 
   useEffect(() => {
@@ -150,7 +150,7 @@ function StorplanApp() {
           if (manualConfig['gpfs-ece']) {
             const mc = manualConfig['gpfs-ece']
             const ec = GPFS_EC_SCHEMES.find((s: any) => s.efficiency === mc.ecEfficiency)!
-            newResults['gpfs-ece'] = buildGPFSECEResult(mc.serverCount, mc.ssdSize, ec.scheme, ec.efficiency, getGPFSTolerance(mc.serverCount, ec.scheme), isBinary, bandwidthUnitType)
+            newResults['gpfs-ece'] = buildGPFSECEResult(mc.serverCount, mc.ssdSize, ec.scheme, ec.efficiency, getGPFSTolerance(mc.serverCount, ec.scheme), isBinary, bandwidthUnitType, mc.ssdCount)
           } else {
             const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
             const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
@@ -233,27 +233,36 @@ function StorplanApp() {
 
   const handleGpfsServerCountChange = (newCount: number) => {
     if (!results['gpfs-ece'] || newCount < 3) return
-    const { ssdSize } = results['gpfs-ece']
+    const { ssdSize, ssdCount } = results['gpfs-ece']
     const ec = getGpfsEcScheme(newCount)
-    const newCapacityTiB = gpfsCapacity(newCount, ssdSize, ec.efficiency)
-    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount: newCount, ssdSize, ecEfficiency: ec.efficiency } }))
+    const newCapacityTiB = gpfsCapacity(newCount, ssdSize, ec.efficiency, ssdCount)
+    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount: newCount, ssdSize, ecEfficiency: ec.efficiency, ssdCount } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleGpfsDiskChange = (newSsdSize: number) => {
     if (!results['gpfs-ece']) return
-    const { serverCount } = results['gpfs-ece']
+    const { serverCount, ssdCount } = results['gpfs-ece']
     const ec = getGpfsEcScheme(serverCount)
-    const newCapacityTiB = gpfsCapacity(serverCount, newSsdSize, ec.efficiency)
-    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize: newSsdSize, ecEfficiency: ec.efficiency } }))
+    const newCapacityTiB = gpfsCapacity(serverCount, newSsdSize, ec.efficiency, ssdCount)
+    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize: newSsdSize, ecEfficiency: ec.efficiency, ssdCount } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleGpfsEcChange = (ecEfficiency: number) => {
     if (!results['gpfs-ece']) return
+    const { serverCount, ssdSize, ssdCount } = results['gpfs-ece']
+    const newCapacityTiB = gpfsCapacity(serverCount, ssdSize, ecEfficiency, ssdCount)
+    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize, ecEfficiency, ssdCount } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleGpfsSsdCountChange = (newSsdCount: number) => {
+    if (!results['gpfs-ece']) return
     const { serverCount, ssdSize } = results['gpfs-ece']
-    const newCapacityTiB = gpfsCapacity(serverCount, ssdSize, ecEfficiency)
-    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize, ecEfficiency } }))
+    const ec = getGpfsEcScheme(serverCount)
+    const newCapacityTiB = gpfsCapacity(serverCount, ssdSize, ec.efficiency, newSsdCount)
+    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize, ecEfficiency: ec.efficiency, ssdCount: newSsdCount } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
@@ -381,7 +390,7 @@ function StorplanApp() {
                 </div>
               )}
               {results['gpfs-ece'] && (
-                <GPFSECEResult data={results['gpfs-ece']} onServerCountChange={handleGpfsServerCountChange} onDiskChange={handleGpfsDiskChange} onEcChange={handleGpfsEcChange} />
+                <GPFSECEResult data={results['gpfs-ece']} onServerCountChange={handleGpfsServerCountChange} onDiskChange={handleGpfsDiskChange} onEcChange={handleGpfsEcChange} onSsdCountChange={handleGpfsSsdCountChange} />
               )}
             </div>
           )}
@@ -690,7 +699,7 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
   )
 }
 
-function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange }: { data: GPFSECEPlanResult; onServerCountChange: (n: number) => void; onDiskChange: (n: number) => void; onEcChange: (n: number) => void }) {
+function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, onSsdCountChange }: { data: GPFSECEPlanResult; onServerCountChange: (n: number) => void; onDiskChange: (n: number) => void; onEcChange: (n: number) => void; onSsdCountChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
 
@@ -770,7 +779,9 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange }: 
             <div className="flex justify-between items-center">
               <dt className="text-gray-500">数据盘</dt>
               <dd>
-                24 × <select value={data.ssdSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                <select value={data.ssdCount} onChange={(e) => onSsdCountChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {GPFS_CONSTANTS.SSD_COUNTS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select> × <select value={data.ssdSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
                   {GPFS_CONSTANTS.SSD_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
                 </select> NVMe SSD
               </dd>
