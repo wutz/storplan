@@ -35,6 +35,8 @@ export interface XEOSPlanResult {
 
 export const CONSTANTS = {
   DISKS_PER_SERVER: 32,
+  MAX_DISKS_PER_SERVER: 100,
+  MAX_SERVERS: 4096,
   SPACE_OVERHEAD: 0.81,
   EC8_2_EFFICIENCY: 0.8,
   EC4_2_EFFICIENCY: 0.6667,
@@ -180,7 +182,7 @@ export function planXEOS(req: XEOSPlanRequest): XEOSPlanResult {
   const startServers = Math.max(3, minServersForPerf);
 
   for (const diskSize of CONSTANTS.DISK_SIZES) {
-    for (let servers = startServers; servers <= 200; servers++) {
+    for (let servers = startServers; servers <= CONSTANTS.MAX_SERVERS; servers++) {
       const ec = getEcScheme(servers);
       const actual = calculateActualCapacity(servers, diskSize, ec.efficiency);
 
