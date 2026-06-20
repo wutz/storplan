@@ -232,7 +232,7 @@ function StorplanApp() {
   }
 
   const handleGpfsServerCountChange = (newCount: number) => {
-    if (!results['gpfs-ece'] || newCount < 3) return
+    if (!results['gpfs-ece'] || newCount < 3 || newCount > GPFS_CONSTANTS.MAX_SERVERS) return
     const { ssdSize, ssdCount } = results['gpfs-ece']
     const ec = getGpfsEcScheme(newCount)
     const newCapacityTiB = gpfsCapacity(newCount, ssdSize, ec.efficiency, ssdCount)
@@ -719,9 +719,10 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
                   value={data.serverCount}
                   onChange={onServerCountChange}
                   min={3}
+                  max={GPFS_CONSTANTS.MAX_SERVERS}
                   className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
                 />
-                <button onClick={() => onServerCountChange(data.serverCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
+                <button onClick={() => onServerCountChange(data.serverCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.serverCount >= GPFS_CONSTANTS.MAX_SERVERS}>+</button>
                 <span className="ml-0.5">台</span>
               </dd>
             </div>

@@ -34,6 +34,7 @@ export interface GPFSECEPlanResult {
 export const CONSTANTS = {
   SSD_COUNTS: [4, 8, 12, 16, 20, 24] as const,
   SSDS_PER_SERVER: 24,
+  MAX_SERVERS: 256,
   TB_TO_TIB: 0.909,
   METADATA_RESERVED: 0.9,
   EC4_2P_EFFICIENCY: 0.6667,
@@ -197,7 +198,7 @@ export function planGPFSECE(req: GPFSECEPlanRequest): GPFSECEPlanResult {
   const configs: Config[] = [];
 
   for (const ssdSize of CONSTANTS.SSD_SIZES) {
-    for (let servers = minServersForPerf; servers <= 256; servers++) {
+    for (let servers = minServersForPerf; servers <= CONSTANTS.MAX_SERVERS; servers++) {
       const ec = getECScheme(servers);
       const actual = calculateCapacity(servers, ssdSize, ec.efficiency);
 
