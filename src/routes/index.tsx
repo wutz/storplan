@@ -32,15 +32,16 @@ type Theme = {
 
 const THEME: Record<string, Theme> = {
   vastdata: {
+    // VastData 官网品牌色：亮青 #23D1FE 配深藏蓝文字 #0D1021
     label: 'VastData（统一存储）',
-    accentText: 'text-violet-600',
-    accentBgSoft: 'bg-violet-50',
-    accentBorder: 'border-violet-200',
-    chip: 'bg-violet-100 text-violet-700',
-    bigValue: 'text-violet-600',
-    selectedCard: 'border-violet-500 bg-violet-50 ring-1 ring-violet-500',
-    dot: 'bg-violet-500',
-    accentBar: 'bg-violet-500',
+    accentText: 'text-[#0D1021]',
+    accentBgSoft: 'bg-[#23D1FE]/10',
+    accentBorder: 'border-[#23D1FE]',
+    chip: 'bg-[#23D1FE]/20 text-[#0D1021]',
+    bigValue: 'text-[#0D1021]',
+    selectedCard: 'border-[#23D1FE] bg-[#23D1FE] ring-1 ring-[#23D1FE]',
+    dot: 'bg-[#0D1021]',
+    accentBar: 'bg-[#23D1FE]',
   },
   'gpfs-ece': {
     label: 'GPFS/Scale（文件系统）',
