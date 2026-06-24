@@ -96,6 +96,7 @@ export const CONSTANTS = {
   MAX_TOTAL_DISKS_ULTRA: 20000,
   ULTRA_NODES_PER_CLUSTER: 40, // 二级数据集群每簇标准节点数（最后一簇可少于 40）
   ULTRA_MIN_LAST_CLUSTER_NODES: 10, // 最后一簇最小节点数（EC8+2 最低要求）
+  ULTRA_DEFAULT_DISKS_PER_SERVER: 32, // 二级数据集群每节点缺省数据盘数
   METADATA_DISK_COUNTS: [2, 4] as const, // 一级元数据节点每节点 NVMe 数
   METADATA_DISK_SIZES: [1.6, 3.2, 6.4, 12.8] as const, // 一级元数据 NVMe 单盘容量（TB，DWPD ≥ 3）
   METADATA_TIER_RATIO: 5, // 二级 SSD 总容量 / 一级 NVMe 总容量 = 5（决定元数据 NVMe 总量）
@@ -302,34 +303,33 @@ function splitClusters(totalNodes: number): { numClusters: number; lastClusterNo
   return { numClusters, lastClusterNodes };
 }
 
-// 规划二级数据集群：每簇 40 节点（EC8+2），最后一簇允许少于 40 台以减少超配；HDD 总数 ≤ 20000。
-// 节点数按满簇单节点可用容量向上取整，再拆簇。评分：主指标总 HDD 数（成本代理），次指标总节点数。
+// 规划二级数据集群：每节点缺省 32 块数据盘，每簇 40 节点（EC8+2），最后一簇允许少于 40 台以减少超配；
+// HDD 总数 ≤ 20000。节点数按满簇单节点可用容量向上取整，再拆簇。评分：主指标总 HDD 数，次指标总节点数。
 export function planTier2(capacityTiB: number): Tier2Config {
   const nodesPerCluster = CONSTANTS.ULTRA_NODES_PER_CLUSTER;
+  const disksPerServer = CONSTANTS.ULTRA_DEFAULT_DISKS_PER_SERVER;
   const ecEff = CONSTANTS.EC8_2_EFFICIENCY;
   const candidates: Tier2Config[] = [];
 
-  for (const disksPerServer of CONSTANTS.DISKS_PER_SERVER_OPTIONS) {
-    for (const diskSize of CONSTANTS.DISK_SIZES) {
-      const perClusterCapacity = calculateActualCapacity(nodesPerCluster, disksPerServer, diskSize, ecEff);
-      const perNodeCapacity = perClusterCapacity / nodesPerCluster;
-      // 按单节点可用容量向上取整所需节点数（减去极小 epsilon 抵消浮点误差）
-      let totalNodes = Math.max(nodesPerCluster, Math.ceil(capacityTiB / perNodeCapacity - 1e-9));
-      const { numClusters, lastClusterNodes } = splitClusters(totalNodes);
-      totalNodes = (numClusters - 1) * nodesPerCluster + lastClusterNodes;
-      const totalHDDs = totalNodes * disksPerServer;
-      if (totalHDDs > CONSTANTS.MAX_TOTAL_DISKS_ULTRA) continue;
-      candidates.push({
-        disksPerServer,
-        diskSize,
-        numClusters,
-        lastClusterNodes,
-        totalNodes,
-        totalHDDs,
-        perClusterCapacity,
-        actualCapacity: calculateActualCapacity(totalNodes, disksPerServer, diskSize, ecEff),
-      });
-    }
+  for (const diskSize of CONSTANTS.DISK_SIZES) {
+    const perClusterCapacity = calculateActualCapacity(nodesPerCluster, disksPerServer, diskSize, ecEff);
+    const perNodeCapacity = perClusterCapacity / nodesPerCluster;
+    // 按单节点可用容量向上取整所需节点数（减去极小 epsilon 抵消浮点误差）
+    let totalNodes = Math.max(nodesPerCluster, Math.ceil(capacityTiB / perNodeCapacity - 1e-9));
+    const { numClusters, lastClusterNodes } = splitClusters(totalNodes);
+    totalNodes = (numClusters - 1) * nodesPerCluster + lastClusterNodes;
+    const totalHDDs = totalNodes * disksPerServer;
+    if (totalHDDs > CONSTANTS.MAX_TOTAL_DISKS_ULTRA) continue;
+    candidates.push({
+      disksPerServer,
+      diskSize,
+      numClusters,
+      lastClusterNodes,
+      totalNodes,
+      totalHDDs,
+      perClusterCapacity,
+      actualCapacity: calculateActualCapacity(totalNodes, disksPerServer, diskSize, ecEff),
+    });
   }
 
   if (candidates.length === 0) {
