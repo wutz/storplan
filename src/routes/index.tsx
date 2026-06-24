@@ -207,14 +207,14 @@ function StorplanApp() {
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(serverCount, disksPerServer, newDiskSize, ec.efficiency)
 
-    // 自动计算并设置缓存盘：选择最接近需要容量的配置
+    // 自动计算并设置缓存盘：优先最大化块数，其次选择最接近需要容量的配置
     const requiredCacheTB = (disksPerServer * newDiskSize) / XEOS_CONSTANTS.CACHE_RATIO
-    let bestCount = 4
-    let bestSize = 12.8
+    let bestCount = 1
+    let bestSize = 1.6
     let bestDiff = Infinity
 
-    // 遍历所有可能的组合，找到最接近需要容量的配置
-    for (let count = 1; count <= 4; count++) {
+    // 遍历所有可能的组合，优先最大化块数，其次选择最接近需要容量的配置
+    for (let count = 4; count >= 1; count--) {
       for (const size of XEOS_CONSTANTS.CACHE_DISK_SIZES) {
         const totalSize = count * size
         // 容量必须满足需求
@@ -226,8 +226,13 @@ function StorplanApp() {
             bestCount = count
             bestSize = size
           }
+          // 找到最大块数满足需求后，可以直接跳出
+          // 因为我们从大到小遍历，所以第一个满足的就是最大块数
+          break
         }
       }
+      // 如果找到了满足需求的配置，就不用继续了
+      if (bestDiff < Infinity) break
     }
 
     setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize: newDiskSize, ecEfficiency: ec.efficiency, cacheCount: bestCount, cacheSizePerDisk: bestSize } }))
@@ -241,14 +246,14 @@ function StorplanApp() {
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(serverCount, newDisksPerServer, diskSize, ec.efficiency)
 
-    // 自动计算并设置缓存盘：选择最接近需要容量的配置
+    // 自动计算并设置缓存盘：优先最大化块数，其次选择最接近需要容量的配置
     const requiredCacheTB = (newDisksPerServer * diskSize) / XEOS_CONSTANTS.CACHE_RATIO
-    let bestCount = 4
-    let bestSize = 12.8
+    let bestCount = 1
+    let bestSize = 1.6
     let bestDiff = Infinity
 
-    // 遍历所有可能的组合，找到最接近需要容量的配置
-    for (let count = 1; count <= 4; count++) {
+    // 遍历所有可能的组合，优先最大化块数，其次选择最接近需要容量的配置
+    for (let count = 4; count >= 1; count--) {
       for (const size of XEOS_CONSTANTS.CACHE_DISK_SIZES) {
         const totalSize = count * size
         // 容量必须满足需求
@@ -260,8 +265,13 @@ function StorplanApp() {
             bestCount = count
             bestSize = size
           }
+          // 找到最大块数满足需求后，可以直接跳出
+          // 因为我们从大到小遍历，所以第一个满足的就是最大块数
+          break
         }
       }
+      // 如果找到了满足需求的配置，就不用继续了
+      if (bestDiff < Infinity) break
     }
 
     setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer: newDisksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: bestCount, cacheSizePerDisk: bestSize } }))
