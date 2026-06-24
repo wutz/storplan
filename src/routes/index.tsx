@@ -26,6 +26,32 @@ function convertTibToUnit(tib: number, unit: string): string {
   }
 }
 
+// 索引缓存盘最优选择：总容量尽可能接近实际需求（浪费最小），
+// 同等接近时优先使用更多盘数
+function pickOptimalCache(disksPerServer: number, diskSize: number): { cacheCount: number; cacheSizePerDisk: number } {
+  const requiredCacheTB = (disksPerServer * diskSize) / XEOS_CONSTANTS.CACHE_RATIO
+  let bestCount = 4
+  let bestSize = 12.8
+  let bestWaste = Infinity
+
+  // 遍历所有 (盘数 × 容量) 组合，筛选满足需求的，选最接近需求的
+  for (let count = 1; count <= 4; count++) {
+    for (const size of XEOS_CONSTANTS.CACHE_DISK_SIZES) {
+      const totalSize = count * size
+      if (totalSize >= requiredCacheTB) {
+        const waste = totalSize - requiredCacheTB
+        // 浪费更小则更优；浪费相同则盘数更多更优
+        if (waste < bestWaste || (waste === bestWaste && count > bestCount)) {
+          bestWaste = waste
+          bestCount = count
+          bestSize = size
+        }
+      }
+    }
+  }
+  return { cacheCount: bestCount, cacheSizePerDisk: bestSize }
+}
+
 function NumberInput({ value, onChange, min, max, disabled, className }: {
   value: number;
   onChange: (n: number) => void;
@@ -192,11 +218,13 @@ function StorplanApp() {
 
   const handleXeosServerCountChange = (newCount: number) => {
     if (!results.xeos || newCount < 3) return
-    const { diskSize, disksPerServer, cacheConfig } = results.xeos
+    const { diskSize, disksPerServer } = results.xeos
     const allowedSchemes = getAllowedEcSchemes(newCount)
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(newCount, disksPerServer, diskSize, ec.efficiency)
-    setManualConfig(prev => ({ ...prev, xeos: { serverCount: newCount, disksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cacheConfig.count, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
+    // 调整服务器台数时也自动调整索引缓存盘
+    const cache = pickOptimalCache(disksPerServer, diskSize)
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount: newCount, disksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cache.cacheCount, cacheSizePerDisk: cache.cacheSizePerDisk } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
@@ -206,36 +234,9 @@ function StorplanApp() {
     const allowedSchemes = getAllowedEcSchemes(serverCount)
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(serverCount, disksPerServer, newDiskSize, ec.efficiency)
-
-    // 自动计算并设置缓存盘：优先最大化块数，其次选择最接近需要容量的配置
-    const requiredCacheTB = (disksPerServer * newDiskSize) / XEOS_CONSTANTS.CACHE_RATIO
-    let bestCount = 1
-    let bestSize = 1.6
-    let bestDiff = Infinity
-
-    // 遍历所有可能的组合，优先最大化块数，其次选择最接近需要容量的配置
-    for (let count = 4; count >= 1; count--) {
-      for (const size of XEOS_CONSTANTS.CACHE_DISK_SIZES) {
-        const totalSize = count * size
-        // 容量必须满足需求
-        if (totalSize >= requiredCacheTB) {
-          const diff = totalSize - requiredCacheTB
-          // 找到最接近的配置（最小的超出量）
-          if (diff < bestDiff) {
-            bestDiff = diff
-            bestCount = count
-            bestSize = size
-          }
-          // 找到最大块数满足需求后，可以直接跳出
-          // 因为我们从大到小遍历，所以第一个满足的就是最大块数
-          break
-        }
-      }
-      // 如果找到了满足需求的配置，就不用继续了
-      if (bestDiff < Infinity) break
-    }
-
-    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize: newDiskSize, ecEfficiency: ec.efficiency, cacheCount: bestCount, cacheSizePerDisk: bestSize } }))
+    // 选择数据盘容量时自动调整索引缓存盘
+    const cache = pickOptimalCache(disksPerServer, newDiskSize)
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize: newDiskSize, ecEfficiency: ec.efficiency, cacheCount: cache.cacheCount, cacheSizePerDisk: cache.cacheSizePerDisk } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
@@ -245,36 +246,9 @@ function StorplanApp() {
     const allowedSchemes = getAllowedEcSchemes(serverCount)
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(serverCount, newDisksPerServer, diskSize, ec.efficiency)
-
-    // 自动计算并设置缓存盘：优先最大化块数，其次选择最接近需要容量的配置
-    const requiredCacheTB = (newDisksPerServer * diskSize) / XEOS_CONSTANTS.CACHE_RATIO
-    let bestCount = 1
-    let bestSize = 1.6
-    let bestDiff = Infinity
-
-    // 遍历所有可能的组合，优先最大化块数，其次选择最接近需要容量的配置
-    for (let count = 4; count >= 1; count--) {
-      for (const size of XEOS_CONSTANTS.CACHE_DISK_SIZES) {
-        const totalSize = count * size
-        // 容量必须满足需求
-        if (totalSize >= requiredCacheTB) {
-          const diff = totalSize - requiredCacheTB
-          // 找到最接近的配置（最小的超出量）
-          if (diff < bestDiff) {
-            bestDiff = diff
-            bestCount = count
-            bestSize = size
-          }
-          // 找到最大块数满足需求后，可以直接跳出
-          // 因为我们从大到小遍历，所以第一个满足的就是最大块数
-          break
-        }
-      }
-      // 如果找到了满足需求的配置，就不用继续了
-      if (bestDiff < Infinity) break
-    }
-
-    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer: newDisksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: bestCount, cacheSizePerDisk: bestSize } }))
+    // 选择每台 HDD 数量时自动调整索引缓存盘
+    const cache = pickOptimalCache(newDisksPerServer, diskSize)
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer: newDisksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cache.cacheCount, cacheSizePerDisk: cache.cacheSizePerDisk } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
@@ -621,8 +595,8 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">容错能力：容量离线台数</dt>
-              <dd>{data.tolerance} 台{data.poolConfig ? ` = 2 × ${data.poolConfig.poolCount} 池` : ''}</dd>
+              <dt className="text-gray-500">容错能力</dt>
+              <dd>容忍 {data.tolerance} 台节点离线{data.poolConfig ? `（计算公式：2 × ${data.poolConfig.poolCount}）` : ''}</dd>
             </div>
           </dl>
         </div>
