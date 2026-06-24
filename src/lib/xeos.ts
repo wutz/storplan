@@ -354,8 +354,8 @@ function getMetadataEcScheme(nodeCount: number): { scheme: string; tolerance: nu
 
 // 规划一级元数据集群：
 // - 所需 NVMe 总量 = 二级缓存 SSD 总量 / 5（容量配比）。
-// - 节点数 ∈ [6, 20]、每节点 [2,4]×[1.6,3.2,6.4,12.8]TB，枚举所有组合，
-//   取满足 NVMe 总量需求且总容量最小（最小化超配）、其次节点数最小的方案。
+// - 节点数 ∈ [6, 20]、每节点 [2,4]×[1.6,3.2,6.4,12.8]TB，枚举所有组合。
+// - 选型优先级：优先每节点最多盘数（4 盘优先于 2 盘）→ 再总容量最小（最小化超配）→ 再节点数最小。
 // - 6–9 台用 EC4+2，≥10 台用 EC8+2。
 export function planMetadata(requiredNvmeTB: number): MetadataClusterConfig {
   let best: MetadataClusterConfig | null = null;
@@ -368,9 +368,12 @@ export function planMetadata(requiredNvmeTB: number): MetadataClusterConfig {
         if (totalSize < requiredNvmeTB - 1e-9) continue;
         const ec = getMetadataEcScheme(nodeCount);
         const cand: MetadataClusterConfig = { nodeCount, disksPerNode, diskSize, totalSize, ecScheme: ec.scheme, tolerance: ec.tolerance };
-        if (!best || totalSize < best.totalSize || (totalSize === best.totalSize && nodeCount < best.nodeCount)) {
-          best = cand;
-        }
+        // 优先盘数多 → 总容量小 → 节点数少
+        const better = !best
+          || cand.disksPerNode > best.disksPerNode
+          || (cand.disksPerNode === best.disksPerNode && cand.totalSize < best.totalSize)
+          || (cand.disksPerNode === best.disksPerNode && cand.totalSize === best.totalSize && cand.nodeCount < best.nodeCount);
+        if (better) best = cand;
       }
     }
   }
