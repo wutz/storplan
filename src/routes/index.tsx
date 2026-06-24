@@ -55,15 +55,16 @@ const THEME: Record<string, Theme> = {
     accentBar: 'bg-blue-500',
   },
   xeos: {
+    // XSKY 官网品牌色：紫 #704BFF
     label: 'XSKY XEOS（对象存储）',
-    accentText: 'text-cyan-600',
-    accentBgSoft: 'bg-cyan-50',
-    accentBorder: 'border-cyan-200',
-    chip: 'bg-cyan-100 text-cyan-700',
-    bigValue: 'text-cyan-600',
-    selectedCard: 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-500',
-    dot: 'bg-cyan-500',
-    accentBar: 'bg-cyan-500',
+    accentText: 'text-[#704BFF]',
+    accentBgSoft: 'bg-[#704BFF]/10',
+    accentBorder: 'border-[#704BFF]',
+    chip: 'bg-[#704BFF]/15 text-[#704BFF]',
+    bigValue: 'text-[#704BFF]',
+    selectedCard: 'border-[#704BFF] bg-[#704BFF]/10 ring-1 ring-[#704BFF]',
+    dot: 'bg-[#704BFF]',
+    accentBar: 'bg-[#704BFF]',
   },
 }
 
