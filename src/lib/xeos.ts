@@ -77,23 +77,27 @@ export const EC_SCHEMES = [
 export function calculateCacheConfig(disksPerServer: number, diskSizeTB: number): CacheConfig {
   const requiredCacheTB = (disksPerServer * diskSizeTB) / CONSTANTS.CACHE_RATIO;
 
-  // 默认尝试使用最大 4 块缓存盘
-  for (let count = CONSTANTS.MAX_CACHE_DISKS; count >= CONSTANTS.MIN_CACHE_DISKS; count--) {
-    for (const sizePerDisk of [...CONSTANTS.CACHE_DISK_SIZES].reverse()) {
+  // 遍历所有 (盘数 × 容量) 组合，选总容量最接近需求（浪费最小）的；
+  // 同等接近时优先更多盘数
+  let bestCount = CONSTANTS.MAX_CACHE_DISKS;
+  let bestSize = CONSTANTS.CACHE_DISK_SIZES[CONSTANTS.CACHE_DISK_SIZES.length - 1];
+  let bestWaste = Infinity;
+
+  for (let count = CONSTANTS.MIN_CACHE_DISKS; count <= CONSTANTS.MAX_CACHE_DISKS; count++) {
+    for (const sizePerDisk of CONSTANTS.CACHE_DISK_SIZES) {
       const totalSize = count * sizePerDisk;
       if (totalSize >= requiredCacheTB) {
-        return { count, sizePerDisk, totalSize };
+        const waste = totalSize - requiredCacheTB;
+        if (waste < bestWaste || (waste === bestWaste && count > bestCount)) {
+          bestWaste = waste;
+          bestCount = count;
+          bestSize = sizePerDisk;
+        }
       }
     }
   }
 
-  // 如果都不满足，返回最大配置
-  const maxSize = CONSTANTS.MAX_CACHE_DISKS * CONSTANTS.CACHE_DISK_SIZES[CONSTANTS.CACHE_DISK_SIZES.length - 1];
-  return {
-    count: CONSTANTS.MAX_CACHE_DISKS,
-    sizePerDisk: CONSTANTS.CACHE_DISK_SIZES[CONSTANTS.CACHE_DISK_SIZES.length - 1],
-    totalSize: maxSize,
-  };
+  return { count: bestCount, sizePerDisk: bestSize, totalSize: bestCount * bestSize };
 }
 
 export function calculatePoolConfig(serverCount: number, ecScheme: string): PoolConfig | undefined {

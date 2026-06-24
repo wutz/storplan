@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { planXEOS, buildXEOSResult, getAllowedEcSchemes, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity } from '#/lib/xeos'
+import { planXEOS, buildXEOSResult, getAllowedEcSchemes, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity, calculateCacheConfig as xeosCacheConfig } from '#/lib/xeos'
 import type { XEOSPlanResult } from '#/lib/xeos'
 import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calculateCapacityTiB as vastCapacity } from '#/lib/vastdata'
 import type { VastDataPlanResult } from '#/lib/vastdata'
@@ -24,32 +24,6 @@ function convertTibToUnit(tib: number, unit: string): string {
     case 'PB': return (tib / 0.909 / 1000).toFixed(2)
     default: return tib.toFixed(2)
   }
-}
-
-// 索引缓存盘最优选择：总容量尽可能接近实际需求（浪费最小），
-// 同等接近时优先使用更多盘数
-function pickOptimalCache(disksPerServer: number, diskSize: number): { cacheCount: number; cacheSizePerDisk: number } {
-  const requiredCacheTB = (disksPerServer * diskSize) / XEOS_CONSTANTS.CACHE_RATIO
-  let bestCount = 4
-  let bestSize = 12.8
-  let bestWaste = Infinity
-
-  // 遍历所有 (盘数 × 容量) 组合，筛选满足需求的，选最接近需求的
-  for (let count = 1; count <= 4; count++) {
-    for (const size of XEOS_CONSTANTS.CACHE_DISK_SIZES) {
-      const totalSize = count * size
-      if (totalSize >= requiredCacheTB) {
-        const waste = totalSize - requiredCacheTB
-        // 浪费更小则更优；浪费相同则盘数更多更优
-        if (waste < bestWaste || (waste === bestWaste && count > bestCount)) {
-          bestWaste = waste
-          bestCount = count
-          bestSize = size
-        }
-      }
-    }
-  }
-  return { cacheCount: bestCount, cacheSizePerDisk: bestSize }
 }
 
 function NumberInput({ value, onChange, min, max, disabled, className }: {
@@ -223,8 +197,8 @@ function StorplanApp() {
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(newCount, disksPerServer, diskSize, ec.efficiency)
     // 调整服务器台数时也自动调整索引缓存盘
-    const cache = pickOptimalCache(disksPerServer, diskSize)
-    setManualConfig(prev => ({ ...prev, xeos: { serverCount: newCount, disksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cache.cacheCount, cacheSizePerDisk: cache.cacheSizePerDisk } }))
+    const cache = xeosCacheConfig(disksPerServer, diskSize)
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount: newCount, disksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cache.count, cacheSizePerDisk: cache.sizePerDisk } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
@@ -235,8 +209,8 @@ function StorplanApp() {
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(serverCount, disksPerServer, newDiskSize, ec.efficiency)
     // 选择数据盘容量时自动调整索引缓存盘
-    const cache = pickOptimalCache(disksPerServer, newDiskSize)
-    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize: newDiskSize, ecEfficiency: ec.efficiency, cacheCount: cache.cacheCount, cacheSizePerDisk: cache.cacheSizePerDisk } }))
+    const cache = xeosCacheConfig(disksPerServer, newDiskSize)
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize: newDiskSize, ecEfficiency: ec.efficiency, cacheCount: cache.count, cacheSizePerDisk: cache.sizePerDisk } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
@@ -247,8 +221,8 @@ function StorplanApp() {
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(serverCount, newDisksPerServer, diskSize, ec.efficiency)
     // 选择每台 HDD 数量时自动调整索引缓存盘
-    const cache = pickOptimalCache(newDisksPerServer, diskSize)
-    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer: newDisksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cache.cacheCount, cacheSizePerDisk: cache.cacheSizePerDisk } }))
+    const cache = xeosCacheConfig(newDisksPerServer, diskSize)
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer: newDisksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cache.count, cacheSizePerDisk: cache.sizePerDisk } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
