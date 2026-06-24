@@ -524,86 +524,6 @@ function StorageInfo({ storage }: { storage: string }) {
   )
 }
 
-function XEOSUltraLargeResult({ data }: { data: XEOSPlanResult }) {
-  const ul = data.ultraLarge!
-  const mc = ul.metadataCluster
-  const requiredCacheTB = (data.disksPerServer * data.diskSize) / XEOS_CONSTANTS.CACHE_RATIO
-  const isCacheSufficient = data.cacheConfig.totalSize >= requiredCacheTB
-  const perTiBReadBW = data.performance.downloadBandwidth / data.actualCapacity
-  const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
-
-  return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-xl font-bold">XSKY XEOS 超大规模规划方案</h2>
-        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">超大规模架构</span>
-      </div>
-      <div className="space-y-6">
-        <div className="bg-purple-50 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-700 mb-2">架构概览</h3>
-          <dl className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-            <div>
-              <dt className="text-gray-500">二级数据集群</dt>
-              <dd className="font-medium">{ul.tier2ClusterCount} 个 × {ul.nodesPerCluster} 节点</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">集群 HDD 总数</dt>
-              <dd className="font-medium">{ul.tier2TotalHDDs.toLocaleString()} / {XEOS_CONSTANTS.MAX_TOTAL_DISKS_ULTRA.toLocaleString()} 块</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">二级总节点数</dt>
-              <dd className="font-medium">{ul.tier2ServersTotal.toLocaleString()} 台</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">可用容量</dt>
-              <dd className="text-lg font-bold text-blue-600">{data.formatted.capacity}</dd>
-            </div>
-          </dl>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <h3 className="font-semibold text-gray-700 mb-2">二级数据集群（混闪）</h3>
-            <dl className="space-y-1 text-sm">
-              <div className="flex justify-between"><dt className="text-gray-500">集群数</dt><dd>{ul.tier2ClusterCount} 个（每集群 {ul.nodesPerCluster} 节点）</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">每节点数据盘</dt><dd>{data.disksPerServer} × {data.diskSize}TB HDD</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">单集群可用容量</dt><dd>{formatCapacity(ul.tier2PerClusterCapacity, data.capacityUnitPreference)}</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">纠删码</dt><dd>EC8+2（每集群 2 池）</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">容错能力</dt><dd>每集群容忍 {ul.tier2PerClusterTolerance} 节点离线</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">索引缓存盘/节点</dt><dd>{data.cacheConfig.count} × {data.cacheConfig.sizePerDisk}TB NVMe{!isCacheSufficient && <span className="text-red-600 text-xs ml-1">⚠️ 不足</span>}</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">二级 SSD 总容量</dt><dd>{ul.tier2CacheSSDTotal.toLocaleString()} TB</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">处理器/内存/网卡</dt><dd>2×Xeon 4134 / 256GB / 2×双口25GbE</dd></div>
-            </dl>
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-700 mb-2">一级元数据集群（全闪 NVMe）</h3>
-            <dl className="space-y-1 text-sm">
-              <div className="flex justify-between"><dt className="text-gray-500">节点数</dt><dd>{mc.nodeCount} 台（{mc.ecScheme}，范围 6–20）</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">节点配比</dt><dd>二级 : 一级 = 25 : 1（{ul.tier2ServersTotal} → {mc.nodeCount}）</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">每节点数据盘</dt><dd>{mc.disksPerNode} × {mc.diskSize}TB NVMe SSD（DWPD ≥ 3）</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">NVMe 总容量</dt><dd>{mc.totalSize.toLocaleString()} TB</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">容错能力</dt><dd>容忍 {mc.tolerance} 节点离线</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">处理器/内存</dt><dd>2×Intel 6330 / 256GB</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">系统盘/网卡</dt><dd>2×960GB SATA RAID1 / 2×双口25GbE</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">容量配比</dt><dd>二级SSD总/一级NVMe总 = {ul.ratio.toFixed(2)}（目标 5）</dd></div>
-            </dl>
-          </div>
-        </div>
-        <div>
-          <h3 className="font-semibold text-gray-700 mb-2">性能（厂商数据，基于二级 HDD）</h3>
-          <dl className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-            <div><dt className="text-gray-500">上传 BW (4MiB)</dt><dd className="font-medium">{data.formatted.uploadBandwidth}</dd></div>
-            <div><dt className="text-gray-500">下载 BW (4MiB)</dt><dd className="font-medium">{data.formatted.downloadBandwidth}</dd></div>
-            <div><dt className="text-gray-500">每 TiB 读 BW (4MiB)</dt><dd className="font-medium">{perTiBReadBWFormatted}</dd></div>
-            <div><dt className="text-gray-500">上传 OPS (4KiB)</dt><dd className="font-medium">{data.formatted.uploadOps}</dd></div>
-            <div><dt className="text-gray-500">下载 OPS (4KiB)</dt><dd className="font-medium">{data.formatted.downloadOps}</dd></div>
-          </dl>
-        </div>
-        <p className="text-xs text-gray-400">超大规模方案为只读展示；如需调整，请修改容量需求后重新规划。</p>
-      </div>
-    </div>
-  )
-}
-
 function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerChange, onEcChange, onCacheCountChange, onCacheSizeChange }: {
   data: XEOSPlanResult;
   onServerCountChange: (n: number) => void;
@@ -613,25 +533,28 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
   onCacheCountChange: (n: number) => void;
   onCacheSizeChange: (n: number) => void;
 }) {
-  if (data.ultraLarge) {
-    return <XEOSUltraLargeResult data={data} />
-  }
+  const ul = data.ultraLarge
+  const mc = ul?.metadataCluster
   const perTiBReadBW = data.performance.downloadBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
   const totalDisks = data.serverCount * data.disksPerServer
+  const hddLimit = ul ? XEOS_CONSTANTS.MAX_TOTAL_DISKS_ULTRA : XEOS_CONSTANTS.MAX_TOTAL_DISKS
   const requiredCacheTB = (data.disksPerServer * data.diskSize) / XEOS_CONSTANTS.CACHE_RATIO
   const isCacheSufficient = data.cacheConfig.totalSize >= requiredCacheTB
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-bold mb-4">XSKY XEOS 规划方案</h2>
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-xl font-bold">XSKY XEOS 规划方案</h2>
+        {ul && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">超大规模架构（两级）</span>}
+      </div>
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
             <dl className="space-y-1 text-sm">
             <div className="flex justify-between items-center">
-              <dt className="text-gray-500">服务器台数</dt>
+              <dt className="text-gray-500">{ul ? '二级总服务器台数' : '服务器台数'}</dt>
               <dd className="flex items-center gap-1">
                 <button onClick={() => onServerCountChange(data.serverCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.serverCount <= 3}>−</button>
                 <NumberInput
@@ -645,20 +568,33 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">集群 HDD 总数</dt>
-              <dd className={totalDisks > XEOS_CONSTANTS.MAX_TOTAL_DISKS ? 'text-red-600 font-semibold' : ''}>{totalDisks} 块 {totalDisks > XEOS_CONSTANTS.MAX_TOTAL_DISKS && '⚠️ 超出上限'}</dd>
+              <dt className="text-gray-500">{ul ? '二级集群 HDD 总数' : '集群 HDD 总数'}</dt>
+              <dd className={totalDisks > hddLimit ? 'text-red-600 font-semibold' : ''}>{totalDisks.toLocaleString()} / {hddLimit.toLocaleString()} 块 {totalDisks > hddLimit && '⚠️ 超出上限'}</dd>
             </div>
-            <div className="flex justify-between items-center">
-              <dt className="text-gray-500">纠删码方案</dt>
-              <dd>
-                <select value={data.ecScheme} onChange={(e) => { const s = XEOS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
-                  {getAllowedEcSchemes(data.serverCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}</option>)}
-                </select>
-              </dd>
-            </div>
+            {ul && (
+              <div className="flex justify-between">
+                <dt className="text-gray-500">二级数据集群</dt>
+                <dd>{ul.tier2ClusterCount} 个 × {ul.nodesPerCluster} 节点</dd>
+              </div>
+            )}
+            {ul ? (
+              <div className="flex justify-between">
+                <dt className="text-gray-500">纠删码方案</dt>
+                <dd>EC8+2（每集群 2 池）</dd>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center">
+                <dt className="text-gray-500">纠删码方案</dt>
+                <dd>
+                  <select value={data.ecScheme} onChange={(e) => { const s = XEOS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                    {getAllowedEcSchemes(data.serverCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}</option>)}
+                  </select>
+                </dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt className="text-gray-500">容错能力</dt>
-              <dd>容忍 {data.tolerance} 台节点离线</dd>
+              <dd>{ul ? `每集群容忍 ${ul.tier2PerClusterTolerance} 台节点离线` : `容忍 ${data.tolerance} 台节点离线`}</dd>
             </div>
             {data.poolConfig && (
               <div className="flex justify-between">
@@ -679,11 +615,23 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
               <dt className="text-gray-500">裸容量</dt>
               <dd>{data.formatted.rawCapacity}</dd>
             </div>
+            {ul && (
+              <>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">单集群可用容量</dt>
+                  <dd>{formatCapacity(ul.tier2PerClusterCapacity, data.capacityUnitPreference)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">二级 SSD 总容量</dt>
+                  <dd>{ul.tier2CacheSSDTotal.toLocaleString()} TB</dd>
+                </div>
+              </>
+            )}
           </dl>
         </div>
         </div>
         <div>
-          <h3 className="font-semibold text-gray-700 mb-2">每台服务器配置</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">{ul ? '每台二级数据节点配置（混闪）' : '每台服务器配置'}</h3>
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
               <dt className="text-gray-500">处理器</dt>
@@ -734,8 +682,25 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             </div>
           </dl>
         </div>
+        {ul && mc && (
+          <div className="border-t border-gray-100 pt-4">
+            <h3 className="font-semibold text-gray-700 mb-2">一级元数据集群（全闪 NVMe）</h3>
+            <dl className="space-y-1 text-sm">
+              <div className="flex justify-between"><dt className="text-gray-500">节点数</dt><dd>{mc.nodeCount} 台（{mc.ecScheme}，范围 6–20）</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">节点配比</dt><dd>二级 : 一级 = 25 : 1（{ul.tier2ServersTotal} → {mc.nodeCount}）</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">处理器</dt><dd>2 × Intel 6330</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">内存</dt><dd>256GB</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">系统盘</dt><dd>2 × 960GB SATA SSD（RAID1）</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">数据盘</dt><dd>{mc.disksPerNode} × {mc.diskSize}TB NVMe SSD（DWPD ≥ 3）</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">NVMe 总容量</dt><dd>{mc.totalSize.toLocaleString()} TB</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">网卡</dt><dd>2 × 双口 25Gb ETH NIC</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">容错能力</dt><dd>容忍 {mc.tolerance} 台节点离线</dd></div>
+              <div className="flex justify-between text-xs text-gray-400"><dt>容量配比</dt><dd>二级SSD总 / 一级NVMe总 = {ul.ratio.toFixed(2)}（目标 5）</dd></div>
+            </dl>
+          </div>
+        )}
         <div>
-          <h3 className="font-semibold text-gray-700 mb-2">性能（厂商数据）</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">{ul ? '性能（厂商数据，基于二级 HDD）' : '性能（厂商数据）'}</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="text-gray-500">上传 BW (4MiB)</dt>
