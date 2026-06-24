@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { planXEOS, buildXEOSResult, getAllowedEcSchemes, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity, calculateCacheConfig as xeosCacheConfig } from '#/lib/xeos'
+import { planXEOS, buildXEOSResult, buildUltraLargeFromServers, getAllowedEcSchemes, calculatePoolConfig as xeosPoolConfig, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity, calculateCacheConfig as xeosCacheConfig } from '#/lib/xeos'
 import type { XEOSPlanResult } from '#/lib/xeos'
 import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calculateCapacityTiB as vastCapacity } from '#/lib/vastdata'
 import type { VastDataPlanResult } from '#/lib/vastdata'
 import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, getAllowedECSchemes, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
-import { formatBandwidth } from '#/lib/utils'
+import { formatBandwidth, formatCapacity } from '#/lib/utils'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
 
@@ -108,12 +108,17 @@ function StorplanApp() {
         try {
           if (manualConfig.xeos) {
             const mc = manualConfig.xeos
-            const allowedSchemes = getAllowedEcSchemes(mc.serverCount)
-            const ec = allowedSchemes.find((s: any) => s.efficiency === mc.ecEfficiency) || allowedSchemes[0]
-            const result = buildXEOSResult(mc.serverCount, mc.disksPerServer, mc.diskSize, ec.scheme, ec.efficiency, ec.tolerance, isBinary, bandwidthUnitType)
-            // 应用手动缓存配置
-            result.cacheConfig = { count: mc.cacheCount, sizePerDisk: mc.cacheSizePerDisk, totalSize: mc.cacheCount * mc.cacheSizePerDisk }
-            newResults.xeos = result
+            if (mc.serverCount * mc.disksPerServer > XEOS_CONSTANTS.MAX_TOTAL_DISKS) {
+              // 手动服务器台数 × 每台 HDD 超过 2000 -> 超大规模两级架构（含一级元数据集群）
+              newResults.xeos = buildUltraLargeFromServers(mc.serverCount, mc.disksPerServer, mc.diskSize, mc.cacheCount, mc.cacheSizePerDisk, isBinary, bandwidthUnitType)
+            } else {
+              const allowedSchemes = getAllowedEcSchemes(mc.serverCount)
+              const ec = allowedSchemes.find((s: any) => s.efficiency === mc.ecEfficiency) || allowedSchemes[0]
+              const result = buildXEOSResult(mc.serverCount, mc.disksPerServer, mc.diskSize, ec.scheme, ec.efficiency, ec.tolerance, isBinary, bandwidthUnitType)
+              // 应用手动缓存配置
+              result.cacheConfig = { count: mc.cacheCount, sizePerDisk: mc.cacheSizePerDisk, totalSize: mc.cacheCount * mc.cacheSizePerDisk }
+              newResults.xeos = result
+            }
           } else {
             const uploadBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
             const downloadBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
@@ -528,22 +533,31 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
   onCacheCountChange: (n: number) => void;
   onCacheSizeChange: (n: number) => void;
 }) {
+  const ul = data.ultraLarge
+  const mc = ul?.metadataCluster
+  // 末簇容忍离线节点数：末簇可能少于/多于 40 台，池数与满簇不同（<20 台 → 1 池容忍 2，20+ 台 → 2 池容忍 4）
+  const lastClusterTolerance = ul ? (xeosPoolConfig(ul.lastClusterNodes, 'EC8+2')?.totalTolerance ?? 2) : 0
+  const lastClusterIsFull = ul ? ul.lastClusterNodes === ul.nodesPerCluster : true
   const perTiBReadBW = data.performance.downloadBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
   const totalDisks = data.serverCount * data.disksPerServer
+  const hddLimit = ul ? XEOS_CONSTANTS.MAX_TOTAL_DISKS_ULTRA : XEOS_CONSTANTS.MAX_TOTAL_DISKS
   const requiredCacheTB = (data.disksPerServer * data.diskSize) / XEOS_CONSTANTS.CACHE_RATIO
   const isCacheSufficient = data.cacheConfig.totalSize >= requiredCacheTB
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-bold mb-4">XSKY XEOS 规划方案</h2>
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-xl font-bold">XSKY XEOS 规划方案</h2>
+        {ul && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">超大规模架构（两级）</span>}
+      </div>
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
             <dl className="space-y-1 text-sm">
             <div className="flex justify-between items-center">
-              <dt className="text-gray-500">服务器台数</dt>
+              <dt className="text-gray-500">{ul ? '二级总服务器台数' : '服务器台数'}</dt>
               <dd className="flex items-center gap-1">
                 <button onClick={() => onServerCountChange(data.serverCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.serverCount <= 3}>−</button>
                 <NumberInput
@@ -557,20 +571,39 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">集群 HDD 总数</dt>
-              <dd className={totalDisks > XEOS_CONSTANTS.MAX_TOTAL_DISKS ? 'text-red-600 font-semibold' : ''}>{totalDisks} 块 {totalDisks > XEOS_CONSTANTS.MAX_TOTAL_DISKS && '⚠️ 超出上限'}</dd>
+              <dt className="text-gray-500">{ul ? '二级集群 HDD 总数' : '集群 HDD 总数'}</dt>
+              <dd className={totalDisks > hddLimit ? 'text-red-600 font-semibold' : ''}>{totalDisks.toLocaleString()} / {hddLimit.toLocaleString()} 块 {totalDisks > hddLimit && '⚠️ 超出上限'}</dd>
             </div>
-            <div className="flex justify-between items-center">
-              <dt className="text-gray-500">纠删码方案</dt>
-              <dd>
-                <select value={data.ecScheme} onChange={(e) => { const s = XEOS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
-                  {getAllowedEcSchemes(data.serverCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}</option>)}
-                </select>
-              </dd>
-            </div>
+            {ul && (
+              <div className="flex justify-between">
+                <dt className="text-gray-500">二级数据集群</dt>
+                <dd>{ul.lastClusterNodes === ul.nodesPerCluster
+                  ? `${ul.tier2ClusterCount} 个 × ${ul.nodesPerCluster} 节点`
+                  : `${ul.tier2ClusterCount} 个（前 ${ul.tier2ClusterCount - 1} 个 × ${ul.nodesPerCluster} + 末簇 ${ul.lastClusterNodes} 节点）`}</dd>
+              </div>
+            )}
+            {ul ? (
+              <div className="flex justify-between">
+                <dt className="text-gray-500">纠删码方案</dt>
+                <dd>EC8+2（每集群 2 池）</dd>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center">
+                <dt className="text-gray-500">纠删码方案</dt>
+                <dd>
+                  <select value={data.ecScheme} onChange={(e) => { const s = XEOS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                    {getAllowedEcSchemes(data.serverCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}</option>)}
+                  </select>
+                </dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt className="text-gray-500">容错能力</dt>
-              <dd>容忍 {data.tolerance} 台节点离线</dd>
+              <dd>{ul
+                ? (lastClusterIsFull
+                    ? `每集群容忍 ${ul.tier2PerClusterTolerance} 台节点离线`
+                    : `满簇容忍 ${ul.tier2PerClusterTolerance} 台（末簇 ${ul.lastClusterNodes} 节点容忍 ${lastClusterTolerance} 台）`)
+                : `容忍 ${data.tolerance} 台节点离线`}</dd>
             </div>
             {data.poolConfig && (
               <div className="flex justify-between">
@@ -591,11 +624,23 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
               <dt className="text-gray-500">裸容量</dt>
               <dd>{data.formatted.rawCapacity}</dd>
             </div>
+            {ul && (
+              <>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">单集群可用容量</dt>
+                  <dd>{formatCapacity(ul.tier2PerClusterCapacity, data.capacityUnitPreference)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-gray-500">二级 SSD 总容量</dt>
+                  <dd>{ul.tier2CacheSSDTotal.toLocaleString()} TB</dd>
+                </div>
+              </>
+            )}
           </dl>
         </div>
         </div>
         <div>
-          <h3 className="font-semibold text-gray-700 mb-2">每台服务器配置</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">{ul ? '每台二级数据节点配置（混闪）' : '每台服务器配置'}</h3>
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
               <dt className="text-gray-500">处理器</dt>
@@ -646,8 +691,24 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             </div>
           </dl>
         </div>
+        {ul && mc && (
+          <div className="border-t border-gray-100 pt-4">
+            <h3 className="font-semibold text-gray-700 mb-2">一级元数据集群（全闪 NVMe）</h3>
+            <dl className="space-y-1 text-sm">
+              <div className="flex justify-between"><dt className="text-gray-500">节点数</dt><dd>{mc.nodeCount} 台（{mc.ecScheme}，范围 6–20）</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">处理器</dt><dd>2 × Intel 6330</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">内存</dt><dd>256GB</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">系统盘</dt><dd>2 × 960GB SATA SSD（RAID1）</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">数据盘</dt><dd>{mc.disksPerNode} × {mc.diskSize}TB NVMe SSD（DWPD ≥ 3）</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">NVMe 总容量</dt><dd>{mc.totalSize.toLocaleString()} TB</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">网卡</dt><dd>2 × 双口 25Gb ETH NIC</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">容错能力</dt><dd>容忍 {mc.tolerance} 台节点离线</dd></div>
+              <div className="flex justify-between text-xs text-gray-400"><dt>容量配比</dt><dd>二级SSD总 / 一级NVMe总 = {ul.ratio.toFixed(2)}（目标 5）</dd></div>
+            </dl>
+          </div>
+        )}
         <div>
-          <h3 className="font-semibold text-gray-700 mb-2">性能（厂商数据）</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">{ul ? '性能（厂商数据，基于二级 HDD）' : '性能（厂商数据）'}</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="text-gray-500">上传 BW (4MiB)</dt>
