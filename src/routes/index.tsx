@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { planXEOS, buildXEOSResult, getAllowedEcSchemes, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity, calculateCacheConfig as xeosCacheConfig } from '#/lib/xeos'
+import { planXEOS, buildXEOSResult, buildUltraLargeFromServers, getAllowedEcSchemes, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity, calculateCacheConfig as xeosCacheConfig } from '#/lib/xeos'
 import type { XEOSPlanResult } from '#/lib/xeos'
 import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calculateCapacityTiB as vastCapacity } from '#/lib/vastdata'
 import type { VastDataPlanResult } from '#/lib/vastdata'
@@ -108,12 +108,17 @@ function StorplanApp() {
         try {
           if (manualConfig.xeos) {
             const mc = manualConfig.xeos
-            const allowedSchemes = getAllowedEcSchemes(mc.serverCount)
-            const ec = allowedSchemes.find((s: any) => s.efficiency === mc.ecEfficiency) || allowedSchemes[0]
-            const result = buildXEOSResult(mc.serverCount, mc.disksPerServer, mc.diskSize, ec.scheme, ec.efficiency, ec.tolerance, isBinary, bandwidthUnitType)
-            // 应用手动缓存配置
-            result.cacheConfig = { count: mc.cacheCount, sizePerDisk: mc.cacheSizePerDisk, totalSize: mc.cacheCount * mc.cacheSizePerDisk }
-            newResults.xeos = result
+            if (mc.serverCount * mc.disksPerServer > XEOS_CONSTANTS.MAX_TOTAL_DISKS) {
+              // 手动服务器台数 × 每台 HDD 超过 2000 -> 超大规模两级架构（含一级元数据集群）
+              newResults.xeos = buildUltraLargeFromServers(mc.serverCount, mc.disksPerServer, mc.diskSize, mc.cacheCount, mc.cacheSizePerDisk, isBinary, bandwidthUnitType)
+            } else {
+              const allowedSchemes = getAllowedEcSchemes(mc.serverCount)
+              const ec = allowedSchemes.find((s: any) => s.efficiency === mc.ecEfficiency) || allowedSchemes[0]
+              const result = buildXEOSResult(mc.serverCount, mc.disksPerServer, mc.diskSize, ec.scheme, ec.efficiency, ec.tolerance, isBinary, bandwidthUnitType)
+              // 应用手动缓存配置
+              result.cacheConfig = { count: mc.cacheCount, sizePerDisk: mc.cacheSizePerDisk, totalSize: mc.cacheCount * mc.cacheSizePerDisk }
+              newResults.xeos = result
+            }
           } else {
             const uploadBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
             const downloadBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
@@ -572,13 +577,14 @@ function XEOSUltraLargeResult({ data }: { data: XEOSPlanResult }) {
           <div>
             <h3 className="font-semibold text-gray-700 mb-2">一级元数据集群（全闪 NVMe）</h3>
             <dl className="space-y-1 text-sm">
-              <div className="flex justify-between"><dt className="text-gray-500">节点数</dt><dd>{mc.nodeCount} 台（{mc.ecScheme}）</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">每节点数据盘</dt><dd>{mc.disksPerNode} × {mc.diskSize}TB NVMe SSD</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">节点数</dt><dd>{mc.nodeCount} 台（{mc.ecScheme}，范围 6–20）</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">节点配比</dt><dd>二级 : 一级 = 25 : 1（{ul.tier2ServersTotal} → {mc.nodeCount}）</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">每节点数据盘</dt><dd>{mc.disksPerNode} × {mc.diskSize}TB NVMe SSD（DWPD ≥ 3）</dd></div>
               <div className="flex justify-between"><dt className="text-gray-500">NVMe 总容量</dt><dd>{mc.totalSize.toLocaleString()} TB</dd></div>
               <div className="flex justify-between"><dt className="text-gray-500">容错能力</dt><dd>容忍 {mc.tolerance} 节点离线</dd></div>
               <div className="flex justify-between"><dt className="text-gray-500">处理器/内存</dt><dd>2×Intel 6330 / 256GB</dd></div>
               <div className="flex justify-between"><dt className="text-gray-500">系统盘/网卡</dt><dd>2×960GB SATA RAID1 / 2×双口25GbE</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">比例校验</dt><dd>二级SSD总/一级NVMe总 = {ul.ratio.toFixed(2)}（目标 5）✓</dd></div>
+              <div className="flex justify-between"><dt className="text-gray-500">容量配比</dt><dd>二级SSD总/一级NVMe总 = {ul.ratio.toFixed(2)}（目标 5）</dd></div>
             </dl>
           </div>
         </div>

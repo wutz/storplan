@@ -1,4 +1,4 @@
-import { planXEOS, calculateCacheConfig, calculatePoolConfig, CONSTANTS, getAllowedEcSchemes } from './src/lib/xeos'
+import { planXEOS, calculateCacheConfig, calculatePoolConfig, buildUltraLargeFromServers, CONSTANTS, getAllowedEcSchemes } from './src/lib/xeos'
 
 console.log('=== XSKY XEOS 改进测试（第二版）===\n')
 
@@ -111,12 +111,16 @@ ultraTests.forEach(cap => {
   if (r.ultraLarge) {
     const ul = r.ultraLarge
     const mc = ul.metadataCluster
-    const ratioOk = mc.totalSize * CONSTANTS.METADATA_TIER_RATIO >= ul.tier2CacheSSDTotal - 0.01
-    const ok = ul.tier2TotalHDDs <= CONSTANTS.MAX_TOTAL_DISKS_ULTRA && mc.nodeCount >= CONSTANTS.MIN_METADATA_NODES && ratioOk
+    // 元数据节点数 = clamp(ceil(数据节点/25), 6, 20)
+    const expectedNodes = Math.min(CONSTANTS.MAX_METADATA_NODES, Math.max(CONSTANTS.MIN_METADATA_NODES, Math.ceil(ul.tier2ServersTotal / CONSTANTS.METADATA_NODE_RATIO - 1e-9)))
+    const nodeOk = mc.nodeCount === expectedNodes && mc.nodeCount >= 6 && mc.nodeCount <= 20
+    const ecOk = mc.ecScheme === (mc.nodeCount >= 10 ? 'EC8+2' : 'EC4+2')
+    const diskOk = CONSTANTS.METADATA_DISK_COUNTS.includes(mc.disksPerNode as any) && CONSTANTS.METADATA_DISK_SIZES.includes(mc.diskSize as any)
+    const ok = ul.tier2TotalHDDs <= CONSTANTS.MAX_TOTAL_DISKS_ULTRA && nodeOk && ecOk && diskOk
     console.log(`   ${cap}: 二级 ${ul.tier2ClusterCount} 簇 × 40 节点 = ${ul.tier2ServersTotal} 台, HDD ${ul.tier2TotalHDDs} 块`)
     console.log(`     可用容量 ${r.formatted.capacity} | 二级 SSD 总容量 ${ul.tier2CacheSSDTotal.toLocaleString()} TB`)
-    console.log(`     一级元数据 ${mc.nodeCount} 台 × ${mc.disksPerNode}×${mc.diskSize}TB NVMe = ${mc.totalSize.toLocaleString()} TB (${mc.ecScheme})`)
-    console.log(`     比例 二级SSD/一级NVMe = ${ul.ratio.toFixed(2)} (目标 5)`)
+    console.log(`     一级元数据 ${mc.nodeCount} 台 (期望 ${expectedNodes}) × ${mc.disksPerNode}×${mc.diskSize}TB NVMe = ${mc.totalSize.toLocaleString()} TB (${mc.ecScheme})`)
+    console.log(`     比例 二级SSD/一级NVMe = ${ul.ratio.toFixed(2)} (目标 5，受节点数 6–20 与单盘上限夹紧)`)
     console.log(`     ${ok ? '✓ 通过' : '✗ 失败'}`)
   } else {
     console.log(`   ${cap}: ✗ 未进入超大规模模式`)
@@ -140,6 +144,27 @@ const regTests = ['500TiB', '2000TiB']
 regTests.forEach(cap => {
   const r = planXEOS({ capacity: cap })
   console.log(`   ${cap}: ${r.ultraLarge ? '✗ 误判超大规模' : '✓ 单集群'} | ${r.serverCount} 台 × ${r.disksPerServer}×${r.diskSize}TB | ${r.formatted.capacity}`)
+})
+console.log()
+
+// 测试 10: 手动服务器台数 × 每台 HDD 超 2000 -> 超大规模（含一级元数据集群）
+console.log('10. 手动服务器台数超大规模测试')
+const manualTests = [
+  { servers: 56, disks: 36, size: 24 },   // 56×36=2016 > 2000
+  { servers: 300, disks: 36, size: 24 },  // 300×36=10800
+]
+manualTests.forEach(t => {
+  const cache = calculateCacheConfig(t.disks, t.size)
+  const r = buildUltraLargeFromServers(t.servers, t.disks, t.size, cache.count, cache.sizePerDisk, true, 'decimal-bit')
+  const ul = r.ultraLarge!
+  const mc = ul.metadataCluster
+  const expectedNodes = Math.min(CONSTANTS.MAX_METADATA_NODES, Math.max(CONSTANTS.MIN_METADATA_NODES, Math.ceil(ul.tier2ServersTotal / CONSTANTS.METADATA_NODE_RATIO - 1e-9)))
+  const nodeOk = mc.nodeCount === expectedNodes
+  const ecOk = mc.ecScheme === (mc.nodeCount >= 10 ? 'EC8+2' : 'EC4+2')
+  console.log(`   ${t.servers} 台 × ${t.disks}×${t.size}TB (HDD ${t.servers * t.disks}):`)
+  console.log(`     -> ${ul.tier2ClusterCount} 簇 × 40 = ${ul.tier2ServersTotal} 台, HDD ${ul.tier2TotalHDDs} / ${CONSTANTS.MAX_TOTAL_DISKS_ULTRA}`)
+  console.log(`     一级元数据 ${mc.nodeCount} 台 (期望 ${expectedNodes}) × ${mc.disksPerNode}×${mc.diskSize}TB = ${mc.totalSize}TB (${mc.ecScheme})`)
+  console.log(`     比例 ${ul.ratio.toFixed(2)} (目标 5) 节点/EC ${nodeOk && ecOk ? '✓' : '✗'}  可用容量 ${r.formatted.capacity}`)
 })
 console.log()
 
