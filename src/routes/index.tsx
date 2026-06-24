@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { planXEOS, buildXEOSResult, buildUltraLargeFromServers, getAllowedEcSchemes, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity, calculateCacheConfig as xeosCacheConfig } from '#/lib/xeos'
+import { planXEOS, buildXEOSResult, buildUltraLargeFromServers, getAllowedEcSchemes, calculatePoolConfig as xeosPoolConfig, CONSTANTS as XEOS_CONSTANTS, EC_SCHEMES as XEOS_EC_SCHEMES, calculateCapacityTiB as xeosCapacity, calculateCacheConfig as xeosCacheConfig } from '#/lib/xeos'
 import type { XEOSPlanResult } from '#/lib/xeos'
 import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calculateCapacityTiB as vastCapacity } from '#/lib/vastdata'
 import type { VastDataPlanResult } from '#/lib/vastdata'
@@ -535,6 +535,9 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
 }) {
   const ul = data.ultraLarge
   const mc = ul?.metadataCluster
+  // 末簇容忍离线节点数：末簇可能少于/多于 40 台，池数与满簇不同（<20 台 → 1 池容忍 2，20+ 台 → 2 池容忍 4）
+  const lastClusterTolerance = ul ? (xeosPoolConfig(ul.lastClusterNodes, 'EC8+2')?.totalTolerance ?? 2) : 0
+  const lastClusterIsFull = ul ? ul.lastClusterNodes === ul.nodesPerCluster : true
   const perTiBReadBW = data.performance.downloadBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
   const totalDisks = data.serverCount * data.disksPerServer
@@ -596,7 +599,11 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             )}
             <div className="flex justify-between">
               <dt className="text-gray-500">容错能力</dt>
-              <dd>{ul ? `每集群容忍 ${ul.tier2PerClusterTolerance} 台节点离线` : `容忍 ${data.tolerance} 台节点离线`}</dd>
+              <dd>{ul
+                ? (lastClusterIsFull
+                    ? `每集群容忍 ${ul.tier2PerClusterTolerance} 台节点离线`
+                    : `满簇容忍 ${ul.tier2PerClusterTolerance} 台（末簇 ${ul.lastClusterNodes} 节点容忍 ${lastClusterTolerance} 台）`)
+                : `容忍 ${data.tolerance} 台节点离线`}</dd>
             </div>
             {data.poolConfig && (
               <div className="flex justify-between">
