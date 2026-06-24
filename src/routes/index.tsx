@@ -39,8 +39,8 @@ const THEME: Record<string, Theme> = {
     accentBorder: 'border-[#23D1FE]',
     chip: 'bg-[#23D1FE]/20 text-[#0D1021]',
     bigValue: 'text-[#0D1021]',
-    selectedCard: 'border-[#23D1FE] bg-[#23D1FE] ring-1 ring-[#23D1FE]',
-    dot: 'bg-[#0D1021]',
+    selectedCard: 'border-[#23D1FE] bg-[#23D1FE]/10 ring-1 ring-[#23D1FE]',
+    dot: 'bg-[#23D1FE]',
     accentBar: 'bg-[#23D1FE]',
   },
   'gpfs-ece': {
