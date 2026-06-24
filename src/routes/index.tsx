@@ -207,22 +207,30 @@ function StorplanApp() {
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(serverCount, disksPerServer, newDiskSize, ec.efficiency)
 
-    // 自动计算并设置缓存盘：尝试使用 4 块缓存盘，从最大容量开始
+    // 自动计算并设置缓存盘：选择最接近需要容量的配置
     const requiredCacheTB = (disksPerServer * newDiskSize) / XEOS_CONSTANTS.CACHE_RATIO
-    let cacheCount = 4
-    let cacheSizePerDisk = 12.8  // 默认最大
-    for (let count = 4; count >= 1; count--) {
-      for (const size of [...XEOS_CONSTANTS.CACHE_DISK_SIZES].reverse()) {
-        if (count * size >= requiredCacheTB) {
-          cacheCount = count
-          cacheSizePerDisk = size
-          break
+    let bestCount = 4
+    let bestSize = 12.8
+    let bestDiff = Infinity
+
+    // 遍历所有可能的组合，找到最接近需要容量的配置
+    for (let count = 1; count <= 4; count++) {
+      for (const size of XEOS_CONSTANTS.CACHE_DISK_SIZES) {
+        const totalSize = count * size
+        // 容量必须满足需求
+        if (totalSize >= requiredCacheTB) {
+          const diff = totalSize - requiredCacheTB
+          // 找到最接近的配置（最小的超出量）
+          if (diff < bestDiff) {
+            bestDiff = diff
+            bestCount = count
+            bestSize = size
+          }
         }
       }
-      if (cacheCount !== 4 || cacheSizePerDisk !== 12.8) break
     }
 
-    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize: newDiskSize, ecEfficiency: ec.efficiency, cacheCount, cacheSizePerDisk } }))
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize: newDiskSize, ecEfficiency: ec.efficiency, cacheCount: bestCount, cacheSizePerDisk: bestSize } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
@@ -233,22 +241,30 @@ function StorplanApp() {
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(serverCount, newDisksPerServer, diskSize, ec.efficiency)
 
-    // 自动计算并设置缓存盘：尝试使用 4 块缓存盘，从最大容量开始
+    // 自动计算并设置缓存盘：选择最接近需要容量的配置
     const requiredCacheTB = (newDisksPerServer * diskSize) / XEOS_CONSTANTS.CACHE_RATIO
-    let cacheCount = 4
-    let cacheSizePerDisk = 12.8  // 默认最大
-    for (let count = 4; count >= 1; count--) {
-      for (const size of [...XEOS_CONSTANTS.CACHE_DISK_SIZES].reverse()) {
-        if (count * size >= requiredCacheTB) {
-          cacheCount = count
-          cacheSizePerDisk = size
-          break
+    let bestCount = 4
+    let bestSize = 12.8
+    let bestDiff = Infinity
+
+    // 遍历所有可能的组合，找到最接近需要容量的配置
+    for (let count = 1; count <= 4; count++) {
+      for (const size of XEOS_CONSTANTS.CACHE_DISK_SIZES) {
+        const totalSize = count * size
+        // 容量必须满足需求
+        if (totalSize >= requiredCacheTB) {
+          const diff = totalSize - requiredCacheTB
+          // 找到最接近的配置（最小的超出量）
+          if (diff < bestDiff) {
+            bestDiff = diff
+            bestCount = count
+            bestSize = size
+          }
         }
       }
-      if (cacheCount !== 4 || cacheSizePerDisk !== 12.8) break
     }
 
-    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer: newDisksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount, cacheSizePerDisk } }))
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer: newDisksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: bestCount, cacheSizePerDisk: bestSize } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
@@ -595,8 +611,8 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">容忍离线台数</dt>
-              <dd>{data.tolerance} 台{data.poolConfig ? `（2 × ${data.poolConfig.poolCount} 池）` : '（1 池）'}</dd>
+              <dt className="text-gray-500">容错能力：容量离线台数</dt>
+              <dd>{data.tolerance} 台 = 2 × {data.poolConfig ? data.poolConfig.poolCount : '0.5'} 池</dd>
             </div>
           </dl>
         </div>
@@ -652,13 +668,13 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
                 <select value={data.cacheConfig.sizePerDisk} onChange={(e) => onCacheSizeChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
                   {XEOS_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
                 </select>
-                <span className="text-xs">NVMe SSD</span>
+                <span className="text-xs">NVMe SSD（DWPD ≥ 3）</span>
                 {!isCacheSufficient && <span className="text-red-600 text-xs">⚠️ 不足</span>}
               </dd>
             </div>
             <div className="flex justify-between text-xs text-gray-400">
               <dt>缓存容量要求</dt>
-              <dd>≥ {requiredCacheTB.toFixed(2)}TB（实际 {data.cacheConfig.totalSize}TB）</dd>
+              <dd>≥ {requiredCacheTB.toFixed(2)}TB（实际 {data.cacheConfig.totalSize.toFixed(2)}TB）</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">网卡</dt>
