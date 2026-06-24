@@ -596,7 +596,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">容错能力</dt>
-              <dd>容忍 {data.tolerance} 台节点离线{data.poolConfig ? `（计算公式：2 × ${data.poolConfig.poolCount}）` : ''}</dd>
+              <dd>容忍 {data.tolerance} 台节点离线{data.poolConfig && data.poolConfig.poolCount > 1 ? `（${data.poolConfig.poolCount} 池，2 × ${data.poolConfig.poolCount}）` : ''}</dd>
             </div>
           </dl>
         </div>
