@@ -601,7 +601,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             {data.poolConfig && (
               <div className="flex justify-between">
                 <dt className="text-gray-500">池数</dt>
-                <dd>{data.poolConfig.poolCount} 个池（2 × {data.poolConfig.poolCount} = {data.tolerance} 台）</dd>
+                <dd>{data.poolConfig.poolCount} 个池</dd>
               </div>
             )}
           </dl>

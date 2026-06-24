@@ -215,9 +215,11 @@ export function buildXEOSResult(
   const performance = calculatePerformance(totalDisks);
   const cacheConfig = calculateCacheConfig(disksPerServer, diskSize);
   const poolConfig = calculatePoolConfig(serverCount, ecScheme);
+  // 分池时容忍离线台数 = 2 × 池数，覆盖传入的基础 tolerance
+  const effectiveTolerance = poolConfig ? poolConfig.totalTolerance : tolerance;
 
   return {
-    serverCount, disksPerServer, ecScheme, tolerance, diskSize, actualCapacity, rawCapacity, cacheConfig, poolConfig, performance,
+    serverCount, disksPerServer, ecScheme, tolerance: effectiveTolerance, diskSize, actualCapacity, rawCapacity, cacheConfig, poolConfig, performance,
     formatted: {
       capacity: formatCapacity(actualCapacity, isBinary),
       rawCapacity: formatCapacity(rawCapacity, isBinary),
