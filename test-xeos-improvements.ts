@@ -111,8 +111,8 @@ ultraTests.forEach(cap => {
   if (r.ultraLarge) {
     const ul = r.ultraLarge
     const mc = ul.metadataCluster
-    // 末簇 ∈ [10, 40]，每簇 ≤ 40，总节点数自洽
-    const lastOk = ul.lastClusterNodes >= 10 && ul.lastClusterNodes <= ul.nodesPerCluster
+    // 末簇 ∈ [10, 40]，或余数 1–9 并入上簇时 ∈ [41, 49]；总节点数自洽
+    const lastOk = ul.lastClusterNodes >= 10 && ul.lastClusterNodes < 2 * ul.nodesPerCluster
     const totalNodesOk = ul.tier2ServersTotal === (ul.tier2ClusterCount - 1) * ul.nodesPerCluster + ul.lastClusterNodes
     // 元数据节点 ∈ [6,20]，EC 与节点数匹配
     const nodeOk = mc.nodeCount >= 6 && mc.nodeCount <= 20
@@ -155,7 +155,8 @@ console.log()
 // 测试 10: 手动服务器台数 × 每台 HDD 超 2000 -> 超大规模（含一级元数据集群）
 console.log('10. 手动服务器台数超大规模测试')
 const manualTests = [
-  { servers: 56, disks: 36, size: 24 },   // 56×36=2016 > 2000
+  { servers: 56, disks: 36, size: 24 },   // 56×36=2016 > 2000，末簇 16
+  { servers: 86, disks: 32, size: 24 },   // 余数 6 -> 并入上簇，2 簇：40 + 末簇 46
   { servers: 300, disks: 36, size: 24 },  // 300×36=10800
 ]
 manualTests.forEach(t => {
@@ -163,8 +164,8 @@ manualTests.forEach(t => {
   const r = buildUltraLargeFromServers(t.servers, t.disks, t.size, cache.count, cache.sizePerDisk, true, 'decimal-bit')
   const ul = r.ultraLarge!
   const mc = ul.metadataCluster
-  // 末簇可少于 40：手动 56 台 -> 40 + 16；300 台 -> 7×40 + 20
-  const lastOk = ul.lastClusterNodes >= 10 && ul.lastClusterNodes <= ul.nodesPerCluster
+  // 末簇可少于 40，或余数 1–9 并入上簇时为 41–49
+  const lastOk = ul.lastClusterNodes >= 10 && ul.lastClusterNodes < 2 * ul.nodesPerCluster
   const totalOk = ul.tier2ServersTotal === t.servers
   const ecOk = mc.ecScheme === (mc.nodeCount >= 10 ? 'EC8+2' : 'EC4+2')
   const clusterDesc = ul.lastClusterNodes === ul.nodesPerCluster ? `${ul.tier2ClusterCount} 簇 × 40` : `${ul.tier2ClusterCount - 1} 簇 × 40 + 末簇 ${ul.lastClusterNodes}`

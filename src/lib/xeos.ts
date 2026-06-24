@@ -287,19 +287,22 @@ interface Tier2Config {
   actualCapacity: number; // 全部二级集群可用容量之和（TiB）
 }
 
-// 将总节点数拆为若干 40 节点集群，最后一簇可少于 40（但不少于 EC8+2 最低要求 10 台）。
-// 每簇 ≤ 40，末簇 ∈ [10, 40]；若余数为 1–9，则上调末簇至 10 台（其余簇仍各 40）。
-// 返回 { numClusters, lastClusterNodes }（lastClusterNodes 已是上调后的实际值）。
+// 将总节点数拆为若干 40 节点集群，最后一簇可少于 40。
+// 若末簇余数为 1–9（不足 EC8+2 最低 10 台），则并入上一簇，末簇变为 40+余数 ∈ [41, 49]；
+// 否则末簇 ∈ [10, 40]。返回 { numClusters, lastClusterNodes }（lastClusterNodes 为实际节点数）。
 function splitClusters(totalNodes: number): { numClusters: number; lastClusterNodes: number } {
   const full = CONSTANTS.ULTRA_NODES_PER_CLUSTER;
   const minLast = CONSTANTS.ULTRA_MIN_LAST_CLUSTER_NODES;
   if (totalNodes <= full) {
     return { numClusters: 1, lastClusterNodes: Math.max(totalNodes, 0) };
   }
-  const numClusters = Math.ceil(totalNodes / full);
+  let numClusters = Math.ceil(totalNodes / full);
   let lastClusterNodes = totalNodes - (numClusters - 1) * full; // ∈ [1, 40]
-  // 末簇不足 10 台时上调至 10，保证 EC8+2 可成立（每簇仍 ≤ 40）
-  if (lastClusterNodes < minLast) lastClusterNodes = minLast;
+  // 末簇不足 10 台时并入上一簇（末簇变为 40+余数），保证 EC8+2 可成立
+  if (lastClusterNodes < minLast) {
+    numClusters -= 1;
+    lastClusterNodes += full; // ∈ [41, 49]
+  }
   return { numClusters, lastClusterNodes };
 }
 
