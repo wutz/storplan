@@ -103,4 +103,44 @@ console.log(`   下载 BW: ${fullTest.formatted.downloadBandwidth}`)
 console.log(`   上传 BW: ${fullTest.formatted.uploadBandwidth}`)
 console.log()
 
+// 测试 7: 超大规模集群（2000–20000 HDD 两级架构）
+console.log('7. 超大规模集群测试（2000–20000 HDD）')
+const ultraTests = ['50PiB', '100PiB', '250PiB']
+ultraTests.forEach(cap => {
+  const r = planXEOS({ capacity: cap })
+  if (r.ultraLarge) {
+    const ul = r.ultraLarge
+    const mc = ul.metadataCluster
+    const ratioOk = mc.totalSize * CONSTANTS.METADATA_TIER_RATIO >= ul.tier2CacheSSDTotal - 0.01
+    const ok = ul.tier2TotalHDDs <= CONSTANTS.MAX_TOTAL_DISKS_ULTRA && mc.nodeCount >= CONSTANTS.MIN_METADATA_NODES && ratioOk
+    console.log(`   ${cap}: 二级 ${ul.tier2ClusterCount} 簇 × 40 节点 = ${ul.tier2ServersTotal} 台, HDD ${ul.tier2TotalHDDs} 块`)
+    console.log(`     可用容量 ${r.formatted.capacity} | 二级 SSD 总容量 ${ul.tier2CacheSSDTotal.toLocaleString()} TB`)
+    console.log(`     一级元数据 ${mc.nodeCount} 台 × ${mc.disksPerNode}×${mc.diskSize}TB NVMe = ${mc.totalSize.toLocaleString()} TB (${mc.ecScheme})`)
+    console.log(`     比例 二级SSD/一级NVMe = ${ul.ratio.toFixed(2)} (目标 5)`)
+    console.log(`     ${ok ? '✓ 通过' : '✗ 失败'}`)
+  } else {
+    console.log(`   ${cap}: ✗ 未进入超大规模模式`)
+  }
+})
+console.log()
+
+// 测试 8: 超过 20000 HDD 上限 -> 联系 XSKY 技术支持
+console.log('8. 超过 20000 HDD 上限测试')
+try {
+  planXEOS({ capacity: '300PiB' })
+  console.log('   ✗ 未抛出错误')
+} catch (err) {
+  console.log(`   ✓ 300PiB 抛出: ${err instanceof Error ? err.message : err}`)
+}
+console.log()
+
+// 测试 9: 回归 - 单集群仍正常（不进入超大规模）
+console.log('9. 单集群回归测试')
+const regTests = ['500TiB', '2000TiB']
+regTests.forEach(cap => {
+  const r = planXEOS({ capacity: cap })
+  console.log(`   ${cap}: ${r.ultraLarge ? '✗ 误判超大规模' : '✓ 单集群'} | ${r.serverCount} 台 × ${r.disksPerServer}×${r.diskSize}TB | ${r.formatted.capacity}`)
+})
+console.log()
+
 console.log('=== 测试完成 ===')

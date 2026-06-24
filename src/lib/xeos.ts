@@ -20,6 +20,29 @@ export interface PoolConfig {
   totalTolerance: number;
 }
 
+// 一级全闪元数据集群（超大规模架构）
+export interface MetadataClusterConfig {
+  nodeCount: number;
+  disksPerNode: number; // METADATA_DISK_COUNTS 之一
+  diskSize: number; // NVMe 单盘容量（TB）
+  totalSize: number; // 裸 NVMe 总容量（TB）= nodeCount × disksPerNode × diskSize
+  ecScheme: string;
+  tolerance: number;
+}
+
+// 超大规模两级架构配置
+export interface UltraLargeConfig {
+  tier2ClusterCount: number; // 二级数据集群数
+  nodesPerCluster: number; // 每簇节点数（40）
+  tier2ServersTotal: number; // 二级总节点数 = clusterCount × 40
+  tier2TotalHDDs: number; // 二级集群 HDD 总数
+  tier2PerClusterCapacity: number; // 单簇可用容量（TiB）
+  tier2CacheSSDTotal: number; // 全部二级节点缓存盘裸容量之和（TB）
+  tier2PerClusterTolerance: number; // 单簇容忍离线节点数（40 节点 → 2 池 × 2 = 4）
+  metadataCluster: MetadataClusterConfig; // 一级元数据集群
+  ratio: number; // 实际 二级SSD总 / 一级NVMe总（目标 5）
+}
+
 export interface XEOSPlanResult {
   serverCount: number;
   disksPerServer: number;
@@ -46,6 +69,7 @@ export interface XEOSPlanResult {
   };
   capacityUnitPreference: boolean;
   bandwidthUnitType: string;
+  ultraLarge?: UltraLargeConfig;
 }
 
 export const CONSTANTS = {
@@ -67,6 +91,13 @@ export const CONSTANTS = {
   MAX_CACHE_DISKS: 4,
   MIN_CACHE_DISKS: 1,
   CACHE_RATIO: 80,
+  // 超大规模集群（2000–20000 HDD）两级架构
+  MAX_TOTAL_DISKS_ULTRA: 20000,
+  ULTRA_NODES_PER_CLUSTER: 40, // 二级数据集群每簇节点数
+  METADATA_DISK_COUNTS: [2, 4, 6, 8, 10, 12, 14, 16] as const, // 一级元数据节点每节点 NVMe 数
+  METADATA_DISK_SIZES: [1.92, 3.84, 7.68, 15.36] as const, // 一级元数据 NVMe 单盘容量（TB）
+  METADATA_TIER_RATIO: 5, // 二级 SSD 总容量 / 一级 NVMe 总容量 = 5
+  MIN_METADATA_NODES: 3,
 };
 
 export const EC_SCHEMES = [
@@ -239,6 +270,136 @@ export function buildXEOSResult(
   };
 }
 
+// ===== 超大规模集群（2000–20000 HDD）两级架构 =====
+
+interface Tier2Config {
+  disksPerServer: number;
+  diskSize: number;
+  numClusters: number;
+  totalHDDs: number;
+  totalNodes: number;
+  perClusterCapacity: number; // 单簇可用容量（TiB）
+  actualCapacity: number; // 全部二级集群可用容量之和（TiB）
+}
+
+// 规划二级数据集群：每簇 40 节点（EC8+2），集群数向上取整以满足容量，HDD 总数 ≤ 20000。
+// 评分：主指标总 HDD 数（成本代理，等价于最小化超配），次指标总节点数。
+export function planTier2(capacityTiB: number): Tier2Config {
+  const nodesPerCluster = CONSTANTS.ULTRA_NODES_PER_CLUSTER;
+  const ecEff = CONSTANTS.EC8_2_EFFICIENCY;
+  const candidates: Tier2Config[] = [];
+
+  for (const disksPerServer of CONSTANTS.DISKS_PER_SERVER_OPTIONS) {
+    for (const diskSize of CONSTANTS.DISK_SIZES) {
+      const perClusterCapacity = calculateActualCapacity(nodesPerCluster, disksPerServer, diskSize, ecEff);
+      // 减去极小 epsilon 抵消浮点误差（如 3×3.2=9.600000000000001）导致的向上取整
+      const numClusters = Math.max(1, Math.ceil(capacityTiB / perClusterCapacity - 1e-9));
+      const totalHDDs = numClusters * nodesPerCluster * disksPerServer;
+      if (totalHDDs > CONSTANTS.MAX_TOTAL_DISKS_ULTRA) continue;
+      candidates.push({
+        disksPerServer,
+        diskSize,
+        numClusters,
+        totalHDDs,
+        totalNodes: numClusters * nodesPerCluster,
+        perClusterCapacity,
+        actualCapacity: numClusters * perClusterCapacity,
+      });
+    }
+  }
+
+  if (candidates.length === 0) {
+    throw new Error('所需容量超过 20000 块 HDD 上限（超大规模集群上限），请联系 XSKY 技术支持');
+  }
+
+  return candidates.reduce((a, b) => {
+    if (a.totalHDDs !== b.totalHDDs) return a.totalHDDs < b.totalHDDs ? a : b;
+    return a.totalNodes <= b.totalNodes ? a : b;
+  });
+}
+
+// 规划一级元数据集群：按 二级缓存 SSD 总量 / 5 确定 NVMe 需求，节点数 ≥ 3 以满足 EC。
+// 评分：主指标 NVMe 总容量（最小化超配），次指标节点数。
+export function planMetadata(requiredNvmeTB: number): MetadataClusterConfig {
+  const candidates: MetadataClusterConfig[] = [];
+
+  for (const disksPerNode of CONSTANTS.METADATA_DISK_COUNTS) {
+    for (const diskSize of CONSTANTS.METADATA_DISK_SIZES) {
+      const perNode = disksPerNode * diskSize;
+      const nodeCount = Math.max(CONSTANTS.MIN_METADATA_NODES, Math.ceil(requiredNvmeTB / perNode - 1e-9));
+      // round2 抵消浮点误差，使裸容量为整洁数值
+      const totalSize = Math.round(nodeCount * perNode * 100) / 100;
+      const ec = getEcScheme(nodeCount);
+      candidates.push({ nodeCount, disksPerNode, diskSize, totalSize, ecScheme: ec.scheme, tolerance: ec.tolerance });
+    }
+  }
+
+  return candidates.reduce((a, b) => {
+    if (a.totalSize !== b.totalSize) return a.totalSize < b.totalSize ? a : b;
+    return a.nodeCount <= b.nodeCount ? a : b;
+  });
+}
+
+// 组装超大规模两级架构结果（顶层为全部署聚合 + 二级节点代表性配置）。
+export function buildUltraLargeXEOSResult(tier2: Tier2Config, isBinary: boolean, bandwidthUnitType: string): XEOSPlanResult {
+  const { disksPerServer, diskSize, numClusters } = tier2;
+  const nodesPerCluster = CONSTANTS.ULTRA_NODES_PER_CLUSTER;
+  const tier2ServersTotal = numClusters * nodesPerCluster;
+  const tier2TotalHDDs = tier2.totalHDDs;
+
+  const cacheConfig = calculateCacheConfig(disksPerServer, diskSize);
+  // round2 抵消浮点误差（如 3×3.2=9.600000000000001）
+  const tier2CacheSSDTotal = Math.round(tier2ServersTotal * cacheConfig.totalSize * 100) / 100;
+
+  const requiredNvmeTB = tier2CacheSSDTotal / CONSTANTS.METADATA_TIER_RATIO;
+  const metadataCluster = planMetadata(requiredNvmeTB);
+  const ratio = tier2CacheSSDTotal / metadataCluster.totalSize;
+
+  // 40 节点 EC8+2 集群 → 2 池 × 2 = 容忍 4 节点离线
+  const perClusterPool = calculatePoolConfig(nodesPerCluster, 'EC8+2');
+  const tier2PerClusterTolerance = perClusterPool ? perClusterPool.totalTolerance : 2;
+
+  const ultraLarge: UltraLargeConfig = {
+    tier2ClusterCount: numClusters,
+    nodesPerCluster,
+    tier2ServersTotal,
+    tier2TotalHDDs,
+    tier2PerClusterCapacity: tier2.perClusterCapacity,
+    tier2CacheSSDTotal,
+    tier2PerClusterTolerance,
+    metadataCluster,
+    ratio,
+  };
+
+  const actualCapacity = tier2.actualCapacity;
+  const rawCapacity = calculateRawCapacity(tier2ServersTotal, disksPerServer, diskSize);
+  const performance = calculatePerformance(tier2TotalHDDs);
+
+  return {
+    serverCount: tier2ServersTotal,
+    disksPerServer,
+    ecScheme: 'EC8+2',
+    tolerance: tier2PerClusterTolerance,
+    diskSize,
+    actualCapacity,
+    rawCapacity,
+    cacheConfig,
+    poolConfig: undefined,
+    performance,
+    formatted: {
+      capacity: formatCapacity(actualCapacity, isBinary),
+      rawCapacity: formatCapacity(rawCapacity, isBinary),
+      uploadBandwidth: formatBandwidth(performance.uploadBandwidth, bandwidthUnitType),
+      downloadBandwidth: formatBandwidth(performance.downloadBandwidth, bandwidthUnitType),
+      uploadOps: `${performance.uploadOps.toLocaleString()}`,
+      downloadOps: `${performance.downloadOps.toLocaleString()}`,
+    },
+    capacityUnitPreference: isBinary,
+    bandwidthUnitType,
+    ultraLarge,
+  };
+}
+
 export function planXEOS(req: XEOSPlanRequest): XEOSPlanResult {
   const capacityInfo = parseCapacity(req.capacity);
   const capacityTiB = capacityInfo.tib;
@@ -306,7 +467,10 @@ export function planXEOS(req: XEOSPlanRequest): XEOSPlanResult {
   }
 
   if (configs.length === 0) {
-    throw new Error('无法找到满足需求的配置（可能超出 2000 块 HDD 上限）');
+    // 单集群（<=2000 HDD）无法满足容量 -> 超大规模两级架构（2000–20000 HDD）；
+    // 超过 20000 HDD 时 planTier2 会抛出"联系 XSKY 技术支持"错误。
+    const tier2 = planTier2(capacityTiB);
+    return buildUltraLargeXEOSResult(tier2, capacityInfo.isBinary, bandwidthUnitType);
   }
 
   const best = configs.reduce((a, b) =>
