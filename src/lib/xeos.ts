@@ -140,7 +140,8 @@ export function getAllowedEcSchemes(serverCount: number): typeof EC_SCHEMES[numb
   if (serverCount <= 9) {
     return [EC_SCHEMES[1], EC_SCHEMES[2]]; // EC8+2:1, EC4+2
   }
-  return [EC_SCHEMES[3], EC_SCHEMES[2]]; // EC8+2, EC4+2
+  // 10 台及以上只允许 EC8+2
+  return [EC_SCHEMES[3]]; // EC8+2
 }
 
 export function calculateCapacityTiB(serverCount: number, disksPerServer: number, diskSizeTB: number, ecEfficiency: number): number {

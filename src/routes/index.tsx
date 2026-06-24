@@ -84,7 +84,7 @@ function StorplanApp() {
   const [results, setResults] = useState<PlanResults>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [manualConfig, setManualConfig] = useState<{
-    xeos?: { serverCount: number; disksPerServer: number; diskSize: number; ecEfficiency: number };
+    xeos?: { serverCount: number; disksPerServer: number; diskSize: number; ecEfficiency: number; cacheCount: number; cacheSizePerDisk: number };
     vastdata?: { eboxCount: number; diskSize: number };
     'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number };
   }>({})
@@ -110,7 +110,10 @@ function StorplanApp() {
             const mc = manualConfig.xeos
             const allowedSchemes = getAllowedEcSchemes(mc.serverCount)
             const ec = allowedSchemes.find((s: any) => s.efficiency === mc.ecEfficiency) || allowedSchemes[0]
-            newResults.xeos = buildXEOSResult(mc.serverCount, mc.disksPerServer, mc.diskSize, ec.scheme, ec.efficiency, ec.tolerance, isBinary, bandwidthUnitType)
+            const result = buildXEOSResult(mc.serverCount, mc.disksPerServer, mc.diskSize, ec.scheme, ec.efficiency, ec.tolerance, isBinary, bandwidthUnitType)
+            // 应用手动缓存配置
+            result.cacheConfig = { count: mc.cacheCount, sizePerDisk: mc.cacheSizePerDisk, totalSize: mc.cacheCount * mc.cacheSizePerDisk }
+            newResults.xeos = result
           } else {
             const uploadBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
             const downloadBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
@@ -189,40 +192,56 @@ function StorplanApp() {
 
   const handleXeosServerCountChange = (newCount: number) => {
     if (!results.xeos || newCount < 3) return
-    const { diskSize, disksPerServer } = results.xeos
+    const { diskSize, disksPerServer, cacheConfig } = results.xeos
     const allowedSchemes = getAllowedEcSchemes(newCount)
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(newCount, disksPerServer, diskSize, ec.efficiency)
-    setManualConfig(prev => ({ ...prev, xeos: { serverCount: newCount, disksPerServer, diskSize, ecEfficiency: ec.efficiency } }))
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount: newCount, disksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cacheConfig.count, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleXeosDiskChange = (newDiskSize: number) => {
     if (!results.xeos) return
-    const { serverCount, disksPerServer } = results.xeos
+    const { serverCount, disksPerServer, cacheConfig } = results.xeos
     const allowedSchemes = getAllowedEcSchemes(serverCount)
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(serverCount, disksPerServer, newDiskSize, ec.efficiency)
-    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize: newDiskSize, ecEfficiency: ec.efficiency } }))
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize: newDiskSize, ecEfficiency: ec.efficiency, cacheCount: cacheConfig.count, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleXeosDisksPerServerChange = (newDisksPerServer: number) => {
     if (!results.xeos) return
-    const { serverCount, diskSize } = results.xeos
+    const { serverCount, diskSize, cacheConfig } = results.xeos
     const allowedSchemes = getAllowedEcSchemes(serverCount)
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(serverCount, newDisksPerServer, diskSize, ec.efficiency)
-    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer: newDisksPerServer, diskSize, ecEfficiency: ec.efficiency } }))
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer: newDisksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cacheConfig.count, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleXeosEcChange = (ecEfficiency: number) => {
     if (!results.xeos) return
-    const { serverCount, diskSize, disksPerServer } = results.xeos
+    const { serverCount, diskSize, disksPerServer, cacheConfig } = results.xeos
     const newCapacityTiB = xeosCapacity(serverCount, disksPerServer, diskSize, ecEfficiency)
-    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize, ecEfficiency } }))
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize, ecEfficiency, cacheCount: cacheConfig.count, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleXeosCacheCountChange = (newCount: number) => {
+    if (!results.xeos) return
+    const { serverCount, diskSize, disksPerServer, cacheConfig } = results.xeos
+    const allowedSchemes = getAllowedEcSchemes(serverCount)
+    const ec = allowedSchemes[0]
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: newCount, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
+  }
+
+  const handleXeosCacheSizeChange = (newSize: number) => {
+    if (!results.xeos) return
+    const { serverCount, diskSize, disksPerServer, cacheConfig } = results.xeos
+    const allowedSchemes = getAllowedEcSchemes(serverCount)
+    const ec = allowedSchemes[0]
+    setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cacheConfig.count, cacheSizePerDisk: newSize } }))
   }
 
   const handleVastDataEboxCountChange = (newCount: number) => {
@@ -414,7 +433,7 @@ function StorplanApp() {
                 </div>
               )}
               {results.xeos && (
-                <XEOSResult data={results.xeos} onServerCountChange={handleXeosServerCountChange} onDiskChange={handleXeosDiskChange} onDisksPerServerChange={handleXeosDisksPerServerChange} onEcChange={handleXeosEcChange} />
+                <XEOSResult data={results.xeos} onServerCountChange={handleXeosServerCountChange} onDiskChange={handleXeosDiskChange} onDisksPerServerChange={handleXeosDisksPerServerChange} onEcChange={handleXeosEcChange} onCacheCountChange={handleXeosCacheCountChange} onCacheSizeChange={handleXeosCacheSizeChange} />
               )}
             </div>
           )}
@@ -482,16 +501,20 @@ function StorageInfo({ storage }: { storage: string }) {
   )
 }
 
-function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerChange, onEcChange }: {
+function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerChange, onEcChange, onCacheCountChange, onCacheSizeChange }: {
   data: XEOSPlanResult;
   onServerCountChange: (n: number) => void;
   onDiskChange: (n: number) => void;
   onDisksPerServerChange: (n: number) => void;
-  onEcChange: (n: number) => void
+  onEcChange: (n: number) => void;
+  onCacheCountChange: (n: number) => void;
+  onCacheSizeChange: (n: number) => void;
 }) {
   const perTiBReadBW = data.performance.downloadBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
   const totalDisks = data.serverCount * data.disksPerServer
+  const requiredCacheTB = (data.disksPerServer * data.diskSize) / XEOS_CONSTANTS.CACHE_RATIO
+  const isCacheSufficient = data.cacheConfig.totalSize >= requiredCacheTB
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -515,14 +538,6 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
                 <span className="ml-0.5">台</span>
               </dd>
             </div>
-            <div className="flex justify-between items-center">
-              <dt className="text-gray-500">每台 HDD 数量</dt>
-              <dd>
-                <select value={data.disksPerServer} onChange={(e) => onDisksPerServerChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
-                  {XEOS_CONSTANTS.DISKS_PER_SERVER_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
-                </select> 块
-              </dd>
-            </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">集群 HDD 总数</dt>
               <dd className={totalDisks > XEOS_CONSTANTS.MAX_TOTAL_DISKS ? 'text-red-600 font-semibold' : ''}>{totalDisks} 块 {totalDisks > XEOS_CONSTANTS.MAX_TOTAL_DISKS && '⚠️ 超出上限'}</dd>
@@ -540,16 +555,10 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
               <dd>容忍 {data.tolerance} 台节点离线</dd>
             </div>
             {data.poolConfig && (
-              <>
-                <div className="flex justify-between">
-                  <dt className="text-gray-500">分池策略</dt>
-                  <dd>{data.poolConfig.poolCount} 个池</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-500">每池配置</dt>
-                  <dd className="text-xs">{data.poolConfig.serversPerPool.join(' + ')} 台</dd>
-                </div>
-              </>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">分池策略</dt>
+                <dd>{data.poolConfig.poolCount} 个池</dd>
+              </div>
             )}
           </dl>
         </div>
@@ -582,21 +591,43 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
               <dt className="text-gray-500">系统盘</dt>
               <dd>2 × 960GB SATA SSD（RAID1）</dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">索引缓存盘</dt>
-              <dd>{data.cacheConfig.count} × {data.cacheConfig.sizePerDisk}TB NVMe SSD（≥3 DWPD）</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="text-gray-500">网卡</dt>
-              <dd>2 × 双口 25Gb ETH NIC</dd>
+            <div className="flex justify-between items-center">
+              <dt className="text-gray-500">每台 HDD 数量</dt>
+              <dd>
+                <select value={data.disksPerServer} onChange={(e) => onDisksPerServerChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {XEOS_CONSTANTS.DISKS_PER_SERVER_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select> 块
+              </dd>
             </div>
             <div className="flex justify-between items-center">
               <dt className="text-gray-500">数据盘</dt>
               <dd>
-                {data.disksPerServer} × <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
                   {XEOS_CONSTANTS.DISK_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
                 </select> HDD
               </dd>
+            </div>
+            <div className="flex justify-between items-center">
+              <dt className="text-gray-500">索引缓存盘</dt>
+              <dd className="flex items-center gap-1">
+                <select value={data.cacheConfig.count} onChange={(e) => onCacheCountChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {[1, 2, 3, 4].map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <span>×</span>
+                <select value={data.cacheConfig.sizePerDisk} onChange={(e) => onCacheSizeChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {XEOS_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
+                </select>
+                <span className="text-xs">NVMe SSD</span>
+                {!isCacheSufficient && <span className="text-red-600 text-xs">⚠️ 不足</span>}
+              </dd>
+            </div>
+            <div className="flex justify-between text-xs text-gray-400">
+              <dt>缓存容量要求</dt>
+              <dd>≥ {requiredCacheTB.toFixed(2)}TB（实际 {data.cacheConfig.totalSize}TB）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">网卡</dt>
+              <dd>2 × 双口 25Gb ETH NIC</dd>
             </div>
           </dl>
         </div>
