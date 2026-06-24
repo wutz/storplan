@@ -16,6 +16,58 @@ type PlanResults = {
   'gpfs-ece'?: GPFSECEPlanResult
 }
 
+// 每个存储产品的官网主题色（Tailwind 静态类名，避免运行时拼接导致 JIT 漏扫）
+// VastData → 品牌紫 / GPFS·Scale（IBM）→ IBM 蓝 / XSKY → 天空青
+type Theme = {
+  label: string
+  accentText: string
+  accentBgSoft: string
+  accentBorder: string
+  chip: string
+  bigValue: string
+  selectedCard: string
+  dot: string
+  accentBar: string
+}
+
+const THEME: Record<string, Theme> = {
+  vastdata: {
+    label: 'VastData（统一存储）',
+    accentText: 'text-violet-600',
+    accentBgSoft: 'bg-violet-50',
+    accentBorder: 'border-violet-200',
+    chip: 'bg-violet-100 text-violet-700',
+    bigValue: 'text-violet-600',
+    selectedCard: 'border-violet-500 bg-violet-50 ring-1 ring-violet-500',
+    dot: 'bg-violet-500',
+    accentBar: 'bg-violet-500',
+  },
+  'gpfs-ece': {
+    label: 'GPFS/Scale（文件系统）',
+    accentText: 'text-blue-600',
+    accentBgSoft: 'bg-blue-50',
+    accentBorder: 'border-blue-200',
+    chip: 'bg-blue-100 text-blue-700',
+    bigValue: 'text-blue-600',
+    selectedCard: 'border-blue-500 bg-blue-50 ring-1 ring-blue-500',
+    dot: 'bg-blue-500',
+    accentBar: 'bg-blue-500',
+  },
+  xeos: {
+    label: 'XSKY XEOS（对象存储）',
+    accentText: 'text-cyan-600',
+    accentBgSoft: 'bg-cyan-50',
+    accentBorder: 'border-cyan-200',
+    chip: 'bg-cyan-100 text-cyan-700',
+    bigValue: 'text-cyan-600',
+    selectedCard: 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-500',
+    dot: 'bg-cyan-500',
+    accentBar: 'bg-cyan-500',
+  },
+}
+
+const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'xeos'] as const
+
 function convertTibToUnit(tib: number, unit: string): string {
   switch (unit) {
     case 'TiB': return tib.toFixed(2)
@@ -75,7 +127,7 @@ function NumberInput({ value, onChange, min, max, disabled, className }: {
 }
 
 function StorplanApp() {
-  const [selectedStorages, setSelectedStorages] = useState<Set<string>>(new Set(['vastdata']))
+  const [selectedStorages, setSelectedStorages] = useState<Set<string>>(new Set())
   const [capacityValue, setCapacityValue] = useState('1024')
   const [capacityUnit, setCapacityUnit] = useState('TiB')
   const [downloadBWValue, setDownloadBWValue] = useState('')
@@ -182,9 +234,7 @@ function StorplanApp() {
   const toggleStorage = (storage: string) => {
     const newSet = new Set(selectedStorages)
     if (newSet.has(storage)) {
-      if (newSet.size > 1) {
-        newSet.delete(storage)
-      }
+      newSet.delete(storage)
     } else {
       newSet.add(storage)
     }
@@ -318,47 +368,55 @@ function StorplanApp() {
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">Storplan</h1>
-        <p className="text-gray-600 mb-8">存储容量和性能规划工具</p>
+  const hasSelection = selectedStorages.size > 0
+  const selectClass = "border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 transition"
+  const inputClass = "flex-1 border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 transition"
 
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
+      <div className="max-w-7xl mx-auto">
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Storplan</h1>
+          <p className="text-gray-500 mt-1">存储容量和性能规划工具</p>
+        </header>
+
+        <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6 mb-8">
+          <label className="block text-sm font-medium text-gray-700 mb-3">存储方案</label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+            {STORAGE_ORDER.map((key) => {
+              const t = THEME[key]
+              const active = selectedStorages.has(key)
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => toggleStorage(key)}
+                  className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-left transition ${active ? t.selectedCard : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'}`}
+                >
+                  <span className={`h-2.5 w-2.5 rounded-full ${active ? t.dot : 'bg-gray-300'}`} />
+                  <span className={`text-sm font-medium ${active ? t.accentText : 'text-gray-600'}`}>{t.label}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">存储方案</label>
-              <div className="flex flex-wrap gap-3">
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input type="checkbox" checked={selectedStorages.has('vastdata')} onChange={() => toggleStorage('vastdata')} className="rounded" />
-                  <span className="text-sm">VastData（统一存储）</span>
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input type="checkbox" checked={selectedStorages.has('gpfs-ece')} onChange={() => toggleStorage('gpfs-ece')} className="rounded" />
-                  <span className="text-sm">GPFS/Scale（文件系统）</span>
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input type="checkbox" checked={selectedStorages.has('xeos')} onChange={() => toggleStorage('xeos')} className="rounded" />
-                  <span className="text-sm">XSKY XEOS（对象存储）</span>
-                </label>
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">容量</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">容量</label>
               <div className="flex gap-2">
                 <input
                   type="number"
                   value={capacityValue}
                   onChange={(e) => { setCapacityValue(e.target.value); setManualConfig({}) }}
                   placeholder="500"
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2"
+                  className={inputClass}
                   min="0"
                   step="0.1"
                 />
                 <select
                   value={capacityUnit}
                   onChange={(e) => { setCapacityUnit(e.target.value); setManualConfig({}) }}
-                  className="border border-gray-300 rounded-md px-3 py-2"
+                  className={selectClass}
                 >
                   <option value="TiB">TiB</option>
                   <option value="PiB">PiB</option>
@@ -368,21 +426,21 @@ function StorplanApp() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{bwLabels.read}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{bwLabels.read}</label>
               <div className="flex gap-2">
                 <input
                   type="number"
                   value={downloadBWValue}
                   onChange={(e) => { setDownloadBWValue(e.target.value); setManualConfig({}) }}
                   placeholder="20"
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2"
+                  className={inputClass}
                   min="0"
                   step="0.1"
                 />
                 <select
                   value={bwUnit}
                   onChange={(e) => { setBwUnit(e.target.value); setManualConfig({}) }}
-                  className="border border-gray-300 rounded-md px-3 py-2"
+                  className={selectClass}
                 >
                   <option value="MB/s">MB/s</option>
                   <option value="GB/s">GB/s</option>
@@ -392,21 +450,21 @@ function StorplanApp() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{bwLabels.write}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{bwLabels.write}</label>
               <div className="flex gap-2">
                 <input
                   type="number"
                   value={uploadBWValue}
                   onChange={(e) => { setUploadBWValue(e.target.value); setManualConfig({}) }}
                   placeholder="10"
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2"
+                  className={inputClass}
                   min="0"
                   step="0.1"
                 />
                 <select
                   value={bwUnit}
                   onChange={(e) => { setBwUnit(e.target.value); setManualConfig({}) }}
-                  className="border border-gray-300 rounded-md px-3 py-2"
+                  className={selectClass}
                 >
                   <option value="MB/s">MB/s</option>
                   <option value="GB/s">GB/s</option>
@@ -417,6 +475,18 @@ function StorplanApp() {
             </div>
           </div>
         </div>
+
+        {!hasSelection && (
+          <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-12 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+              <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 0 1-3-3m3 3a3 3 0 1 0 0 6h13.5a3 3 0 1 0 0-6m-16.5-3a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3m-19.5 0a4.5 4.5 0 0 1 .9-2.7L5.737 5.1a3.375 3.375 0 0 1 2.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 0 1 .9 2.7m0 0a3 3 0 0 1-3 3m0 3h.008v.008h-.008v-.008Zm0-6h.008v.008h-.008v-.008Zm-3 6h.008v.008h-.008v-.008Zm0-6h.008v.008h-.008v-.008Z" />
+              </svg>
+            </div>
+            <h3 className="text-base font-semibold text-gray-900">请选择存储方案</h3>
+            <p className="mt-1 text-sm text-gray-500">在上方勾选一个或多个存储产品，开始容量与性能规划。</p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {selectedStorages.has('vastdata') && (
@@ -494,9 +564,11 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
 function StorageInfo({ storage }: { storage: string }) {
   const info = STORAGE_INFO[storage]
   if (!info) return null
+  const t = THEME[storage]
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-4">
+    <div className={`relative overflow-hidden bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6 mb-4`}>
+      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
       <p className="text-gray-600 mb-4">{info.description}</p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
         <div>
@@ -544,12 +616,14 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
   const hddLimit = ul ? XEOS_CONSTANTS.MAX_TOTAL_DISKS_ULTRA : XEOS_CONSTANTS.MAX_TOTAL_DISKS
   const requiredCacheTB = (data.disksPerServer * data.diskSize) / XEOS_CONSTANTS.CACHE_RATIO
   const isCacheSufficient = data.cacheConfig.totalSize >= requiredCacheTB
+  const t = THEME.xeos
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="relative overflow-hidden bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6">
+      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
       <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-xl font-bold">XSKY XEOS 规划方案</h2>
-        {ul && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">超大规模架构（两级）</span>}
+        <h2 className="text-xl font-bold text-gray-900">XSKY XEOS 规划方案</h2>
+        {ul && <span className={`text-xs ${t.chip} px-2 py-0.5 rounded-full`}>超大规模架构（两级）</span>}
       </div>
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -618,7 +692,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
               <dt className="text-gray-500">可用容量</dt>
-              <dd className="text-xl font-bold text-blue-600">{data.formatted.capacity}</dd>
+              <dd className={`text-xl font-bold ${t.bigValue}`}>{data.formatted.capacity}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">裸容量</dt>
@@ -711,24 +785,24 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
           <h3 className="font-semibold text-gray-700 mb-2">{ul ? '性能（厂商数据，基于二级 HDD）' : '性能（厂商数据）'}</h3>
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <dt className="text-gray-500">上传 BW (4MiB)</dt>
-              <dd className="font-medium">{data.formatted.uploadBandwidth}</dd>
-            </div>
-            <div>
               <dt className="text-gray-500">下载 BW (4MiB)</dt>
               <dd className="font-medium">{data.formatted.downloadBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">每 TiB 读 BW (4MiB)</dt>
-              <dd className="font-medium">{perTiBReadBWFormatted}</dd>
+              <dt className="text-gray-500">上传 BW (4MiB)</dt>
+              <dd className="font-medium">{data.formatted.uploadBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-gray-500">上传 OPS (4KiB)</dt>
-              <dd className="font-medium">{data.formatted.uploadOps}</dd>
+              <dt className="text-gray-500">每 TiB 下载 BW (4MiB)</dt>
+              <dd className="font-medium">{perTiBReadBWFormatted}</dd>
             </div>
             <div>
               <dt className="text-gray-500">下载 OPS (4KiB)</dt>
               <dd className="font-medium">{data.formatted.downloadOps}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">上传 OPS (4KiB)</dt>
+              <dd className="font-medium">{data.formatted.uploadOps}</dd>
             </div>
           </dl>
         </div>
@@ -740,10 +814,12 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
 function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastDataPlanResult; onEboxCountChange: (n: number) => void; onDiskChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
+  const t = THEME.vastdata
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-bold mb-4">VastData 统一存储规划方案</h2>
+    <div className="relative overflow-hidden bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6">
+      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
+      <h2 className="text-xl font-bold text-gray-900 mb-4">VastData 统一存储规划方案</h2>
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
@@ -775,7 +851,7 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
               <dt className="text-gray-500">可用容量</dt>
-              <dd className="text-xl font-bold text-blue-600">{data.formatted.capacity}</dd>
+              <dd className={`text-xl font-bold ${t.bigValue}`}>{data.formatted.capacity}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">裸容量</dt>
@@ -850,10 +926,12 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
 function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, onSsdCountChange }: { data: GPFSECEPlanResult; onServerCountChange: (n: number) => void; onDiskChange: (n: number) => void; onEcChange: (n: number) => void; onSsdCountChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
+  const t = THEME['gpfs-ece']
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-xl font-bold mb-4">GPFS/Scale 规划方案</h2>
+    <div className="relative overflow-hidden bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6">
+      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
+      <h2 className="text-xl font-bold text-gray-900 mb-4">GPFS/Scale 规划方案</h2>
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
@@ -893,7 +971,7 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
               <dt className="text-gray-500">可用容量</dt>
-              <dd className="text-xl font-bold text-blue-600">{data.formatted.capacity}</dd>
+              <dd className={`text-xl font-bold ${t.bigValue}`}>{data.formatted.capacity}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">裸容量</dt>
