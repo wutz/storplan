@@ -55,8 +55,10 @@ export const CONSTANTS = {
   SPACE_OVERHEAD: 0.81,
   EC8_2_EFFICIENCY: 0.8,
   EC4_2_EFFICIENCY: 0.6667,
-  READ_BW_PER_DISK: 70,
-  WRITE_BW_PER_DISK: 46,
+  // 厂商性能数据。吞吐以 MiB/s 为内部规范单位（输入解析/格式化均按 MiB/s），
+  // 故 70 MB/s = 70/1.024 MiB/s，显示时 formatBandwidth 会还原为 HDD 盘数 × 70 MB/s
+  READ_BW_PER_DISK: 70 / 1.024,
+  WRITE_BW_PER_DISK: 46 / 1.024,
   READ_OPS_PER_DISK: 333,
   WRITE_OPS_PER_DISK: 83,
   DISK_SIZES: [24, 22, 20, 18, 16, 12, 10, 8] as const,
