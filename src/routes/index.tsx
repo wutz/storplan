@@ -44,15 +44,16 @@ const THEME: Record<string, Theme> = {
     accentBar: 'bg-[#23D1FE]',
   },
   'gpfs-ece': {
+    // IBM 经典黑色 logo 配色：黑 #111111
     label: 'GPFS/Scale（文件系统）',
-    accentText: 'text-blue-600',
-    accentBgSoft: 'bg-blue-50',
-    accentBorder: 'border-blue-200',
-    chip: 'bg-blue-100 text-blue-700',
-    bigValue: 'text-blue-600',
-    selectedCard: 'border-blue-500 bg-blue-50 ring-1 ring-blue-500',
-    dot: 'bg-blue-500',
-    accentBar: 'bg-blue-500',
+    accentText: 'text-[#111111]',
+    accentBgSoft: 'bg-[#111111]/5',
+    accentBorder: 'border-[#111111]',
+    chip: 'bg-[#111111]/10 text-[#111111]',
+    bigValue: 'text-[#111111]',
+    selectedCard: 'border-[#111111] bg-[#111111]/5 ring-1 ring-[#111111]',
+    dot: 'bg-[#111111]',
+    accentBar: 'bg-[#111111]',
   },
   xeos: {
     // XSKY 官网品牌色：紫 #704BFF
