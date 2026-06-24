@@ -97,11 +97,12 @@ export function calculateCacheConfig(disksPerServer: number, diskSizeTB: number)
 }
 
 export function calculatePoolConfig(serverCount: number, ecScheme: string): PoolConfig | undefined {
-  if (ecScheme !== 'EC8+2' || serverCount < 40) {
+  if (ecScheme !== 'EC8+2' || serverCount < 20) {
     return undefined;
   }
 
-  // 每 20 台分一个池，每个池至少 10 台（需要至少 40 台才分池）
+  // 每 20 台分一个池，每个池至少 10 台使用 EC8+2
+  // 例：32 台 → 20+12（2 池，容忍 4 台）；24 台 → 不分池（余 4 < 10，合并为 1 池）
   const fullPools = Math.floor(serverCount / 20);
   const remainder = serverCount % 20;
 
@@ -109,26 +110,29 @@ export function calculatePoolConfig(serverCount: number, ecScheme: string): Pool
     // 剩余台数 >= 10，单独成池
     const serversPerPool = Array(fullPools).fill(20);
     serversPerPool.push(remainder);
+    const poolCount = fullPools + 1;
     return {
-      poolCount: fullPools + 1,
+      poolCount,
       serversPerPool,
-      totalTolerance: (fullPools + 1) * 2,
+      totalTolerance: poolCount * 2,
     };
   } else if (remainder > 0) {
-    // 剩余台数 < 10，合并到最后一个池
+    // 剩余台数 < 10，无法独立成池，合并到最后一个池（等效不分池）
     const serversPerPool = Array(fullPools - 1).fill(20);
     serversPerPool.push(20 + remainder);
+    const poolCount = fullPools;
     return {
-      poolCount: fullPools,
+      poolCount,
       serversPerPool,
-      totalTolerance: fullPools * 2,
+      totalTolerance: poolCount * 2,
     };
   } else {
     // 正好整除
+    const poolCount = fullPools;
     return {
-      poolCount: fullPools,
-      serversPerPool: Array(fullPools).fill(20),
-      totalTolerance: fullPools * 2,
+      poolCount,
+      serversPerPool: Array(poolCount).fill(20),
+      totalTolerance: poolCount * 2,
     };
   }
 }

@@ -622,7 +622,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">容错能力：容量离线台数</dt>
-              <dd>{data.tolerance} 台 = 2 × {data.poolConfig ? data.poolConfig.poolCount : '0.5'} 池</dd>
+              <dd>{data.tolerance} 台{data.poolConfig ? ` = 2 × ${data.poolConfig.poolCount} 池` : ''}</dd>
             </div>
           </dl>
         </div>
