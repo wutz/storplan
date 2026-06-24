@@ -39,24 +39,26 @@ cacheTests.forEach(test => {
 })
 console.log()
 
-// 测试 4: 容错能力 = 2 × 池数
+// 测试 4: 容错能力 = 2 × 池数（需要至少 40 台才分池）
 console.log('4. 容错能力测试（2 × 池数）')
 const poolTests = [
-  { servers: 10, scheme: 'EC8+2' },
-  { servers: 20, scheme: 'EC8+2' },
-  { servers: 24, scheme: 'EC8+2' },
-  { servers: 32, scheme: 'EC8+2' },
-  { servers: 50, scheme: 'EC8+2' },
+  { servers: 10, expected: '不分池' },
+  { servers: 20, expected: '不分池' },
+  { servers: 24, expected: '不分池' },
+  { servers: 32, expected: '不分池' },
+  { servers: 40, expected: '分池' },
+  { servers: 50, expected: '分池' },
 ]
 
 poolTests.forEach(test => {
-  const pool = calculatePoolConfig(test.servers, test.scheme)
-  console.log(`   ${test.servers} 台服务器 (${test.scheme}):`)
+  const pool = calculatePoolConfig(test.servers, 'EC8+2')
+  console.log(`   ${test.servers} 台服务器:`)
   if (pool) {
-    console.log(`     分池: ${pool.poolCount} 个池`)
-    console.log(`     容错能力: ${pool.totalTolerance} 台 (2 × ${pool.poolCount})`)
+    console.log(`     ✓ 分池: ${pool.poolCount} 个池`)
+    console.log(`     配置: ${pool.serversPerPool.join(' + ')} 台`)
+    console.log(`     容错: ${pool.totalTolerance} 台 (2 × ${pool.poolCount})`)
   } else {
-    console.log(`     不分池 (< 20 台)，容错: 1 台`)
+    console.log(`     ✗ ${test.expected} (< 40 台)，容错: 1 台`)
   }
 })
 console.log()

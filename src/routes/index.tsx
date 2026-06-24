@@ -231,6 +231,12 @@ function StorplanApp() {
   const handleXeosCacheCountChange = (newCount: number) => {
     if (!results.xeos) return
     const { serverCount, diskSize, disksPerServer, cacheConfig } = results.xeos
+    const requiredCacheTB = (disksPerServer * diskSize) / XEOS_CONSTANTS.CACHE_RATIO
+    const totalCacheSize = newCount * cacheConfig.sizePerDisk
+
+    // 缓存总容量不能小于需求
+    if (totalCacheSize < requiredCacheTB) return
+
     const allowedSchemes = getAllowedEcSchemes(serverCount)
     const ec = allowedSchemes[0]
     setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: newCount, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
@@ -239,6 +245,12 @@ function StorplanApp() {
   const handleXeosCacheSizeChange = (newSize: number) => {
     if (!results.xeos) return
     const { serverCount, diskSize, disksPerServer, cacheConfig } = results.xeos
+    const requiredCacheTB = (disksPerServer * diskSize) / XEOS_CONSTANTS.CACHE_RATIO
+    const totalCacheSize = cacheConfig.count * newSize
+
+    // 缓存总容量不能小于需求
+    if (totalCacheSize < requiredCacheTB) return
+
     const allowedSchemes = getAllowedEcSchemes(serverCount)
     const ec = allowedSchemes[0]
     setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cacheConfig.count, cacheSizePerDisk: newSize } }))

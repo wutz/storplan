@@ -97,11 +97,11 @@ export function calculateCacheConfig(disksPerServer: number, diskSizeTB: number)
 }
 
 export function calculatePoolConfig(serverCount: number, ecScheme: string): PoolConfig | undefined {
-  if (ecScheme !== 'EC8+2' || serverCount < 20) {
+  if (ecScheme !== 'EC8+2' || serverCount < 40) {
     return undefined;
   }
 
-  // 每 20 台分一个池，每个池容忍 2 台离线
+  // 每 20 台分一个池，每个池至少 10 台（需要至少 40 台才分池）
   const fullPools = Math.floor(serverCount / 20);
   const remainder = serverCount % 20;
 
