@@ -33,12 +33,13 @@ export interface MetadataClusterConfig {
 // 超大规模两级架构配置
 export interface UltraLargeConfig {
   tier2ClusterCount: number; // 二级数据集群数
-  nodesPerCluster: number; // 每簇节点数（40）
-  tier2ServersTotal: number; // 二级总节点数 = clusterCount × 40
+  nodesPerCluster: number; // 标准每簇节点数（40）
+  lastClusterNodes: number; // 最后一簇实际节点数（10–40，等于 40 时各簇均满）
+  tier2ServersTotal: number; // 二级总节点数 = (clusterCount-1) × 40 + lastClusterNodes
   tier2TotalHDDs: number; // 二级集群 HDD 总数
-  tier2PerClusterCapacity: number; // 单簇可用容量（TiB）
+  tier2PerClusterCapacity: number; // 满簇（40 节点）可用容量（TiB）
   tier2CacheSSDTotal: number; // 全部二级节点缓存盘裸容量之和（TB）
-  tier2PerClusterTolerance: number; // 单簇容忍离线节点数（40 节点 → 2 池 × 2 = 4）
+  tier2PerClusterTolerance: number; // 满簇容忍离线节点数（40 节点 → 2 池 × 2 = 4）
   metadataCluster: MetadataClusterConfig; // 一级元数据集群
   ratio: number; // 实际 二级SSD总 / 一级NVMe总（目标 5）
 }
@@ -93,11 +94,11 @@ export const CONSTANTS = {
   CACHE_RATIO: 80,
   // 超大规模集群（2000–20000 HDD）两级架构
   MAX_TOTAL_DISKS_ULTRA: 20000,
-  ULTRA_NODES_PER_CLUSTER: 40, // 二级数据集群每簇节点数
+  ULTRA_NODES_PER_CLUSTER: 40, // 二级数据集群每簇标准节点数（最后一簇可少于 40）
+  ULTRA_MIN_LAST_CLUSTER_NODES: 10, // 最后一簇最小节点数（EC8+2 最低要求）
   METADATA_DISK_COUNTS: [2, 4] as const, // 一级元数据节点每节点 NVMe 数
   METADATA_DISK_SIZES: [1.6, 3.2, 6.4, 12.8] as const, // 一级元数据 NVMe 单盘容量（TB，DWPD ≥ 3）
-  METADATA_TIER_RATIO: 5, // 二级 SSD 总容量 / 一级 NVMe 总容量 = 5（决定单节点 NVMe 容量）
-  METADATA_NODE_RATIO: 25, // 数据节点 : 元数据节点 = 25:1（500 数据 : 20 元数据）
+  METADATA_TIER_RATIO: 5, // 二级 SSD 总容量 / 一级 NVMe 总容量 = 5（决定元数据 NVMe 总量）
   MIN_METADATA_NODES: 6, // 元数据集群最小 6 台（6–9 用 EC4+2）
   MAX_METADATA_NODES: 20, // 元数据集群最大 20 台（≥10 用 EC8+2）
 };
@@ -278,14 +279,31 @@ interface Tier2Config {
   disksPerServer: number;
   diskSize: number;
   numClusters: number;
-  totalHDDs: number;
+  lastClusterNodes: number; // 最后一簇节点数（10–40）
   totalNodes: number;
-  perClusterCapacity: number; // 单簇可用容量（TiB）
+  totalHDDs: number;
+  perClusterCapacity: number; // 满簇（40 节点）可用容量（TiB）
   actualCapacity: number; // 全部二级集群可用容量之和（TiB）
 }
 
-// 规划二级数据集群：每簇 40 节点（EC8+2），集群数向上取整以满足容量，HDD 总数 ≤ 20000。
-// 评分：主指标总 HDD 数（成本代理，等价于最小化超配），次指标总节点数。
+// 将总节点数拆为若干 40 节点集群，最后一簇可少于 40（但不少于 EC8+2 最低要求 10 台）。
+// 每簇 ≤ 40，末簇 ∈ [10, 40]；若余数为 1–9，则上调末簇至 10 台（其余簇仍各 40）。
+// 返回 { numClusters, lastClusterNodes }（lastClusterNodes 已是上调后的实际值）。
+function splitClusters(totalNodes: number): { numClusters: number; lastClusterNodes: number } {
+  const full = CONSTANTS.ULTRA_NODES_PER_CLUSTER;
+  const minLast = CONSTANTS.ULTRA_MIN_LAST_CLUSTER_NODES;
+  if (totalNodes <= full) {
+    return { numClusters: 1, lastClusterNodes: Math.max(totalNodes, 0) };
+  }
+  const numClusters = Math.ceil(totalNodes / full);
+  let lastClusterNodes = totalNodes - (numClusters - 1) * full; // ∈ [1, 40]
+  // 末簇不足 10 台时上调至 10，保证 EC8+2 可成立（每簇仍 ≤ 40）
+  if (lastClusterNodes < minLast) lastClusterNodes = minLast;
+  return { numClusters, lastClusterNodes };
+}
+
+// 规划二级数据集群：每簇 40 节点（EC8+2），最后一簇允许少于 40 台以减少超配；HDD 总数 ≤ 20000。
+// 节点数按满簇单节点可用容量向上取整，再拆簇。评分：主指标总 HDD 数（成本代理），次指标总节点数。
 export function planTier2(capacityTiB: number): Tier2Config {
   const nodesPerCluster = CONSTANTS.ULTRA_NODES_PER_CLUSTER;
   const ecEff = CONSTANTS.EC8_2_EFFICIENCY;
@@ -294,18 +312,22 @@ export function planTier2(capacityTiB: number): Tier2Config {
   for (const disksPerServer of CONSTANTS.DISKS_PER_SERVER_OPTIONS) {
     for (const diskSize of CONSTANTS.DISK_SIZES) {
       const perClusterCapacity = calculateActualCapacity(nodesPerCluster, disksPerServer, diskSize, ecEff);
-      // 减去极小 epsilon 抵消浮点误差（如 3×3.2=9.600000000000001）导致的向上取整
-      const numClusters = Math.max(1, Math.ceil(capacityTiB / perClusterCapacity - 1e-9));
-      const totalHDDs = numClusters * nodesPerCluster * disksPerServer;
+      const perNodeCapacity = perClusterCapacity / nodesPerCluster;
+      // 按单节点可用容量向上取整所需节点数（减去极小 epsilon 抵消浮点误差）
+      let totalNodes = Math.max(nodesPerCluster, Math.ceil(capacityTiB / perNodeCapacity - 1e-9));
+      const { numClusters, lastClusterNodes } = splitClusters(totalNodes);
+      totalNodes = (numClusters - 1) * nodesPerCluster + lastClusterNodes;
+      const totalHDDs = totalNodes * disksPerServer;
       if (totalHDDs > CONSTANTS.MAX_TOTAL_DISKS_ULTRA) continue;
       candidates.push({
         disksPerServer,
         diskSize,
         numClusters,
+        lastClusterNodes,
+        totalNodes,
         totalHDDs,
-        totalNodes: numClusters * nodesPerCluster,
         perClusterCapacity,
-        actualCapacity: numClusters * perClusterCapacity,
+        actualCapacity: calculateActualCapacity(totalNodes, disksPerServer, diskSize, ecEff),
       });
     }
   }
@@ -328,43 +350,46 @@ function getMetadataEcScheme(nodeCount: number): { scheme: string; tolerance: nu
 }
 
 // 规划一级元数据集群：
-// - 节点数由数据节点数按 25:1 配比决定（500 数据 : 20 元数据），夹紧到 [6, 20]。
-// - 单节点 NVMe 容量由容量配比决定：所需 NVMe 总量 = 二级缓存 SSD 总量 / 5，
-//   再除以节点数得单节点需求，从 [2,4]×[1.6,3.2,6.4,12.8]TB 中选满足需求且最省的组合。
-export function planMetadata(requiredNvmeTB: number, dataNodeCount: number): MetadataClusterConfig {
-  const nodeCount = Math.min(
-    CONSTANTS.MAX_METADATA_NODES,
-    Math.max(CONSTANTS.MIN_METADATA_NODES, Math.ceil(dataNodeCount / CONSTANTS.METADATA_NODE_RATIO - 1e-9))
-  );
-  const requiredPerNode = requiredNvmeTB / nodeCount;
+// - 所需 NVMe 总量 = 二级缓存 SSD 总量 / 5（容量配比）。
+// - 节点数 ∈ [6, 20]、每节点 [2,4]×[1.6,3.2,6.4,12.8]TB，枚举所有组合，
+//   取满足 NVMe 总量需求且总容量最小（最小化超配）、其次节点数最小的方案。
+// - 6–9 台用 EC4+2，≥10 台用 EC8+2。
+export function planMetadata(requiredNvmeTB: number): MetadataClusterConfig {
+  let best: MetadataClusterConfig | null = null;
 
-  // 选满足单节点 NVMe 需求且总容量最小的 (盘数 × 单盘) 组合
-  let best: { disksPerNode: number; diskSize: number; perNode: number } | null = null;
-  for (const disksPerNode of CONSTANTS.METADATA_DISK_COUNTS) {
-    for (const diskSize of CONSTANTS.METADATA_DISK_SIZES) {
-      const perNode = disksPerNode * diskSize;
-      if (perNode >= requiredPerNode - 1e-9) {
-        if (!best || perNode < best.perNode) best = { disksPerNode, diskSize, perNode };
+  for (let nodeCount = CONSTANTS.MIN_METADATA_NODES; nodeCount <= CONSTANTS.MAX_METADATA_NODES; nodeCount++) {
+    for (const disksPerNode of CONSTANTS.METADATA_DISK_COUNTS) {
+      for (const diskSize of CONSTANTS.METADATA_DISK_SIZES) {
+        // round2 抵消浮点误差，使裸容量为整洁数值
+        const totalSize = Math.round(nodeCount * disksPerNode * diskSize * 100) / 100;
+        if (totalSize < requiredNvmeTB - 1e-9) continue;
+        const ec = getMetadataEcScheme(nodeCount);
+        const cand: MetadataClusterConfig = { nodeCount, disksPerNode, diskSize, totalSize, ecScheme: ec.scheme, tolerance: ec.tolerance };
+        if (!best || totalSize < best.totalSize || (totalSize === best.totalSize && nodeCount < best.nodeCount)) {
+          best = cand;
+        }
       }
     }
   }
-  // 需求超过单节点最大配置（4×12.8=51.2TB）时取最大配置兜底
+
+  // 需求超过最大配置（20 台 × 4×12.8=51.2TB = 1024TB）时取最大配置兜底
   if (!best) {
+    const nodeCount = CONSTANTS.MAX_METADATA_NODES;
     const disksPerNode = CONSTANTS.METADATA_DISK_COUNTS[CONSTANTS.METADATA_DISK_COUNTS.length - 1];
     const diskSize = CONSTANTS.METADATA_DISK_SIZES[CONSTANTS.METADATA_DISK_SIZES.length - 1];
-    best = { disksPerNode, diskSize, perNode: disksPerNode * diskSize };
+    const totalSize = Math.round(nodeCount * disksPerNode * diskSize * 100) / 100;
+    const ec = getMetadataEcScheme(nodeCount);
+    best = { nodeCount, disksPerNode, diskSize, totalSize, ecScheme: ec.scheme, tolerance: ec.tolerance };
   }
 
-  // round2 抵消浮点误差，使裸容量为整洁数值
-  const totalSize = Math.round(nodeCount * best.perNode * 100) / 100;
-  const ec = getMetadataEcScheme(nodeCount);
-  return { nodeCount, disksPerNode: best.disksPerNode, diskSize: best.diskSize, totalSize, ecScheme: ec.scheme, tolerance: ec.tolerance };
+  return best;
 }
 
 // 组装超大规模两级架构结果（顶层为全部署聚合 + 二级节点代表性配置）。
 // 由 planTier2（按容量自动）与 buildUltraLargeFromServers（按手动节点数）共用。
 function assembleUltraLarge(
   numClusters: number,
+  lastClusterNodes: number,
   disksPerServer: number,
   diskSize: number,
   cacheConfig: CacheConfig,
@@ -372,7 +397,7 @@ function assembleUltraLarge(
   bandwidthUnitType: string
 ): XEOSPlanResult {
   const nodesPerCluster = CONSTANTS.ULTRA_NODES_PER_CLUSTER;
-  const tier2ServersTotal = numClusters * nodesPerCluster;
+  const tier2ServersTotal = (numClusters - 1) * nodesPerCluster + lastClusterNodes;
   const tier2TotalHDDs = tier2ServersTotal * disksPerServer;
   if (tier2TotalHDDs > CONSTANTS.MAX_TOTAL_DISKS_ULTRA) {
     throw new Error('所需规模超过 20000 块 HDD 上限（超大规模集群上限），请联系 XSKY 技术支持');
@@ -380,12 +405,12 @@ function assembleUltraLarge(
 
   const ecEff = CONSTANTS.EC8_2_EFFICIENCY;
   const perClusterCapacity = calculateActualCapacity(nodesPerCluster, disksPerServer, diskSize, ecEff);
-  const actualCapacity = numClusters * perClusterCapacity;
+  const actualCapacity = calculateActualCapacity(tier2ServersTotal, disksPerServer, diskSize, ecEff);
   const rawCapacity = calculateRawCapacity(tier2ServersTotal, disksPerServer, diskSize);
   // round2 抵消浮点误差（如 3×3.2=9.600000000000001）
   const tier2CacheSSDTotal = Math.round(tier2ServersTotal * cacheConfig.totalSize * 100) / 100;
   const requiredNvmeTB = tier2CacheSSDTotal / CONSTANTS.METADATA_TIER_RATIO;
-  const metadataCluster = planMetadata(requiredNvmeTB, tier2ServersTotal);
+  const metadataCluster = planMetadata(requiredNvmeTB);
   const ratio = tier2CacheSSDTotal / metadataCluster.totalSize;
 
   // 40 节点 EC8+2 集群 → 2 池 × 2 = 容忍 4 节点离线
@@ -396,6 +421,7 @@ function assembleUltraLarge(
   const ultraLarge: UltraLargeConfig = {
     tier2ClusterCount: numClusters,
     nodesPerCluster,
+    lastClusterNodes,
     tier2ServersTotal,
     tier2TotalHDDs,
     tier2PerClusterCapacity: perClusterCapacity,
@@ -432,11 +458,11 @@ function assembleUltraLarge(
 
 export function buildUltraLargeXEOSResult(tier2: Tier2Config, isBinary: boolean, bandwidthUnitType: string): XEOSPlanResult {
   const cacheConfig = calculateCacheConfig(tier2.disksPerServer, tier2.diskSize);
-  return assembleUltraLarge(tier2.numClusters, tier2.disksPerServer, tier2.diskSize, cacheConfig, isBinary, bandwidthUnitType);
+  return assembleUltraLarge(tier2.numClusters, tier2.lastClusterNodes, tier2.disksPerServer, tier2.diskSize, cacheConfig, isBinary, bandwidthUnitType);
 }
 
 // 手动节点数入口：用户在 UI 直接指定服务器台数。当 台数 × 每台 HDD > 2000 时，
-// 按 40 节点/簇向上取整为完整集群，组装超大规模两级架构（含一级元数据集群）。
+// 按 40 节点/簇拆分（最后一簇可少于 40），组装超大规模两级架构（含一级元数据集群）。
 export function buildUltraLargeFromServers(
   serverCount: number,
   disksPerServer: number,
@@ -446,14 +472,13 @@ export function buildUltraLargeFromServers(
   isBinary: boolean,
   bandwidthUnitType: string
 ): XEOSPlanResult {
-  const nodesPerCluster = CONSTANTS.ULTRA_NODES_PER_CLUSTER;
-  const numClusters = Math.max(1, Math.ceil(serverCount / nodesPerCluster));
+  const { numClusters, lastClusterNodes } = splitClusters(serverCount);
   const cacheConfig: CacheConfig = {
     count: cacheCount,
     sizePerDisk: cacheSizePerDisk,
     totalSize: Math.round(cacheCount * cacheSizePerDisk * 100) / 100,
   };
-  return assembleUltraLarge(numClusters, disksPerServer, diskSize, cacheConfig, isBinary, bandwidthUnitType);
+  return assembleUltraLarge(numClusters, lastClusterNodes, disksPerServer, diskSize, cacheConfig, isBinary, bandwidthUnitType);
 }
 
 export function planXEOS(req: XEOSPlanRequest): XEOSPlanResult {

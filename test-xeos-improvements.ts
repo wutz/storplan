@@ -111,16 +111,21 @@ ultraTests.forEach(cap => {
   if (r.ultraLarge) {
     const ul = r.ultraLarge
     const mc = ul.metadataCluster
-    // 元数据节点数 = clamp(ceil(数据节点/25), 6, 20)
-    const expectedNodes = Math.min(CONSTANTS.MAX_METADATA_NODES, Math.max(CONSTANTS.MIN_METADATA_NODES, Math.ceil(ul.tier2ServersTotal / CONSTANTS.METADATA_NODE_RATIO - 1e-9)))
-    const nodeOk = mc.nodeCount === expectedNodes && mc.nodeCount >= 6 && mc.nodeCount <= 20
+    // 末簇 ∈ [10, 40]，每簇 ≤ 40，总节点数自洽
+    const lastOk = ul.lastClusterNodes >= 10 && ul.lastClusterNodes <= ul.nodesPerCluster
+    const totalNodesOk = ul.tier2ServersTotal === (ul.tier2ClusterCount - 1) * ul.nodesPerCluster + ul.lastClusterNodes
+    // 元数据节点 ∈ [6,20]，EC 与节点数匹配
+    const nodeOk = mc.nodeCount >= 6 && mc.nodeCount <= 20
     const ecOk = mc.ecScheme === (mc.nodeCount >= 10 ? 'EC8+2' : 'EC4+2')
     const diskOk = CONSTANTS.METADATA_DISK_COUNTS.includes(mc.disksPerNode as any) && CONSTANTS.METADATA_DISK_SIZES.includes(mc.diskSize as any)
-    const ok = ul.tier2TotalHDDs <= CONSTANTS.MAX_TOTAL_DISKS_ULTRA && nodeOk && ecOk && diskOk
-    console.log(`   ${cap}: 二级 ${ul.tier2ClusterCount} 簇 × 40 节点 = ${ul.tier2ServersTotal} 台, HDD ${ul.tier2TotalHDDs} 块`)
+    // NVMe 总量满足 二级SSD/5（除非已达最大配置 1024TB 兜底）
+    const reqOk = mc.totalSize >= ul.tier2CacheSSDTotal / 5 - 0.01 || mc.totalSize >= 1024 - 0.01
+    const ok = ul.tier2TotalHDDs <= CONSTANTS.MAX_TOTAL_DISKS_ULTRA && lastOk && totalNodesOk && nodeOk && ecOk && diskOk && reqOk
+    const clusterDesc = ul.lastClusterNodes === ul.nodesPerCluster ? `${ul.tier2ClusterCount} 簇 × 40` : `${ul.tier2ClusterCount - 1} 簇 × 40 + 末簇 ${ul.lastClusterNodes}`
+    console.log(`   ${cap}: 二级 ${clusterDesc} = ${ul.tier2ServersTotal} 台, HDD ${ul.tier2TotalHDDs} 块`)
     console.log(`     可用容量 ${r.formatted.capacity} | 二级 SSD 总容量 ${ul.tier2CacheSSDTotal.toLocaleString()} TB`)
-    console.log(`     一级元数据 ${mc.nodeCount} 台 (期望 ${expectedNodes}) × ${mc.disksPerNode}×${mc.diskSize}TB NVMe = ${mc.totalSize.toLocaleString()} TB (${mc.ecScheme})`)
-    console.log(`     比例 二级SSD/一级NVMe = ${ul.ratio.toFixed(2)} (目标 5，受节点数 6–20 与单盘上限夹紧)`)
+    console.log(`     一级元数据 ${mc.nodeCount} 台 × ${mc.disksPerNode}×${mc.diskSize}TB NVMe = ${mc.totalSize.toLocaleString()} TB (${mc.ecScheme})`)
+    console.log(`     比例 二级SSD/一级NVMe = ${ul.ratio.toFixed(2)} (目标 5；容量驱动，无节点配比)`)
     console.log(`     ${ok ? '✓ 通过' : '✗ 失败'}`)
   } else {
     console.log(`   ${cap}: ✗ 未进入超大规模模式`)
@@ -158,13 +163,15 @@ manualTests.forEach(t => {
   const r = buildUltraLargeFromServers(t.servers, t.disks, t.size, cache.count, cache.sizePerDisk, true, 'decimal-bit')
   const ul = r.ultraLarge!
   const mc = ul.metadataCluster
-  const expectedNodes = Math.min(CONSTANTS.MAX_METADATA_NODES, Math.max(CONSTANTS.MIN_METADATA_NODES, Math.ceil(ul.tier2ServersTotal / CONSTANTS.METADATA_NODE_RATIO - 1e-9)))
-  const nodeOk = mc.nodeCount === expectedNodes
+  // 末簇可少于 40：手动 56 台 -> 40 + 16；300 台 -> 7×40 + 20
+  const lastOk = ul.lastClusterNodes >= 10 && ul.lastClusterNodes <= ul.nodesPerCluster
+  const totalOk = ul.tier2ServersTotal === t.servers
   const ecOk = mc.ecScheme === (mc.nodeCount >= 10 ? 'EC8+2' : 'EC4+2')
+  const clusterDesc = ul.lastClusterNodes === ul.nodesPerCluster ? `${ul.tier2ClusterCount} 簇 × 40` : `${ul.tier2ClusterCount - 1} 簇 × 40 + 末簇 ${ul.lastClusterNodes}`
   console.log(`   ${t.servers} 台 × ${t.disks}×${t.size}TB (HDD ${t.servers * t.disks}):`)
-  console.log(`     -> ${ul.tier2ClusterCount} 簇 × 40 = ${ul.tier2ServersTotal} 台, HDD ${ul.tier2TotalHDDs} / ${CONSTANTS.MAX_TOTAL_DISKS_ULTRA}`)
-  console.log(`     一级元数据 ${mc.nodeCount} 台 (期望 ${expectedNodes}) × ${mc.disksPerNode}×${mc.diskSize}TB = ${mc.totalSize}TB (${mc.ecScheme})`)
-  console.log(`     比例 ${ul.ratio.toFixed(2)} (目标 5) 节点/EC ${nodeOk && ecOk ? '✓' : '✗'}  可用容量 ${r.formatted.capacity}`)
+  console.log(`     -> ${clusterDesc} = ${ul.tier2ServersTotal} 台, HDD ${ul.tier2TotalHDDs} / ${CONSTANTS.MAX_TOTAL_DISKS_ULTRA}`)
+  console.log(`     一级元数据 ${mc.nodeCount} 台 × ${mc.disksPerNode}×${mc.diskSize}TB = ${mc.totalSize}TB (${mc.ecScheme})`)
+  console.log(`     比例 ${ul.ratio.toFixed(2)} (目标 5) 末簇/节点总数/EC ${lastOk && totalOk && ecOk ? '✓' : '✗'}  可用容量 ${r.formatted.capacity}`)
 })
 console.log()
 

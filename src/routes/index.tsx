@@ -574,7 +574,9 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             {ul && (
               <div className="flex justify-between">
                 <dt className="text-gray-500">二级数据集群</dt>
-                <dd>{ul.tier2ClusterCount} 个 × {ul.nodesPerCluster} 节点</dd>
+                <dd>{ul.lastClusterNodes === ul.nodesPerCluster
+                  ? `${ul.tier2ClusterCount} 个 × ${ul.nodesPerCluster} 节点`
+                  : `${ul.tier2ClusterCount} 个（前 ${ul.tier2ClusterCount - 1} 个 × ${ul.nodesPerCluster} + 末簇 ${ul.lastClusterNodes} 节点）`}</dd>
               </div>
             )}
             {ul ? (
@@ -687,7 +689,6 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             <h3 className="font-semibold text-gray-700 mb-2">一级元数据集群（全闪 NVMe）</h3>
             <dl className="space-y-1 text-sm">
               <div className="flex justify-between"><dt className="text-gray-500">节点数</dt><dd>{mc.nodeCount} 台（{mc.ecScheme}，范围 6–20）</dd></div>
-              <div className="flex justify-between"><dt className="text-gray-500">节点配比</dt><dd>二级 : 一级 = 25 : 1（{ul.tier2ServersTotal} → {mc.nodeCount}）</dd></div>
               <div className="flex justify-between"><dt className="text-gray-500">处理器</dt><dd>2 × Intel 6330</dd></div>
               <div className="flex justify-between"><dt className="text-gray-500">内存</dt><dd>256GB</dd></div>
               <div className="flex justify-between"><dt className="text-gray-500">系统盘</dt><dd>2 × 960GB SATA SSD（RAID1）</dd></div>
