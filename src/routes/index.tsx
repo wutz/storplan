@@ -1816,8 +1816,12 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
                     className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
                   />
                   <button onClick={() => onHotSpareChange(data.hotSpareCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
-                  <span className="ml-0.5">台（总 {data.nodeCount} 台）</span>
+                  <span className="ml-0.5">台</span>
                 </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">总台数</dt>
+                <dd>{data.nodeCount} 台</dd>
               </div>
               <div className="flex justify-between items-center">
                 <dt className="text-gray-500">保护级别 (P)</dt>
@@ -1837,7 +1841,7 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-500">容错能力</dt>
-                <dd>容忍 {data.protection.P} 台节点离线（+{data.hotSpareCount} 热备）</dd>
+                <dd>容忍 {data.protection.P} 台节点离线</dd>
               </div>
             </dl>
           </div>
