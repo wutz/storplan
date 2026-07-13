@@ -1904,8 +1904,8 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
               <dt className="text-gray-500">存储网络</dt>
               <dd>
                 <select value={data.networkType} onChange={(e) => onNetworkChange(e.target.value)} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
-                  <option value="100gb">2 × 双口 100Gb NIC</option>
-                  <option value="200gb">2 × 双口 200Gb NIC</option>
+                  <option value="100gb">2 × 双口 100Gb IB/RoCE/Eth NIC</option>
+                  <option value="200gb">2 × 双口 200Gb IB/RoCE/Eth NIC</option>
                 </select>
               </dd>
             </div>
