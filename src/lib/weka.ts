@@ -66,6 +66,13 @@ export const CONSTANTS = {
 const GBPS_TO_MIBPS = 1000 / MIB_TO_MB;
 
 /**
+ * 热备节点数：5 台数据节点（最小规模）时不配热备，6 台及以上配 1 台热备
+ */
+export function getHotSpareCount(dataNodeCount: number): number {
+  return dataNodeCount <= 5 ? 0 : CONSTANTS.HOT_SPARE;
+}
+
+/**
  * 根据数据节点数和保护级别确定保护方案（EC D+P）
  * 约束：D+P ≤ 节点数，D+P ≤ 20，D > P，条带宽度 5–20
  */
@@ -125,7 +132,8 @@ export function buildWekaResult(
   bandwidthUnitType: string,
 ): WekaPlanResult {
   const protection = getProtectionScheme(dataNodeCount, protectionLevel);
-  const totalNodes = dataNodeCount + CONSTANTS.HOT_SPARE;
+  const hotSpareCount = getHotSpareCount(dataNodeCount);
+  const totalNodes = dataNodeCount + hotSpareCount;
   const actualCapacity = calculateCapacityTiB(dataNodeCount, ssdSize, protectionLevel);
   const rawCapacity = dataNodeCount * CONSTANTS.NVME_PER_NODE * ssdSize * CONSTANTS.TB_TO_TIB;
   const performance = calculatePerformance(totalNodes, networkType);
@@ -133,7 +141,7 @@ export function buildWekaResult(
   return {
     nodeCount: totalNodes,
     dataNodeCount,
-    hotSpareCount: CONSTANTS.HOT_SPARE,
+    hotSpareCount,
     nvmePerNode: CONSTANTS.NVME_PER_NODE,
     ssdSize,
     protectionLevel,
@@ -164,7 +172,7 @@ export function planWeka(req: WekaPlanRequest): WekaPlanResult {
 
   const protectionLevel = CONSTANTS.DEFAULT_PROTECTION_LEVEL;
   const networkType = CONSTANTS.DEFAULT_NETWORK;
-  const minDataNodes = CONSTANTS.MIN_TOTAL_NODES - CONSTANTS.HOT_SPARE;
+  const minDataNodes = 5;
   const MAX_DATA_NODES = 1000;
 
   // 从最小节点数向上搜索，优先小盘（成本最低），满足容量与性能即返回
@@ -178,7 +186,7 @@ export function planWeka(req: WekaPlanRequest): WekaPlanResult {
       }
       if (actual < capacityTiB) continue;
 
-      const perf = calculatePerformance(nodes + CONSTANTS.HOT_SPARE, networkType);
+      const perf = calculatePerformance(nodes + getHotSpareCount(nodes), networkType);
       if (perf.readBandwidth < readBWReq || perf.writeBandwidth < writeBWReq) continue;
 
       const bandwidthUnitType = 'decimal-byte';
