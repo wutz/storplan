@@ -101,16 +101,16 @@ const THEME: Record<string, Theme> = {
     accentBar: 'bg-[#9A2E29]',
   },
   weka: {
-    // Weka 官网品牌色：绿 #16D583 配深色文字
+    // Weka 主题色：品红紫 #A21CAF（偏红的紫，与 XSKY 的蓝紫 #704BFF 区分）
     label: 'Weka（文件系统）',
-    accentText: 'text-[#0B7A4B]',
-    accentBgSoft: 'bg-[#16D583]/10',
-    accentBorder: 'border-[#16D583]',
-    chip: 'bg-[#16D583]/15 text-[#0B7A4B]',
-    bigValue: 'text-[#0B7A4B]',
-    selectedCard: 'border-[#16D583] bg-[#16D583]/10 ring-1 ring-[#16D583]',
-    dot: 'bg-[#16D583]',
-    accentBar: 'bg-[#16D583]',
+    accentText: 'text-[#A21CAF]',
+    accentBgSoft: 'bg-[#A21CAF]/10',
+    accentBorder: 'border-[#A21CAF]',
+    chip: 'bg-[#A21CAF]/15 text-[#A21CAF]',
+    bigValue: 'text-[#A21CAF]',
+    selectedCard: 'border-[#A21CAF] bg-[#A21CAF]/10 ring-1 ring-[#A21CAF]',
+    dot: 'bg-[#A21CAF]',
+    accentBar: 'bg-[#A21CAF]',
   },
 }
 
