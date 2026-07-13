@@ -579,9 +579,11 @@ function StorplanApp() {
   const handleWekaDataNodeCountChange = (newCount: number) => {
     if (!results.weka || newCount < WEKA_CONSTANTS.MIN_TOTAL_NODES - WEKA_CONSTANTS.HOT_SPARE) return
     const { ssdSize, protectionLevel, networkType, hotSpareCount, nvmePerNode } = results.weka
+    // 数据节点 ≥ 100 台时自动升级保护级别为 4；回落到 100 台以下时保留当前选择
+    const newLevel = newCount >= 100 ? 4 : protectionLevel
     try {
-      const newCapacityTiB = wekaCapacity(newCount, ssdSize, protectionLevel, nvmePerNode)
-      setManualConfig(prev => ({ ...prev, weka: { dataNodeCount: newCount, ssdSize, protectionLevel, networkType, hotSpareCount, nvmePerNode } }))
+      const newCapacityTiB = wekaCapacity(newCount, ssdSize, newLevel, nvmePerNode)
+      setManualConfig(prev => ({ ...prev, weka: { dataNodeCount: newCount, ssdSize, protectionLevel: newLevel, networkType, hotSpareCount, nvmePerNode } }))
       setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
     } catch { /* 无效节点数忽略 */ }
   }

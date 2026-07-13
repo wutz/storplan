@@ -168,13 +168,14 @@ export function planWeka(req: WekaPlanRequest): WekaPlanResult {
   if (req.readBandwidth) readBWReq = parseBandwidth(req.readBandwidth).mibps;
   if (req.writeBandwidth) writeBWReq = parseBandwidth(req.writeBandwidth).mibps;
 
-  const protectionLevel = CONSTANTS.DEFAULT_PROTECTION_LEVEL;
   const networkType = CONSTANTS.DEFAULT_NETWORK;
   const minDataNodes = 5;
   const MAX_DATA_NODES = 1000;
 
   // 从最小节点数向上搜索，优先小盘（成本最低），满足容量与性能即返回
   for (let nodes = minDataNodes; nodes <= MAX_DATA_NODES; nodes++) {
+    // 数据节点 ≥ 100 台时保护级别自动取 4
+    const protectionLevel = nodes >= 100 ? 4 : CONSTANTS.DEFAULT_PROTECTION_LEVEL;
     for (const ssdSize of CONSTANTS.SSD_SIZES) {
       let actual: number;
       try {
