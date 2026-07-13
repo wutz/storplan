@@ -10,6 +10,8 @@ import { planCeph, buildCephResult, getMemoryConfig as getCephMemory, getStorage
 import type { CephPlanResult } from '#/lib/ceph'
 import { planCephHybrid, buildCephHybridResult, calculateCacheConfig as cephHybridCacheConfig, calculateCapacityTiB as cephHybridCapacity, getAllowedRedundancySchemes as getCephHybridAllowedSchemes, RGW_HYBRID_PER_DISK, CONSTANTS as CEPH_HYBRID_CONSTANTS } from '#/lib/ceph-hybrid'
 import type { CephHybridPlanResult } from '#/lib/ceph-hybrid'
+import { planWeka, buildWekaResult, calculateCapacityTiB as wekaCapacity, CONSTANTS as WEKA_CONSTANTS } from '#/lib/weka'
+import type { WekaPlanResult } from '#/lib/weka'
 import { formatBandwidth, formatCapacity, MIB_TO_MB } from '#/lib/utils'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
@@ -20,6 +22,7 @@ type PlanResults = {
   'gpfs-ece'?: GPFSECEPlanResult
   ceph?: CephPlanResult
   'ceph-hybrid'?: CephHybridPlanResult
+  weka?: WekaPlanResult
 }
 
 // 每个存储产品的官网主题色（Tailwind 静态类名，避免运行时拼接导致 JIT 漏扫）
@@ -97,9 +100,21 @@ const THEME: Record<string, Theme> = {
     dot: 'bg-[#9A2E29]',
     accentBar: 'bg-[#9A2E29]',
   },
+  weka: {
+    // Weka 主题色：品红紫 #A21CAF（偏红的紫，与 XSKY 的蓝紫 #704BFF 区分）
+    label: 'Weka（文件系统）',
+    accentText: 'text-[#A21CAF]',
+    accentBgSoft: 'bg-[#A21CAF]/10',
+    accentBorder: 'border-[#A21CAF]',
+    chip: 'bg-[#A21CAF]/15 text-[#A21CAF]',
+    bigValue: 'text-[#A21CAF]',
+    selectedCard: 'border-[#A21CAF] bg-[#A21CAF]/10 ring-1 ring-[#A21CAF]',
+    dot: 'bg-[#A21CAF]',
+    accentBar: 'bg-[#A21CAF]',
+  },
 }
 
-const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'xeos', 'ceph', 'ceph-hybrid'] as const
+const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'weka', 'xeos', 'ceph', 'ceph-hybrid'] as const
 
 function convertTibToUnit(tib: number, unit: string): string {
   switch (unit) {
@@ -174,6 +189,7 @@ function StorplanApp() {
     'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number };
     ceph?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; mdsNodeCount?: number };
     'ceph-hybrid'?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; cacheCount: number; cacheSizePerDisk: number };
+    weka?: { dataNodeCount: number; ssdSize: number; protectionLevel: number; networkType: string; hotSpareCount?: number; nvmePerNode?: number };
   }>({})
 
   useEffect(() => {
@@ -294,6 +310,23 @@ function StorplanApp() {
           }
         } catch (err) {
           newErrors['ceph-hybrid'] = err instanceof Error ? err.message : 'Unknown error'
+        }
+      }
+      if (selectedStorages.has('weka')) {
+        try {
+          if (manualConfig.weka) {
+            const mc = manualConfig.weka
+            newResults.weka = buildWekaResult(mc.dataNodeCount, mc.ssdSize, mc.protectionLevel, mc.networkType, isBinary, bandwidthUnitType, mc.hotSpareCount, mc.nvmePerNode)
+          } else {
+            const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
+            const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
+            const result = planWeka({ capacity, readBandwidth: readBW || undefined, writeBandwidth: writeBW || undefined })
+            result.formatted.readBandwidth = formatBandwidth(result.performance.readBandwidth, bandwidthUnitType)
+            result.formatted.writeBandwidth = formatBandwidth(result.performance.writeBandwidth, bandwidthUnitType)
+            newResults.weka = result
+          }
+        } catch (err) {
+          newErrors.weka = err instanceof Error ? err.message : 'Unknown error'
         }
       }
     } catch (err) {
@@ -543,6 +576,56 @@ function StorplanApp() {
     setManualConfig(prev => ({ ...prev, 'ceph-hybrid': { nodeCount, disksPerNode, diskSize, redundancy, cacheCount: cacheConfig.count, cacheSizePerDisk: newSize } }))
   }
 
+  const handleWekaDataNodeCountChange = (newCount: number) => {
+    if (!results.weka || newCount < WEKA_CONSTANTS.MIN_TOTAL_NODES - WEKA_CONSTANTS.HOT_SPARE) return
+    const { ssdSize, protectionLevel, networkType, hotSpareCount, nvmePerNode } = results.weka
+    // 数据节点 ≥ 100 台时自动升级保护级别为 4；回落到 100 台以下时保留当前选择
+    const newLevel = newCount >= 100 ? 4 : protectionLevel
+    try {
+      const newCapacityTiB = wekaCapacity(newCount, ssdSize, newLevel, nvmePerNode)
+      setManualConfig(prev => ({ ...prev, weka: { dataNodeCount: newCount, ssdSize, protectionLevel: newLevel, networkType, hotSpareCount, nvmePerNode } }))
+      setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+    } catch { /* 无效节点数忽略 */ }
+  }
+
+  const handleWekaHotSpareChange = (newHotSpare: number) => {
+    if (!results.weka || newHotSpare < 0) return
+    const { dataNodeCount, ssdSize, protectionLevel, networkType, nvmePerNode } = results.weka
+    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel, networkType, hotSpareCount: newHotSpare, nvmePerNode } }))
+  }
+
+  const handleWekaDiskChange = (newSsdSize: number) => {
+    if (!results.weka) return
+    const { dataNodeCount, protectionLevel, networkType, hotSpareCount, nvmePerNode } = results.weka
+    const newCapacityTiB = wekaCapacity(dataNodeCount, newSsdSize, protectionLevel, nvmePerNode)
+    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize: newSsdSize, protectionLevel, networkType, hotSpareCount, nvmePerNode } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleWekaProtectionChange = (newLevel: number) => {
+    if (!results.weka) return
+    const { dataNodeCount, ssdSize, networkType, hotSpareCount, nvmePerNode } = results.weka
+    try {
+      const newCapacityTiB = wekaCapacity(dataNodeCount, ssdSize, newLevel, nvmePerNode)
+      setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel: newLevel, networkType, hotSpareCount, nvmePerNode } }))
+      setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+    } catch { /* 无效保护级别忽略 */ }
+  }
+
+  const handleWekaNetworkChange = (newNetwork: string) => {
+    if (!results.weka) return
+    const { dataNodeCount, ssdSize, protectionLevel, hotSpareCount, nvmePerNode } = results.weka
+    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel, networkType: newNetwork, hotSpareCount, nvmePerNode } }))
+  }
+
+  const handleWekaNvmeCountChange = (newNvmeCount: number) => {
+    if (!results.weka) return
+    const { dataNodeCount, ssdSize, protectionLevel, networkType, hotSpareCount } = results.weka
+    const newCapacityTiB = wekaCapacity(dataNodeCount, ssdSize, protectionLevel, newNvmeCount)
+    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel, networkType, hotSpareCount, nvmePerNode: newNvmeCount } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
   const hasSelection = selectedStorages.size > 0
   const selectClass = "border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 transition"
   const inputClass = "flex-1 border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 transition"
@@ -692,6 +775,20 @@ function StorplanApp() {
             </div>
           )}
 
+          {selectedStorages.has('weka') && (
+            <div>
+              <StorageInfo storage="weka" />
+              {errors.weka && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-red-800">{errors.weka}</p>
+                </div>
+              )}
+              {results.weka && (
+                <WekaResult data={results.weka} onDataNodeCountChange={handleWekaDataNodeCountChange} onHotSpareChange={handleWekaHotSpareChange} onDiskChange={handleWekaDiskChange} onNvmeCountChange={handleWekaNvmeCountChange} onProtectionChange={handleWekaProtectionChange} onNetworkChange={handleWekaNetworkChange} />
+              )}
+            </div>
+          )}
+
           {selectedStorages.has('xeos') && (
             <div>
               <StorageInfo storage="xeos" />
@@ -804,6 +901,12 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
     limits: [
       '混闪配置仅建议用作对象存储（Ceph RGW），不建议配置块存储和文件系统',
     ],
+  },
+  weka: {
+    description: 'Weka（WekaFS）是高性能并行文件系统，基于 NVMe SSD 和高速网络构建全闪架构，适合 AI/HPC 等高性能场景。',
+    pros: ['性能高，读带宽可随节点线性扩展', '支持快照、分层到对象存储', '支持多租户'],
+    cons: ['软件授权费用较高', '不支持 QoS', '第三方厂商技术支持'],
+    limits: ['条带宽度 D+P 限制在 5–20 之间，且 D 必须大于 P'],
   },
 }
 
@@ -1670,6 +1773,174 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
         <div className="text-xs text-gray-400 space-y-0.5">
           <div>容量计算：(节点数 − 1) × 冗余得盘率 × 单节点盘数 × 单盘容量 × 0.7（数据均衡损失）</div>
           <div>RGW 每 HDD 平均性能：读 {RGW_HYBRID_PER_DISK.readMiBps} MiB/s、写 {RGW_HYBRID_PER_DISK.writeMiBps} MiB/s、读 OPS {RGW_HYBRID_PER_DISK.readOPS}、写 OPS {RGW_HYBRID_PER_DISK.writeOPS}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChange, onNvmeCountChange, onProtectionChange, onNetworkChange }: {
+  data: WekaPlanResult;
+  onDataNodeCountChange: (n: number) => void;
+  onHotSpareChange: (n: number) => void;
+  onDiskChange: (n: number) => void;
+  onNvmeCountChange: (n: number) => void;
+  onProtectionChange: (n: number) => void;
+  onNetworkChange: (s: string) => void;
+}) {
+  const t = THEME.weka
+  const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
+  const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
+  const minDataNodes = WEKA_CONSTANTS.MIN_TOTAL_NODES - WEKA_CONSTANTS.HOT_SPARE
+
+  return (
+    <div className="relative overflow-hidden bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6">
+      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
+      <h2 className="text-xl font-bold text-gray-900 mb-4">Weka 规划方案</h2>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
+            <dl className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-gray-500">总台数</dt>
+                <dd>{data.nodeCount} 台</dd>
+              </div>
+              <div className="flex justify-between items-center">
+                <dt className="text-gray-500">数据节点数量</dt>
+                <dd className="flex items-center gap-1">
+                  <button onClick={() => onDataNodeCountChange(data.dataNodeCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.dataNodeCount <= minDataNodes}>−</button>
+                  <NumberInput
+                    value={data.dataNodeCount}
+                    onChange={onDataNodeCountChange}
+                    min={minDataNodes}
+                    className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                  />
+                  <button onClick={() => onDataNodeCountChange(data.dataNodeCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
+                  <span className="ml-0.5">台</span>
+                </dd>
+              </div>
+              <div className="flex justify-between items-center">
+                <dt className="text-gray-500">热备节点数量</dt>
+                <dd className="flex items-center gap-1">
+                  <button onClick={() => onHotSpareChange(data.hotSpareCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.hotSpareCount <= 0}>−</button>
+                  <NumberInput
+                    value={data.hotSpareCount}
+                    onChange={onHotSpareChange}
+                    min={0}
+                    className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                  />
+                  <button onClick={() => onHotSpareChange(data.hotSpareCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
+                  <span className="ml-0.5">台</span>
+                </dd>
+              </div>
+              <div className="flex justify-between items-center">
+                <dt className="text-gray-500">保护级别 (P)</dt>
+                <dd>
+                  <select value={data.protectionLevel} onChange={(e) => onProtectionChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                    {WEKA_CONSTANTS.PROTECTION_LEVELS.map(p => <option key={p} value={p}>+{p}</option>)}
+                  </select>
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">纠删码方案</dt>
+                <dd>{data.protection.scheme}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">得盘率</dt>
+                <dd>{(data.protection.efficiency * 100).toFixed(1)}%</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">容错能力</dt>
+                <dd>容忍 {data.protection.P} 台节点离线</dd>
+              </div>
+            </dl>
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-2">容量</h3>
+            <dl className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-gray-500">可用容量</dt>
+                <dd className={`text-xl font-bold ${t.bigValue}`}>{data.formatted.capacity}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">裸容量</dt>
+                <dd>{data.formatted.rawCapacity}</dd>
+              </div>
+              <div className="flex justify-between text-xs text-gray-400">
+                <dt>说明</dt>
+                <dd>含 10% 元数据与系统保留，热备节点不计容量</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">每台服务器配置</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">处理器</dt>
+              <dd>2 × Intel Xeon 5418Y</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">内存</dt>
+              <dd>12 × 32GB DDR5（共 384GB）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">系统盘</dt>
+              <dd>2 × 960GB SATA SSD（RAID1）</dd>
+            </div>
+            <div className="flex justify-between items-center">
+              <dt className="text-gray-500">数据盘</dt>
+              <dd className="flex items-center gap-1">
+                <select value={data.nvmePerNode} onChange={(e) => onNvmeCountChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {WEKA_CONSTANTS.NVME_COUNTS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <span>×</span>
+                <select value={data.ssdSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {WEKA_CONSTANTS.SSD_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
+                </select>
+                <span>NVMe SSD</span>
+              </dd>
+            </div>
+            <div className="flex justify-between items-center">
+              <dt className="text-gray-500">存储网络</dt>
+              <dd>
+                <select value={data.networkType} onChange={(e) => onNetworkChange(e.target.value)} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  <option value="100gb">2 × 双口 100Gb IB/RoCE/Eth NIC</option>
+                  <option value="200gb">2 × 双口 200Gb IB/RoCE/Eth NIC</option>
+                </select>
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">管理网络</dt>
+              <dd>1 × 双口 25Gb 以太网卡</dd>
+            </div>
+          </dl>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">性能（预测数据，含热备节点）</h3>
+          <dl className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-gray-500">读 BW (4MiB)</dt>
+              <dd className="font-medium">{data.formatted.readBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">写 BW (4MiB)</dt>
+              <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">每 TiB 读 BW (4MiB)</dt>
+              <dd className="font-medium">{perTiBReadBWFormatted}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">读 IOPS (4KiB)</dt>
+              <dd className="font-medium">{data.formatted.readIOPS}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">写 IOPS (4KiB)</dt>
+              <dd className="font-medium">{data.formatted.writeIOPS}</dd>
+            </div>
+          </dl>
         </div>
       </div>
     </div>
