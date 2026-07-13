@@ -189,7 +189,7 @@ function StorplanApp() {
     'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number };
     ceph?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; mdsNodeCount?: number };
     'ceph-hybrid'?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; cacheCount: number; cacheSizePerDisk: number };
-    weka?: { dataNodeCount: number; ssdSize: number; protectionLevel: number; networkType: string };
+    weka?: { dataNodeCount: number; ssdSize: number; protectionLevel: number; networkType: string; hotSpareCount?: number };
   }>({})
 
   useEffect(() => {
@@ -316,7 +316,7 @@ function StorplanApp() {
         try {
           if (manualConfig.weka) {
             const mc = manualConfig.weka
-            newResults.weka = buildWekaResult(mc.dataNodeCount, mc.ssdSize, mc.protectionLevel, mc.networkType, isBinary, bandwidthUnitType)
+            newResults.weka = buildWekaResult(mc.dataNodeCount, mc.ssdSize, mc.protectionLevel, mc.networkType, isBinary, bandwidthUnitType, mc.hotSpareCount)
           } else {
             const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
             const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
@@ -578,36 +578,42 @@ function StorplanApp() {
 
   const handleWekaDataNodeCountChange = (newCount: number) => {
     if (!results.weka || newCount < WEKA_CONSTANTS.MIN_TOTAL_NODES - WEKA_CONSTANTS.HOT_SPARE) return
-    const { ssdSize, protectionLevel, networkType } = results.weka
+    const { ssdSize, protectionLevel, networkType, hotSpareCount } = results.weka
     try {
       const newCapacityTiB = wekaCapacity(newCount, ssdSize, protectionLevel)
-      setManualConfig(prev => ({ ...prev, weka: { dataNodeCount: newCount, ssdSize, protectionLevel, networkType } }))
+      setManualConfig(prev => ({ ...prev, weka: { dataNodeCount: newCount, ssdSize, protectionLevel, networkType, hotSpareCount } }))
       setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
     } catch { /* 无效节点数忽略 */ }
   }
 
+  const handleWekaHotSpareChange = (newHotSpare: number) => {
+    if (!results.weka || newHotSpare < 0) return
+    const { dataNodeCount, ssdSize, protectionLevel, networkType } = results.weka
+    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel, networkType, hotSpareCount: newHotSpare } }))
+  }
+
   const handleWekaDiskChange = (newSsdSize: number) => {
     if (!results.weka) return
-    const { dataNodeCount, protectionLevel, networkType } = results.weka
+    const { dataNodeCount, protectionLevel, networkType, hotSpareCount } = results.weka
     const newCapacityTiB = wekaCapacity(dataNodeCount, newSsdSize, protectionLevel)
-    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize: newSsdSize, protectionLevel, networkType } }))
+    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize: newSsdSize, protectionLevel, networkType, hotSpareCount } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleWekaProtectionChange = (newLevel: number) => {
     if (!results.weka) return
-    const { dataNodeCount, ssdSize, networkType } = results.weka
+    const { dataNodeCount, ssdSize, networkType, hotSpareCount } = results.weka
     try {
       const newCapacityTiB = wekaCapacity(dataNodeCount, ssdSize, newLevel)
-      setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel: newLevel, networkType } }))
+      setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel: newLevel, networkType, hotSpareCount } }))
       setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
     } catch { /* 无效保护级别忽略 */ }
   }
 
   const handleWekaNetworkChange = (newNetwork: string) => {
     if (!results.weka) return
-    const { dataNodeCount, ssdSize, protectionLevel } = results.weka
-    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel, networkType: newNetwork } }))
+    const { dataNodeCount, ssdSize, protectionLevel, hotSpareCount } = results.weka
+    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel, networkType: newNetwork, hotSpareCount } }))
   }
 
   const hasSelection = selectedStorages.size > 0
@@ -768,7 +774,7 @@ function StorplanApp() {
                 </div>
               )}
               {results.weka && (
-                <WekaResult data={results.weka} onDataNodeCountChange={handleWekaDataNodeCountChange} onDiskChange={handleWekaDiskChange} onProtectionChange={handleWekaProtectionChange} onNetworkChange={handleWekaNetworkChange} />
+                <WekaResult data={results.weka} onDataNodeCountChange={handleWekaDataNodeCountChange} onHotSpareChange={handleWekaHotSpareChange} onDiskChange={handleWekaDiskChange} onProtectionChange={handleWekaProtectionChange} onNetworkChange={handleWekaNetworkChange} />
               )}
             </div>
           )}
@@ -888,8 +894,8 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
   },
   weka: {
     description: 'Weka（WekaFS）是高性能并行文件系统，基于 NVMe SSD 和高速网络构建全闪架构，适合 AI/HPC 等高性能场景。',
-    pros: ['性能高，读带宽可随节点线性扩展', '支持快照、分层到对象存储'],
-    cons: ['软件授权费用较高', '最少 6 节点起步，初始投入较大', '不支持 QoS', '第三方厂商技术支持'],
+    pros: ['性能高，读带宽可随节点线性扩展', '支持快照、分层到对象存储', '支持多租户'],
+    cons: ['软件授权费用较高', '不支持 QoS', '第三方厂商技术支持'],
     limits: ['条带宽度 D+P 限制在 5–20 之间，且 D 必须大于 P'],
   },
 }
@@ -1763,9 +1769,10 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
   )
 }
 
-function WekaResult({ data, onDataNodeCountChange, onDiskChange, onProtectionChange, onNetworkChange }: {
+function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChange, onProtectionChange, onNetworkChange }: {
   data: WekaPlanResult;
   onDataNodeCountChange: (n: number) => void;
+  onHotSpareChange: (n: number) => void;
   onDiskChange: (n: number) => void;
   onProtectionChange: (n: number) => void;
   onNetworkChange: (s: string) => void;
@@ -1798,9 +1805,19 @@ function WekaResult({ data, onDataNodeCountChange, onDiskChange, onProtectionCha
                   <span className="ml-0.5">台</span>
                 </dd>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <dt className="text-gray-500">热备节点数量</dt>
-                <dd>{data.hotSpareCount} 台（总 {data.nodeCount} 台）</dd>
+                <dd className="flex items-center gap-1">
+                  <button onClick={() => onHotSpareChange(data.hotSpareCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.hotSpareCount <= 0}>−</button>
+                  <NumberInput
+                    value={data.hotSpareCount}
+                    onChange={onHotSpareChange}
+                    min={0}
+                    className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                  />
+                  <button onClick={() => onHotSpareChange(data.hotSpareCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
+                  <span className="ml-0.5">台（总 {data.nodeCount} 台）</span>
+                </dd>
               </div>
               <div className="flex justify-between items-center">
                 <dt className="text-gray-500">保护级别 (P)</dt>

@@ -130,9 +130,10 @@ export function buildWekaResult(
   networkType: string,
   isBinary: boolean,
   bandwidthUnitType: string,
+  hotSpareOverride?: number,
 ): WekaPlanResult {
   const protection = getProtectionScheme(dataNodeCount, protectionLevel);
-  const hotSpareCount = getHotSpareCount(dataNodeCount);
+  const hotSpareCount = hotSpareOverride !== undefined && hotSpareOverride >= 0 ? hotSpareOverride : getHotSpareCount(dataNodeCount);
   const totalNodes = dataNodeCount + hotSpareCount;
   const actualCapacity = calculateCapacityTiB(dataNodeCount, ssdSize, protectionLevel);
   const rawCapacity = dataNodeCount * CONSTANTS.NVME_PER_NODE * ssdSize * CONSTANTS.TB_TO_TIB;
