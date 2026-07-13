@@ -8,7 +8,7 @@ import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPF
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
 import { planCeph, buildCephResult, getMemoryConfig as getCephMemory, getStorageNetworkConfig as getCephStorageNetwork, getPerDiskPerformance as getCephPerDisk, getAllowedRedundancySchemes as getCephAllowedSchemes, RGW_PER_DISK as CEPH_RGW_PER_DISK, calculateCapacityTiB as cephCapacity, CONSTANTS as CEPH_CONSTANTS } from '#/lib/ceph'
 import type { CephPlanResult } from '#/lib/ceph'
-import { formatBandwidth, formatCapacity } from '#/lib/utils'
+import { formatBandwidth, formatCapacity, MIB_TO_MB } from '#/lib/utils'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
 
@@ -730,7 +730,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
   const lastClusterTolerance = ul ? (xeosPoolConfig(ul.lastClusterNodes, 'EC8+2')?.totalTolerance ?? 2) : 0
   const lastClusterIsFull = ul ? ul.lastClusterNodes === ul.nodesPerCluster : true
   const perTiBReadBW = data.performance.downloadBandwidth / data.actualCapacity
-  const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
+  const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
   const totalDisks = data.serverCount * data.disksPerServer
   const hddLimit = ul ? XEOS_CONSTANTS.MAX_TOTAL_DISKS_ULTRA : XEOS_CONSTANTS.MAX_TOTAL_DISKS
   const requiredCacheTB = (data.disksPerServer * data.diskSize) / XEOS_CONSTANTS.CACHE_RATIO
@@ -932,7 +932,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
 
 function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastDataPlanResult; onEboxCountChange: (n: number) => void; onDiskChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
-  const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
+  const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
   const t = THEME.vastdata
 
   return (
@@ -1044,7 +1044,7 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
 
 function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, onSsdCountChange }: { data: GPFSECEPlanResult; onServerCountChange: (n: number) => void; onDiskChange: (n: number) => void; onEcChange: (n: number) => void; onSsdCountChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
-  const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
+  const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
   const t = THEME['gpfs-ece']
 
   return (
@@ -1178,7 +1178,7 @@ function CephResult({ data, onNodeCountChange, onDisksPerNodeChange, onDiskChang
   const storageNet = getCephStorageNetwork(data.disksPerNode)
   const perDisk = getCephPerDisk(data.redundancy)
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
-  const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
+  const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
 
   return (
     <div className="relative overflow-hidden bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6">

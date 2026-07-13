@@ -1,5 +1,7 @@
 export const TB_TO_TIB = 0.909;
 export const MIBS_TO_MBPS = 8.388608;
+// 1 MiB/s = 1.048576 MB/s（MB/GB 按 1000 进制换算）
+export const MIB_TO_MB = 1.048576;
 
 export function parseCapacity(input: string): { tib: number; unit: string; isBinary: boolean } {
   const match = input.match(/^([\d.]+)\s*(TB|PB|TiB|PiB)$/i);
@@ -36,8 +38,8 @@ export function parseBandwidth(input: string): { mibps: number; unit: string; un
   let mibps: number;
   let unitType: string;
 
-  if (unitLower === 'mb/s') { mibps = value / 1.024; unitType = 'decimal-byte'; }
-  else if (unitLower === 'gb/s') { mibps = value * 1000 / 1.024; unitType = 'decimal-byte'; }
+  if (unitLower === 'mb/s') { mibps = value / MIB_TO_MB; unitType = 'decimal-byte'; }
+  else if (unitLower === 'gb/s') { mibps = value * 1000 / MIB_TO_MB; unitType = 'decimal-byte'; }
   else if (unitLower === 'mib/s') { mibps = value; unitType = 'binary'; }
   else if (unitLower === 'gib/s') { mibps = value * 1024; unitType = 'binary'; }
   else if (unitLower === 'mbps') { mibps = value / MIBS_TO_MBPS; unitType = 'decimal-bit'; }
@@ -62,7 +64,7 @@ export function formatBandwidth(mibps: number, unitType = 'decimal-bit'): string
     if (mibps >= 1024) return `${(mibps / 1024).toFixed(2)} GiB/s`;
     return `${mibps.toFixed(2)} MiB/s`;
   } else if (unitType === 'decimal-byte') {
-    const mbs = mibps * 1.024;
+    const mbs = mibps * MIB_TO_MB;
     if (mbs >= 1000) return `${(mbs / 1000).toFixed(2)} GB/s`;
     return `${mbs.toFixed(2)} MB/s`;
   } else {
