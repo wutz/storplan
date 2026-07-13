@@ -6,7 +6,9 @@ import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calcula
 import type { VastDataPlanResult } from '#/lib/vastdata'
 import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, getAllowedECSchemes, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
-import { formatBandwidth, formatCapacity } from '#/lib/utils'
+import { planCeph, buildCephResult, getMemoryConfig as getCephMemory, getStorageNetworkConfig as getCephStorageNetwork, getPerDiskPerformance as getCephPerDisk, getAllowedRedundancySchemes as getCephAllowedSchemes, RGW_PER_DISK as CEPH_RGW_PER_DISK, calculateCapacityTiB as cephCapacity, CONSTANTS as CEPH_CONSTANTS } from '#/lib/ceph'
+import type { CephPlanResult } from '#/lib/ceph'
+import { formatBandwidth, formatCapacity, MIB_TO_MB } from '#/lib/utils'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
 
@@ -14,6 +16,7 @@ type PlanResults = {
   xeos?: XEOSPlanResult
   vastdata?: VastDataPlanResult
   'gpfs-ece'?: GPFSECEPlanResult
+  ceph?: CephPlanResult
 }
 
 // 每个存储产品的官网主题色（Tailwind 静态类名，避免运行时拼接导致 JIT 漏扫）
@@ -67,9 +70,21 @@ const THEME: Record<string, Theme> = {
     dot: 'bg-[#704BFF]',
     accentBar: 'bg-[#704BFF]',
   },
+  ceph: {
+    // Ceph 官网品牌色：红 #EF5C55
+    label: 'Ceph（统一存储）',
+    accentText: 'text-[#C43E38]',
+    accentBgSoft: 'bg-[#EF5C55]/10',
+    accentBorder: 'border-[#EF5C55]',
+    chip: 'bg-[#EF5C55]/15 text-[#C43E38]',
+    bigValue: 'text-[#C43E38]',
+    selectedCard: 'border-[#EF5C55] bg-[#EF5C55]/10 ring-1 ring-[#EF5C55]',
+    dot: 'bg-[#EF5C55]',
+    accentBar: 'bg-[#EF5C55]',
+  },
 }
 
-const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'xeos'] as const
+const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'xeos', 'ceph'] as const
 
 function convertTibToUnit(tib: number, unit: string): string {
   switch (unit) {
@@ -142,6 +157,7 @@ function StorplanApp() {
     xeos?: { serverCount: number; disksPerServer: number; diskSize: number; ecEfficiency: number; cacheCount: number; cacheSizePerDisk: number };
     vastdata?: { eboxCount: number; diskSize: number };
     'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number };
+    ceph?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string };
   }>({})
 
   useEffect(() => {
@@ -224,6 +240,26 @@ function StorplanApp() {
           }
         } catch (err) {
           newErrors['gpfs-ece'] = err instanceof Error ? err.message : 'Unknown error'
+        }
+      }
+
+      if (selectedStorages.has('ceph')) {
+        try {
+          if (manualConfig.ceph) {
+            const mc = manualConfig.ceph
+            newResults.ceph = buildCephResult(mc.nodeCount, mc.disksPerNode, mc.diskSize, isBinary, bandwidthUnitType, mc.redundancy)
+          } else {
+            const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
+            const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
+            const result = planCeph({ capacity, readBandwidth: readBW || undefined, writeBandwidth: writeBW || undefined })
+            result.formatted.readBandwidth = formatBandwidth(result.performance.readBandwidth, bandwidthUnitType)
+            result.formatted.writeBandwidth = formatBandwidth(result.performance.writeBandwidth, bandwidthUnitType)
+            result.formatted.rgwReadBandwidth = formatBandwidth(result.rgwPerformance.readBandwidth, bandwidthUnitType)
+            result.formatted.rgwWriteBandwidth = formatBandwidth(result.rgwPerformance.writeBandwidth, bandwidthUnitType)
+            newResults.ceph = result
+          }
+        } catch (err) {
+          newErrors.ceph = err instanceof Error ? err.message : 'Unknown error'
         }
       }
     } catch (err) {
@@ -371,6 +407,46 @@ function StorplanApp() {
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
+  const handleCephNodeCountChange = (newCount: number) => {
+    if (!results.ceph || newCount < CEPH_CONSTANTS.MIN_NODES || newCount > CEPH_CONSTANTS.MAX_NODES) return
+    const { disksPerNode, diskSize, redundancy, nodeCount } = results.ceph
+    // 增加节点数时自动选择得盘率最大的策略（即该节点数的默认策略）；
+    // 减少节点数时若当前策略仍允许则保留，否则回退默认策略
+    const allowed = getCephAllowedSchemes(newCount)
+    const scheme = newCount > nodeCount
+      ? allowed.reduce((a, b) => (b.efficiency > a.efficiency ? b : a))
+      : (allowed.find(s => s.scheme === redundancy) ?? allowed[0])
+    const newCapacityTiB = cephCapacity(newCount, disksPerNode, diskSize, scheme.efficiency)
+    setManualConfig(prev => ({ ...prev, ceph: { nodeCount: newCount, disksPerNode, diskSize, redundancy: scheme.scheme } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleCephDisksPerNodeChange = (newDisksPerNode: number) => {
+    if (!results.ceph) return
+    const { nodeCount, diskSize, redundancy, efficiency } = results.ceph
+    const newCapacityTiB = cephCapacity(nodeCount, newDisksPerNode, diskSize, efficiency)
+    setManualConfig(prev => ({ ...prev, ceph: { nodeCount, disksPerNode: newDisksPerNode, diskSize, redundancy } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleCephDiskChange = (newDiskSize: number) => {
+    if (!results.ceph) return
+    const { nodeCount, disksPerNode, redundancy, efficiency } = results.ceph
+    const newCapacityTiB = cephCapacity(nodeCount, disksPerNode, newDiskSize, efficiency)
+    setManualConfig(prev => ({ ...prev, ceph: { nodeCount, disksPerNode, diskSize: newDiskSize, redundancy } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleCephRedundancyChange = (scheme: string) => {
+    if (!results.ceph) return
+    const { nodeCount, disksPerNode, diskSize } = results.ceph
+    const s = getCephAllowedSchemes(nodeCount).find(x => x.scheme === scheme)
+    if (!s) return
+    const newCapacityTiB = cephCapacity(nodeCount, disksPerNode, diskSize, s.efficiency)
+    setManualConfig(prev => ({ ...prev, ceph: { nodeCount, disksPerNode, diskSize, redundancy: scheme } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
   const hasSelection = selectedStorages.size > 0
   const selectClass = "border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 transition"
   const inputClass = "flex-1 border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 transition"
@@ -385,7 +461,7 @@ function StorplanApp() {
 
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6 mb-8">
           <label className="block text-sm font-medium text-gray-700 mb-3">存储方案</label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
             {STORAGE_ORDER.map((key) => {
               const t = THEME[key]
               const active = selectedStorages.has(key)
@@ -533,12 +609,28 @@ function StorplanApp() {
               )}
             </div>
           )}
+          {selectedStorages.has('ceph') && (
+            <div>
+              <StorageInfo storage="ceph" />
+              {errors.ceph && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-red-800">{errors.ceph}</p>
+                </div>
+              )}
+              {results.ceph && (
+                <CephResult data={results.ceph} onNodeCountChange={handleCephNodeCountChange} onDisksPerNodeChange={handleCephDisksPerNodeChange} onDiskChange={handleCephDiskChange} onRedundancyChange={handleCephRedundancyChange} />
+              )}
+            </div>
+          )}
         </div>
 
-        <footer className="text-center text-sm text-gray-400 mt-12 pb-8">
-          <a href="https://github.com/wutz/storplan" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600">
-            GitHub: wutz/storplan
-          </a>
+        <footer className="text-center text-sm text-gray-400 mt-12 pb-8 space-y-1">
+          <div>
+            <a href="https://github.com/wutz/storplan" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600">
+              GitHub: wutz/storplan
+            </a>
+          </div>
+          <div className="text-xs">构建时间：{__BUILD_TIME__}（Asia/Shanghai）</div>
         </footer>
       </div>
     </div>
@@ -561,6 +653,30 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
     pros: ['性能高', '采购成本低'],
     cons: ['多租户支持弱', '运维成本高', '原厂支持弱'],
     limits: ['启用多租户支持时，容量起步和扩容步长均为 50TiB', '启用多租户时，K8s 只能使用 hostPath，不能使用基于 CSI 的 PVC 方式'],
+  },
+  ceph: {
+    description: 'Ceph 是开源分布式统一存储系统，单一集群同时提供块、对象和文件存储服务。',
+    pros: [
+      '开源软件，无需购买软件授权',
+      '支持多租户',
+      '统一存储：支持块、对象存储和文件系统',
+      '块存储系统成熟',
+      '支持同一集群使用不同容量磁盘',
+    ],
+    cons: [
+      '不支持折叠纠删码，起步节点少时得盘率低',
+      '每盘容量均衡度低，总可用容量进一步锐减，通常按 70% 计算',
+      '全闪配置性能普通，有高性能需求时需要堆盘',
+      '文件系统元数据缓存上限受节点内存大小限制，不足时性能锐减',
+      '文件系统元数据需要额外配置多个大内存节点',
+      '文件系统运维成本高',
+      'CephFS 不支持 QoS，Ceph RGW 的 QoS 较弱',
+      '无技术支持',
+    ],
+    limits: [
+      '文件系统热数据数量不建议超过 5 千万（大约消耗 200G 内存）',
+      '文件系统不建议应用于 AI 场景',
+    ],
   },
 }
 
@@ -614,7 +730,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
   const lastClusterTolerance = ul ? (xeosPoolConfig(ul.lastClusterNodes, 'EC8+2')?.totalTolerance ?? 2) : 0
   const lastClusterIsFull = ul ? ul.lastClusterNodes === ul.nodesPerCluster : true
   const perTiBReadBW = data.performance.downloadBandwidth / data.actualCapacity
-  const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
+  const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
   const totalDisks = data.serverCount * data.disksPerServer
   const hddLimit = ul ? XEOS_CONSTANTS.MAX_TOTAL_DISKS_ULTRA : XEOS_CONSTANTS.MAX_TOTAL_DISKS
   const requiredCacheTB = (data.disksPerServer * data.diskSize) / XEOS_CONSTANTS.CACHE_RATIO
@@ -816,7 +932,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
 
 function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastDataPlanResult; onEboxCountChange: (n: number) => void; onDiskChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
-  const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
+  const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
   const t = THEME.vastdata
 
   return (
@@ -928,7 +1044,7 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
 
 function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, onSsdCountChange }: { data: GPFSECEPlanResult; onServerCountChange: (n: number) => void; onDiskChange: (n: number) => void; onEcChange: (n: number) => void; onSsdCountChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
-  const perTiBReadBWFormatted = (perTiBReadBW * 1.024).toFixed(2) + ' MB/s'
+  const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
   const t = THEME['gpfs-ece']
 
   return (
@@ -996,7 +1112,7 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">系统盘</dt>
-              <dd>2 × 480GB SATA SSD（RAID1）</dd>
+              <dd>2 × 960GB SATA SSD（RAID1）</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">存储网络</dt>
@@ -1042,6 +1158,179 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
               <dd className="font-medium">{data.formatted.writeIOPS}</dd>
             </div>
           </dl>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CephResult({ data, onNodeCountChange, onDisksPerNodeChange, onDiskChange, onRedundancyChange }: {
+  data: CephPlanResult;
+  onNodeCountChange: (n: number) => void;
+  onDisksPerNodeChange: (n: number) => void;
+  onDiskChange: (n: number) => void;
+  onRedundancyChange: (s: string) => void;
+}) {
+  const t = THEME.ceph
+  const totalDisks = data.nodeCount * data.disksPerNode
+  const effectiveRate = data.actualCapacity / data.rawCapacity
+  const mem = getCephMemory(data.disksPerNode)
+  const storageNet = getCephStorageNetwork(data.disksPerNode)
+  const perDisk = getCephPerDisk(data.redundancy)
+  const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
+  const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
+
+  return (
+    <div className="relative overflow-hidden bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6">
+      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
+      <h2 className="text-xl font-bold text-gray-900 mb-4">Ceph 规划方案</h2>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
+            <dl className="space-y-1 text-sm">
+              <div className="flex justify-between items-center">
+                <dt className="text-gray-500">节点数量</dt>
+                <dd className="flex items-center gap-1">
+                  <button onClick={() => onNodeCountChange(data.nodeCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.nodeCount <= 3}>−</button>
+                  <NumberInput
+                    value={data.nodeCount}
+                    onChange={onNodeCountChange}
+                    min={3}
+                    className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                  />
+                  <button onClick={() => onNodeCountChange(data.nodeCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
+                  <span className="ml-0.5">台</span>
+                </dd>
+              </div>
+              <div className="flex justify-between items-center">
+                <dt className="text-gray-500">数据冗余策略</dt>
+                <dd className="flex items-center gap-1">
+                  <select value={data.redundancy} onChange={(e) => onRedundancyChange(e.target.value)} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                    {getCephAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（生产环境不建议）' : ''}</option>)}
+                  </select>
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">冗余得盘率</dt>
+                <dd>{(data.efficiency * 100).toFixed(1)}%</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">容错能力</dt>
+                <dd>容忍 {data.tolerance} 台节点离线</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">集群磁盘总数</dt>
+                <dd>{totalDisks.toLocaleString()} 块</dd>
+              </div>
+            </dl>
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-2">容量</h3>
+            <dl className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-gray-500">可用容量</dt>
+                <dd className={`text-xl font-bold ${t.bigValue}`}>{data.formatted.capacity}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">裸容量</dt>
+                <dd>{data.formatted.rawCapacity}</dd>
+              </div>
+              <div className="flex justify-between text-xs text-gray-400">
+                <dt>综合得盘率</dt>
+                <dd>{(effectiveRate * 100).toFixed(1)}%（含预留 1 节点 × 均衡损失 70%）</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">每台节点配置</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">处理器</dt>
+              <dd>2 × Intel Xeon 6530</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">内存</dt>
+              <dd>{mem.dimmCount} × {mem.dimmSizeGB}GB DDR5 4800（共 {mem.totalGB}GB）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">系统盘</dt>
+              <dd>2 × 960GB SATA SSD（RAID1）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">存储网络</dt>
+              <dd>{storageNet.label}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">管理网络（可选）</dt>
+              <dd>1 × 双口 25Gb 以太网卡</dd>
+            </div>
+            <div className="flex justify-between items-center">
+              <dt className="text-gray-500">数据盘</dt>
+              <dd className="flex items-center gap-1">
+                <select value={data.disksPerNode} onChange={(e) => onDisksPerNodeChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {CEPH_CONSTANTS.DISKS_PER_NODE_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+                <span>×</span>
+                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {CEPH_CONSTANTS.DISK_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
+                </select>
+                <span>NVMe SSD（TLC）</span>
+              </dd>
+            </div>
+          </dl>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">性能（CephFS / RBD 预测数据）</h3>
+          <dl className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-gray-500">读 BW (4MiB)</dt>
+              <dd className="font-medium">{data.formatted.readBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">写 BW (4MiB)</dt>
+              <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">每 TiB 读 BW (4MiB)</dt>
+              <dd className="font-medium">{perTiBReadBWFormatted}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">读 IOPS (4KiB)</dt>
+              <dd className="font-medium">{data.formatted.readIOPS}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">写 IOPS (4KiB)</dt>
+              <dd className="font-medium">{data.formatted.writeIOPS}</dd>
+            </div>
+          </dl>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">性能（RGW 对象存储预测数据）</h3>
+          <dl className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-gray-500">读 BW (4MiB)</dt>
+              <dd className="font-medium">{data.formatted.rgwReadBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">写 BW (4MiB)</dt>
+              <dd className="font-medium">{data.formatted.rgwWriteBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">读 OPS (4KiB)</dt>
+              <dd className="font-medium">{data.formatted.rgwReadOPS}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">写 OPS (4KiB)</dt>
+              <dd className="font-medium">{data.formatted.rgwWriteOPS}</dd>
+            </div>
+          </dl>
+        </div>
+        <div className="text-xs text-gray-400 space-y-0.5">
+          <div>容量计算：(节点数 − 1) × 冗余得盘率 × 单节点盘数 × 单盘容量 × 0.7（数据均衡损失）</div>
+          <div>性能计算：集群盘总数 × 每盘平均性能（{data.redundancy}：读 {perDisk.readMiBps} MiB/s、写 {perDisk.writeMiBps} MiB/s、读 IOPS {(perDisk.readIOPS / 1000)}k、写 IOPS {(perDisk.writeIOPS / 1000)}k）</div>
+          <div>RGW 每盘平均性能：读 {CEPH_RGW_PER_DISK.readMiBps} MiB/s、写 {CEPH_RGW_PER_DISK.writeMiBps} MiB/s、读 OPS {CEPH_RGW_PER_DISK.readOPS}、写 OPS {CEPH_RGW_PER_DISK.writeOPS}</div>
         </div>
       </div>
     </div>
