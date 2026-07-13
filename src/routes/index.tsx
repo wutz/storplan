@@ -1256,7 +1256,7 @@ function CephResult({ data, onNodeCountChange, onDisksPerNodeChange, onDiskChang
               <dd>{storageNet.label}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-gray-500">管理网络</dt>
+              <dt className="text-gray-500">管理网络（可选）</dt>
               <dd>1 × 双口 25Gb 以太网卡</dd>
             </div>
             <div className="flex justify-between items-center">
