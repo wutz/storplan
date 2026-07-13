@@ -1619,7 +1619,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
               </dd>
             </div>
             <div className="flex justify-between items-center">
-              <dt className="text-gray-500">索引缓存盘</dt>
+              <dt className="text-gray-500">索引盘</dt>
               <dd className="flex items-center gap-1">
                 <select value={data.cacheConfig.count} onChange={(e) => onCacheCountChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
                   {[1, 2, 3, 4].map(c => <option key={c} value={c}>{c}</option>)}
@@ -1628,12 +1628,12 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
                 <select value={data.cacheConfig.sizePerDisk} onChange={(e) => onCacheSizeChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
                   {CEPH_HYBRID_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
                 </select>
-                <span className="text-xs">NVMe SSD（DWPD ≥ 3）</span>
+                <span className="text-xs">NVMe SSD</span>
                 {!isCacheSufficient && <span className="text-red-600 text-xs">⚠️ 不足</span>}
               </dd>
             </div>
             <div className="flex justify-between text-xs text-gray-400">
-              <dt>缓存容量要求</dt>
+              <dt>索引盘容量要求</dt>
               <dd>≥ {requiredCacheTB.toFixed(2)}TB（实际 {data.cacheConfig.totalSize.toFixed(2)}TB）</dd>
             </div>
             <div className="flex justify-between">

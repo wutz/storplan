@@ -57,7 +57,7 @@ export const CONSTANTS = {
   DISK_SIZES: [24, 22, 20, 18, 16, 12, 10, 8] as const, // TB HDD
   TB_TO_TIB: CEPH_CONSTANTS.TB_TO_TIB,
   BALANCE_FACTOR: CEPH_CONSTANTS.BALANCE_FACTOR,
-  // 索引缓存盘（NVMe SSD，DWPD ≥ 3）：总容量 ≥ HDD 总容量 / 80
+  // 索引盘（NVMe SSD）：总容量 ≥ HDD 总容量 / 80
   CACHE_DISK_SIZES: [1.6, 3.2, 6.4, 12.8] as const,
   MIN_CACHE_DISKS: 1,
   MAX_CACHE_DISKS: 4,
@@ -73,7 +73,7 @@ export const RGW_HYBRID_PER_DISK = {
   writeOPS: 50,
 } as const;
 
-// 索引缓存盘配置：遍历 (盘数 × 容量) 组合，选总容量最接近需求（浪费最小）的；同等接近时优先更多盘数
+// 索引盘配置：遍历 (盘数 × 容量) 组合，选总容量最接近需求（浪费最小）的；同等接近时优先更多盘数
 export function calculateCacheConfig(disksPerNode: number, diskSizeTB: number): HybridCacheConfig {
   const requiredCacheTB = (disksPerNode * diskSizeTB) / CONSTANTS.CACHE_RATIO;
 
