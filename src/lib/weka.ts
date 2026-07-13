@@ -77,12 +77,7 @@ export function getHotSpareCount(dataNodeCount: number): number {
  * 约束：D+P ≤ 节点数，D+P ≤ 20，D > P，条带宽度 5–20
  */
 export function getProtectionScheme(dataNodeCount: number, protectionLevel = CONSTANTS.DEFAULT_PROTECTION_LEVEL): WekaProtection {
-  let P: number;
-  if (dataNodeCount >= 100) {
-    P = 4;
-  } else {
-    P = dataNodeCount < 10 ? Math.min(protectionLevel, 2) : protectionLevel;
-  }
+  const P = dataNodeCount >= 100 ? 4 : protectionLevel;
 
   const D = Math.min(dataNodeCount - P, 20 - P);
 
