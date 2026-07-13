@@ -624,10 +624,13 @@ function StorplanApp() {
           )}
         </div>
 
-        <footer className="text-center text-sm text-gray-400 mt-12 pb-8">
-          <a href="https://github.com/wutz/storplan" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600">
-            GitHub: wutz/storplan
-          </a>
+        <footer className="text-center text-sm text-gray-400 mt-12 pb-8 space-y-1">
+          <div>
+            <a href="https://github.com/wutz/storplan" target="_blank" rel="noopener noreferrer" className="hover:text-gray-600">
+              GitHub: wutz/storplan
+            </a>
+          </div>
+          <div className="text-xs">构建时间：{__BUILD_TIME__}（Asia/Shanghai）</div>
         </footer>
       </div>
     </div>
