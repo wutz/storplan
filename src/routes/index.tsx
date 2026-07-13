@@ -1821,14 +1821,6 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
                 </dd>
               </div>
               <div className="flex justify-between items-center">
-                <dt className="text-gray-500">保护级别 (P)</dt>
-                <dd>
-                  <select value={data.protectionLevel} onChange={(e) => onProtectionChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
-                    {WEKA_CONSTANTS.PROTECTION_LEVELS.map(p => <option key={p} value={p}>+{p}</option>)}
-                  </select>
-                </dd>
-              </div>
-              <div className="flex justify-between items-center">
                 <dt className="text-gray-500">热备节点数量</dt>
                 <dd className="flex items-center gap-1">
                   <button onClick={() => onHotSpareChange(data.hotSpareCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.hotSpareCount <= 0}>−</button>
@@ -1840,6 +1832,14 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
                   />
                   <button onClick={() => onHotSpareChange(data.hotSpareCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
                   <span className="ml-0.5">台</span>
+                </dd>
+              </div>
+              <div className="flex justify-between items-center">
+                <dt className="text-gray-500">保护级别 (P)</dt>
+                <dd>
+                  <select value={data.protectionLevel} onChange={(e) => onProtectionChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                    {WEKA_CONSTANTS.PROTECTION_LEVELS.map(p => <option key={p} value={p}>+{p}</option>)}
+                  </select>
                 </dd>
               </div>
               <div className="flex justify-between">
