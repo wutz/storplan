@@ -888,8 +888,8 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
   },
   weka: {
     description: 'Weka（WekaFS）是高性能并行文件系统，基于 NVMe SSD 和高速网络构建全闪架构，适合 AI/HPC 等高性能场景。',
-    pros: ['性能高，读带宽可随节点线性扩展', '支持快照、分层到对象存储', '原厂技术支持'],
-    cons: ['软件授权费用较高', '最少 6 节点起步，初始投入较大', '不支持 QoS'],
+    pros: ['性能高，读带宽可随节点线性扩展', '支持快照、分层到对象存储'],
+    cons: ['软件授权费用较高', '最少 6 节点起步，初始投入较大', '不支持 QoS', '第三方厂商技术支持'],
     limits: ['条带宽度 D+P 限制在 5–20 之间，且 D 必须大于 P'],
   },
 }
