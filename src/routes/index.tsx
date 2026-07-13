@@ -6,7 +6,7 @@ import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calcula
 import type { VastDataPlanResult } from '#/lib/vastdata'
 import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, getAllowedECSchemes, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
-import { planCeph, buildCephResult, getMemoryConfig as getCephMemory, getStorageNetworkConfig as getCephStorageNetwork, getPerDiskPerformance as getCephPerDisk, getAllowedRedundancySchemes as getCephAllowedSchemes, RGW_PER_DISK as CEPH_RGW_PER_DISK, calculateCapacityTiB as cephCapacity, CONSTANTS as CEPH_CONSTANTS } from '#/lib/ceph'
+import { planCeph, buildCephResult, getMemoryConfig as getCephMemory, getStorageNetworkConfig as getCephStorageNetwork, getMdsMemoryConfig as getCephMdsMemory, getMdsStorageNetworkConfig as getCephMdsStorageNetwork, getPerDiskPerformance as getCephPerDisk, getAllowedRedundancySchemes as getCephAllowedSchemes, RGW_PER_DISK as CEPH_RGW_PER_DISK, calculateCapacityTiB as cephCapacity, CONSTANTS as CEPH_CONSTANTS } from '#/lib/ceph'
 import type { CephPlanResult } from '#/lib/ceph'
 import { formatBandwidth, formatCapacity, MIB_TO_MB } from '#/lib/utils'
 
@@ -157,7 +157,7 @@ function StorplanApp() {
     xeos?: { serverCount: number; disksPerServer: number; diskSize: number; ecEfficiency: number; cacheCount: number; cacheSizePerDisk: number };
     vastdata?: { eboxCount: number; diskSize: number };
     'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number };
-    ceph?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string };
+    ceph?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; mdsNodeCount?: number };
   }>({})
 
   useEffect(() => {
@@ -247,7 +247,7 @@ function StorplanApp() {
         try {
           if (manualConfig.ceph) {
             const mc = manualConfig.ceph
-            newResults.ceph = buildCephResult(mc.nodeCount, mc.disksPerNode, mc.diskSize, isBinary, bandwidthUnitType, mc.redundancy)
+            newResults.ceph = buildCephResult(mc.nodeCount, mc.disksPerNode, mc.diskSize, isBinary, bandwidthUnitType, mc.redundancy, mc.mdsNodeCount)
           } else {
             const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
             const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
@@ -409,7 +409,7 @@ function StorplanApp() {
 
   const handleCephNodeCountChange = (newCount: number) => {
     if (!results.ceph || newCount < CEPH_CONSTANTS.MIN_NODES || newCount > CEPH_CONSTANTS.MAX_NODES) return
-    const { disksPerNode, diskSize, redundancy, nodeCount } = results.ceph
+    const { disksPerNode, diskSize, redundancy, nodeCount, mdsNodeCount } = results.ceph
     // 增加节点数时自动选择得盘率最大的策略（即该节点数的默认策略）；
     // 减少节点数时若当前策略仍允许则保留，否则回退默认策略
     const allowed = getCephAllowedSchemes(newCount)
@@ -417,33 +417,39 @@ function StorplanApp() {
       ? allowed.reduce((a, b) => (b.efficiency > a.efficiency ? b : a))
       : (allowed.find(s => s.scheme === redundancy) ?? allowed[0])
     const newCapacityTiB = cephCapacity(newCount, disksPerNode, diskSize, scheme.efficiency)
-    setManualConfig(prev => ({ ...prev, ceph: { nodeCount: newCount, disksPerNode, diskSize, redundancy: scheme.scheme } }))
+    setManualConfig(prev => ({ ...prev, ceph: { nodeCount: newCount, disksPerNode, diskSize, redundancy: scheme.scheme, mdsNodeCount } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleCephMdsNodeCountChange = (newCount: number) => {
+    if (!results.ceph || newCount < CEPH_CONSTANTS.MIN_MDS_NODES) return
+    const { nodeCount, disksPerNode, diskSize, redundancy } = results.ceph
+    setManualConfig(prev => ({ ...prev, ceph: { nodeCount, disksPerNode, diskSize, redundancy, mdsNodeCount: newCount } }))
   }
 
   const handleCephDisksPerNodeChange = (newDisksPerNode: number) => {
     if (!results.ceph) return
-    const { nodeCount, diskSize, redundancy, efficiency } = results.ceph
+    const { nodeCount, diskSize, redundancy, efficiency, mdsNodeCount } = results.ceph
     const newCapacityTiB = cephCapacity(nodeCount, newDisksPerNode, diskSize, efficiency)
-    setManualConfig(prev => ({ ...prev, ceph: { nodeCount, disksPerNode: newDisksPerNode, diskSize, redundancy } }))
+    setManualConfig(prev => ({ ...prev, ceph: { nodeCount, disksPerNode: newDisksPerNode, diskSize, redundancy, mdsNodeCount } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleCephDiskChange = (newDiskSize: number) => {
     if (!results.ceph) return
-    const { nodeCount, disksPerNode, redundancy, efficiency } = results.ceph
+    const { nodeCount, disksPerNode, redundancy, efficiency, mdsNodeCount } = results.ceph
     const newCapacityTiB = cephCapacity(nodeCount, disksPerNode, newDiskSize, efficiency)
-    setManualConfig(prev => ({ ...prev, ceph: { nodeCount, disksPerNode, diskSize: newDiskSize, redundancy } }))
+    setManualConfig(prev => ({ ...prev, ceph: { nodeCount, disksPerNode, diskSize: newDiskSize, redundancy, mdsNodeCount } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleCephRedundancyChange = (scheme: string) => {
     if (!results.ceph) return
-    const { nodeCount, disksPerNode, diskSize } = results.ceph
+    const { nodeCount, disksPerNode, diskSize, mdsNodeCount } = results.ceph
     const s = getCephAllowedSchemes(nodeCount).find(x => x.scheme === scheme)
     if (!s) return
     const newCapacityTiB = cephCapacity(nodeCount, disksPerNode, diskSize, s.efficiency)
-    setManualConfig(prev => ({ ...prev, ceph: { nodeCount, disksPerNode, diskSize, redundancy: scheme } }))
+    setManualConfig(prev => ({ ...prev, ceph: { nodeCount, disksPerNode, diskSize, redundancy: scheme, mdsNodeCount } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
@@ -618,7 +624,7 @@ function StorplanApp() {
                 </div>
               )}
               {results.ceph && (
-                <CephResult data={results.ceph} onNodeCountChange={handleCephNodeCountChange} onDisksPerNodeChange={handleCephDisksPerNodeChange} onDiskChange={handleCephDiskChange} onRedundancyChange={handleCephRedundancyChange} />
+                <CephResult data={results.ceph} onNodeCountChange={handleCephNodeCountChange} onMdsNodeCountChange={handleCephMdsNodeCountChange} onDisksPerNodeChange={handleCephDisksPerNodeChange} onDiskChange={handleCephDiskChange} onRedundancyChange={handleCephRedundancyChange} />
               )}
             </div>
           )}
@@ -1164,9 +1170,10 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
   )
 }
 
-function CephResult({ data, onNodeCountChange, onDisksPerNodeChange, onDiskChange, onRedundancyChange }: {
+function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerNodeChange, onDiskChange, onRedundancyChange }: {
   data: CephPlanResult;
   onNodeCountChange: (n: number) => void;
+  onMdsNodeCountChange: (n: number) => void;
   onDisksPerNodeChange: (n: number) => void;
   onDiskChange: (n: number) => void;
   onRedundancyChange: (s: string) => void;
@@ -1176,6 +1183,8 @@ function CephResult({ data, onNodeCountChange, onDisksPerNodeChange, onDiskChang
   const effectiveRate = data.actualCapacity / data.rawCapacity
   const mem = getCephMemory(data.disksPerNode)
   const storageNet = getCephStorageNetwork(data.disksPerNode)
+  const mdsMem = getCephMdsMemory()
+  const mdsStorageNet = getCephMdsStorageNetwork(data.disksPerNode)
   const perDisk = getCephPerDisk(data.redundancy)
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
@@ -1190,7 +1199,7 @@ function CephResult({ data, onNodeCountChange, onDisksPerNodeChange, onDiskChang
             <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
             <dl className="space-y-1 text-sm">
               <div className="flex justify-between items-center">
-                <dt className="text-gray-500">节点数量</dt>
+                <dt className="text-gray-500">数据节点数量</dt>
                 <dd className="flex items-center gap-1">
                   <button onClick={() => onNodeCountChange(data.nodeCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.nodeCount <= 3}>−</button>
                   <NumberInput
@@ -1200,6 +1209,20 @@ function CephResult({ data, onNodeCountChange, onDisksPerNodeChange, onDiskChang
                     className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
                   />
                   <button onClick={() => onNodeCountChange(data.nodeCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
+                  <span className="ml-0.5">台</span>
+                </dd>
+              </div>
+              <div className="flex justify-between items-center">
+                <dt className="text-gray-500">元数据节点数量（仅 CephFS 需要）</dt>
+                <dd className="flex items-center gap-1">
+                  <button onClick={() => onMdsNodeCountChange(data.mdsNodeCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.mdsNodeCount <= CEPH_CONSTANTS.MIN_MDS_NODES}>−</button>
+                  <NumberInput
+                    value={data.mdsNodeCount}
+                    onChange={onMdsNodeCountChange}
+                    min={CEPH_CONSTANTS.MIN_MDS_NODES}
+                    className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                  />
+                  <button onClick={() => onMdsNodeCountChange(data.mdsNodeCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
                   <span className="ml-0.5">台</span>
                 </dd>
               </div>
@@ -1244,7 +1267,7 @@ function CephResult({ data, onNodeCountChange, onDisksPerNodeChange, onDiskChang
           </div>
         </div>
         <div>
-          <h3 className="font-semibold text-gray-700 mb-2">每台节点配置</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">每台数据节点配置</h3>
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
               <dt className="text-gray-500">处理器</dt>
@@ -1278,6 +1301,35 @@ function CephResult({ data, onNodeCountChange, onDisksPerNodeChange, onDiskChang
                 </select>
                 <span>NVMe SSD（TLC）</span>
               </dd>
+            </div>
+          </dl>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">每台元数据节点配置（仅 CephFS 需要，共 {data.mdsNodeCount} 台）</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">处理器</dt>
+              <dd>2 × Intel Xeon 6530</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">内存</dt>
+              <dd>{mdsMem.dimmCount} × {mdsMem.dimmSizeGB}GB DDR5 4800（共 {mdsMem.totalGB}GB）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">系统盘</dt>
+              <dd>2 × 960GB SATA SSD（RAID1）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">存储网络</dt>
+              <dd>{mdsStorageNet.label}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">管理网络（可选）</dt>
+              <dd>1 × 双口 25Gb 以太网卡</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">数据盘</dt>
+              <dd>无</dd>
             </div>
           </dl>
         </div>
