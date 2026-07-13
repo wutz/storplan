@@ -87,7 +87,7 @@ const THEME: Record<string, Theme> = {
   },
   'ceph-hybrid': {
     // Ceph 官网品牌色（混闪用更深的暗红区分全闪）
-    label: 'Ceph 混闪（对象存储）',
+    label: 'Ceph（混闪对象存储）',
     accentText: 'text-[#9A2E29]',
     accentBgSoft: 'bg-[#9A2E29]/10',
     accentBorder: 'border-[#9A2E29]',
@@ -803,7 +803,6 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
     ],
     limits: [
       '混闪配置仅建议用作对象存储（Ceph RGW），不建议配置块存储和文件系统',
-      '单集群 HDD 总数不建议超过 20000 块',
     ],
   },
 }
@@ -1531,7 +1530,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
   return (
     <div className="relative overflow-hidden bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6">
       <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Ceph 混闪对象存储规划方案</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-4">Ceph（混闪对象存储）规划方案</h2>
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
@@ -1569,7 +1568,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-500">集群 HDD 总数</dt>
-                <dd className={totalDisks > CEPH_HYBRID_CONSTANTS.MAX_TOTAL_DISKS ? 'text-red-600 font-semibold' : ''}>{totalDisks.toLocaleString()} / {CEPH_HYBRID_CONSTANTS.MAX_TOTAL_DISKS.toLocaleString()} 块 {totalDisks > CEPH_HYBRID_CONSTANTS.MAX_TOTAL_DISKS && '⚠️ 超出上限'}</dd>
+                <dd>{totalDisks.toLocaleString()} 块</dd>
               </div>
             </dl>
           </div>

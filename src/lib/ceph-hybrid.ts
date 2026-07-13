@@ -48,14 +48,13 @@ export interface CephHybridPlanResult {
   };
 }
 
-// 混闪硬件规划借鉴 XSKY XEOS 单集群（< 20000 HDD）方案
+// 混闪硬件规划借鉴 XSKY XEOS 方案
 export const CONSTANTS = {
   MIN_NODES: 3,
   MAX_NODES: 1000,
   DISKS_PER_NODE_OPTIONS: [24, 26, 28, 30, 32, 34, 36] as const,
   DEFAULT_DISKS_PER_NODE: 32,
   DISK_SIZES: [24, 22, 20, 18, 16, 12, 10, 8] as const, // TB HDD
-  MAX_TOTAL_DISKS: 20000, // 单集群 HDD 总数上限
   TB_TO_TIB: CEPH_CONSTANTS.TB_TO_TIB,
   BALANCE_FACTOR: CEPH_CONSTANTS.BALANCE_FACTOR,
   // 索引缓存盘（NVMe SSD，DWPD ≥ 3）：总容量 ≥ HDD 总容量 / 80
@@ -168,7 +167,6 @@ export function planCephHybrid(req: CephHybridPlanRequest): CephHybridPlanResult
 
   for (const diskSize of CONSTANTS.DISK_SIZES) {
     for (let nodes = CONSTANTS.MIN_NODES; nodes <= CONSTANTS.MAX_NODES; nodes++) {
-      if (nodes * disksPerNode > CONSTANTS.MAX_TOTAL_DISKS) break;
       const scheme = getRedundancyScheme(nodes);
       const actual = calculateCapacityTiB(nodes, disksPerNode, diskSize, scheme.efficiency);
       const perf = calculateRgwHybridPerformance(nodes, disksPerNode);
@@ -180,7 +178,7 @@ export function planCephHybrid(req: CephHybridPlanRequest): CephHybridPlanResult
   }
 
   if (configs.length === 0) {
-    throw new Error('所需规模超过 20000 块 HDD 上限（单集群上限），无法找到满足需求的配置');
+    throw new Error('无法找到满足需求的配置');
   }
 
   // 选择节点数最少的方案；节点数相同时选可用容量最接近需求（更省成本）的方案
