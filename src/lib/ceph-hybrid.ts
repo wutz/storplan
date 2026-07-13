@@ -64,11 +64,10 @@ export const CONSTANTS = {
   CACHE_RATIO: 80,
 };
 
-// Ceph RGW 混闪每 HDD 平均性能。
-// 吞吐以 MiB/s 为内部规范单位，60 MB/s = 60/1.024 MiB/s，显示时还原为 MB/s
+// Ceph RGW 混闪每 HDD 平均性能（读/写 BW 单位：MiB/s）
 export const RGW_HYBRID_PER_DISK = {
-  readMiBps: 60 / 1.024,
-  writeMiBps: 30 / 1.024,
+  readMiBps: 60,
+  writeMiBps: 30,
   readOPS: 285,
   writeOPS: 50,
 } as const;

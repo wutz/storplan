@@ -1669,7 +1669,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
         </div>
         <div className="text-xs text-gray-400 space-y-0.5">
           <div>容量计算：(节点数 − 1) × 冗余得盘率 × 单节点盘数 × 单盘容量 × 0.7（数据均衡损失）</div>
-          <div>RGW 每 HDD 平均性能：读 {(RGW_HYBRID_PER_DISK.readMiBps * MIB_TO_MB).toFixed(0)} MB/s、写 {(RGW_HYBRID_PER_DISK.writeMiBps * MIB_TO_MB).toFixed(0)} MB/s、读 OPS {RGW_HYBRID_PER_DISK.readOPS}、写 OPS {RGW_HYBRID_PER_DISK.writeOPS}</div>
+          <div>RGW 每 HDD 平均性能：读 {RGW_HYBRID_PER_DISK.readMiBps} MiB/s、写 {RGW_HYBRID_PER_DISK.writeMiBps} MiB/s、读 OPS {RGW_HYBRID_PER_DISK.readOPS}、写 OPS {RGW_HYBRID_PER_DISK.writeOPS}</div>
         </div>
       </div>
     </div>
