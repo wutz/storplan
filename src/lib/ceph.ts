@@ -45,7 +45,7 @@ export const CONSTANTS = {
   MIN_NODES: 3,
   MAX_NODES: 1000,
   DISKS_PER_NODE_OPTIONS: [4, 8, 12, 16, 20, 24] as const,
-  DEFAULT_DISKS_PER_NODE: 24,
+  DEFAULT_DISKS_PER_NODE: 12,
   DISK_SIZES: [3.84, 7.68, 15.36] as const,
   TB_TO_TIB: 0.909,
   // 数据均衡损失：每盘容量均衡度低，可用容量按 70% 计算
@@ -64,11 +64,11 @@ export interface RedundancyScheme {
 }
 
 export const REDUNDANCY_SCHEMES: RedundancyScheme[] = [
-  { scheme: 'EC8+2', efficiency: 8 / 10, tolerance: 2 },
-  { scheme: 'EC6+2', efficiency: 6 / 8, tolerance: 2 },
-  { scheme: 'EC4+2', efficiency: 4 / 6, tolerance: 2 },
-  { scheme: 'EC2+2', efficiency: 2 / 4, tolerance: 2 },
-  { scheme: '3 副本', efficiency: 1 / 3, tolerance: 2 },
+  { scheme: 'EC8+2', efficiency: 8 / 10, tolerance: 1 },
+  { scheme: 'EC6+2', efficiency: 6 / 8, tolerance: 1 },
+  { scheme: 'EC4+2', efficiency: 4 / 6, tolerance: 1 },
+  { scheme: 'EC2+2', efficiency: 2 / 4, tolerance: 1 },
+  { scheme: '3 副本', efficiency: 1 / 3, tolerance: 1 },
   { scheme: '2 副本', efficiency: 1 / 2, tolerance: 1, notRecommended: true },
 ];
 

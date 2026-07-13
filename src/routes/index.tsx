@@ -663,6 +663,7 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
       '文件系统元数据缓存上限受节点内存大小限制，不足时性能锐减',
       '文件系统元数据需要额外配置多个大内存节点',
       '文件系统运维成本高',
+      'CephFS 不支持 QoS，Ceph RGW 的 QoS 较弱',
       '无技术支持',
     ],
     limits: [
@@ -1201,7 +1202,6 @@ function CephResult({ data, onNodeCountChange, onDisksPerNodeChange, onDiskChang
                   <select value={data.redundancy} onChange={(e) => onRedundancyChange(e.target.value)} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
                     {getCephAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（生产环境不建议）' : ''}</option>)}
                   </select>
-                  {data.redundancy === '2 副本' && <span className="text-red-600 text-xs">⚠️ 生产环境不建议</span>}
                 </dd>
               </div>
               <div className="flex justify-between">
