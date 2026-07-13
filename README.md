@@ -14,6 +14,7 @@
 - **XSKY XEOS** — 对象存储
 - **VastData** — 统一存储（NFS、SMB、S3、iSCSI、NVMe-oF）
 - **GPFS ECE** — 高性能文件系统
+- **Ceph** — 开源统一存储（块、对象、文件系统）
 
 ## 快速开始
 
