@@ -8,6 +8,7 @@ export interface CephPlanRequest {
 
 export interface CephPlanResult {
   nodeCount: number;
+  mdsNodeCount: number; // CephFS 元数据节点数量（仅 CephFS 需要）
   disksPerNode: number;
   diskSize: number;
   redundancy: string;
@@ -43,6 +44,8 @@ export interface CephPlanResult {
 
 export const CONSTANTS = {
   MIN_NODES: 3,
+  // CephFS 元数据节点：至少 2 台，仅 CephFS 需要
+  MIN_MDS_NODES: 2,
   MAX_NODES: 1000,
   DISKS_PER_NODE_OPTIONS: [4, 8, 12, 16, 20, 24] as const,
   DEFAULT_DISKS_PER_NODE: 12,
@@ -98,6 +101,17 @@ export function getMemoryConfig(disksPerNode: number): { dimmCount: number; dimm
 export function getStorageNetworkConfig(disksPerNode: number): { nicCount: number; speedGb: number; label: string } {
   const speedGb = disksPerNode <= CONSTANTS.MEM_HALF_THRESHOLD ? 100 : 200;
   return { nicCount: 2, speedGb, label: `2 × 双口 ${speedGb}Gb 以太网卡` };
+}
+
+// CephFS 元数据节点配置（仅 CephFS 需要）：
+// 内存固定 16 × 32GB DDR5 4800；无数据盘；存储网络 1 × 双口 100/200Gb 以太网卡（口速与数据节点一致）；其它与数据节点一致
+export function getMdsMemoryConfig(): { dimmCount: number; dimmSizeGB: number; totalGB: number } {
+  return { dimmCount: 16, dimmSizeGB: 32, totalGB: 16 * 32 };
+}
+
+export function getMdsStorageNetworkConfig(disksPerNode: number): { nicCount: number; speedGb: number; label: string } {
+  const speedGb = disksPerNode <= CONSTANTS.MEM_HALF_THRESHOLD ? 100 : 200;
+  return { nicCount: 1, speedGb, label: `1 × 双口 ${speedGb}Gb 以太网卡` };
 }
 
 // CephFS / Ceph RBD 每盘平均性能（按冗余策略）
@@ -182,7 +196,8 @@ export function buildCephResult(
   diskSize: number,
   isBinary: boolean,
   bandwidthUnitType: string = 'decimal-byte',
-  redundancyScheme?: string
+  redundancyScheme?: string,
+  mdsNodeCount?: number
 ): CephPlanResult {
   const allowed = getAllowedRedundancySchemes(nodeCount);
   const scheme = (redundancyScheme && allowed.find(s => s.scheme === redundancyScheme)) || getRedundancyScheme(nodeCount);
@@ -192,6 +207,7 @@ export function buildCephResult(
   const rgwPerformance = calculateRgwPerformance(nodeCount, disksPerNode);
   return {
     nodeCount,
+    mdsNodeCount: Math.max(CONSTANTS.MIN_MDS_NODES, mdsNodeCount ?? CONSTANTS.MIN_MDS_NODES),
     disksPerNode,
     diskSize,
     redundancy: scheme.scheme,
