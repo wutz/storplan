@@ -1105,7 +1105,7 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">系统盘</dt>
-              <dd>2 × 480GB SATA SSD（RAID1）</dd>
+              <dd>2 × 960GB SATA SSD（RAID1）</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">存储网络</dt>
@@ -1249,7 +1249,7 @@ function CephResult({ data, onNodeCountChange, onDisksPerNodeChange, onDiskChang
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">系统盘</dt>
-              <dd>2 × 480GB SATA SSD（RAID1）</dd>
+              <dd>2 × 960GB SATA SSD（RAID1）</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">存储网络</dt>
