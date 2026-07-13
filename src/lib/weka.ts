@@ -44,6 +44,7 @@ export interface WekaPlanResult {
 export const CONSTANTS = {
   MIN_TOTAL_NODES: 6,               // 最小总节点数（数据节点 + 热备节点）
   HOT_SPARE: 1,                     // 热备节点数（不参与容量计算，参与性能计算）
+  NVME_COUNTS: [4, 8, 12] as const,
   NVME_PER_NODE: 12,
   SSD_SIZES: [7.68, 15.36] as const,
   PROTECTION_LEVELS: [2, 3, 4] as const,
@@ -126,19 +127,20 @@ export function buildWekaResult(
   isBinary: boolean,
   bandwidthUnitType: string,
   hotSpareOverride?: number,
+  nvmePerNode: number = CONSTANTS.NVME_PER_NODE,
 ): WekaPlanResult {
   const protection = getProtectionScheme(dataNodeCount, protectionLevel);
   const hotSpareCount = hotSpareOverride !== undefined && hotSpareOverride >= 0 ? hotSpareOverride : getHotSpareCount(dataNodeCount);
   const totalNodes = dataNodeCount + hotSpareCount;
-  const actualCapacity = calculateCapacityTiB(dataNodeCount, ssdSize, protectionLevel);
-  const rawCapacity = dataNodeCount * CONSTANTS.NVME_PER_NODE * ssdSize * CONSTANTS.TB_TO_TIB;
-  const performance = calculatePerformance(totalNodes, networkType);
+  const actualCapacity = calculateCapacityTiB(dataNodeCount, ssdSize, protectionLevel, nvmePerNode);
+  const rawCapacity = dataNodeCount * nvmePerNode * ssdSize * CONSTANTS.TB_TO_TIB;
+  const performance = calculatePerformance(totalNodes, networkType, nvmePerNode);
 
   return {
     nodeCount: totalNodes,
     dataNodeCount,
     hotSpareCount,
-    nvmePerNode: CONSTANTS.NVME_PER_NODE,
+    nvmePerNode,
     ssdSize,
     protectionLevel,
     protection,

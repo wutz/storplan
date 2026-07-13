@@ -189,7 +189,7 @@ function StorplanApp() {
     'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number };
     ceph?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; mdsNodeCount?: number };
     'ceph-hybrid'?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; cacheCount: number; cacheSizePerDisk: number };
-    weka?: { dataNodeCount: number; ssdSize: number; protectionLevel: number; networkType: string; hotSpareCount?: number };
+    weka?: { dataNodeCount: number; ssdSize: number; protectionLevel: number; networkType: string; hotSpareCount?: number; nvmePerNode?: number };
   }>({})
 
   useEffect(() => {
@@ -316,7 +316,7 @@ function StorplanApp() {
         try {
           if (manualConfig.weka) {
             const mc = manualConfig.weka
-            newResults.weka = buildWekaResult(mc.dataNodeCount, mc.ssdSize, mc.protectionLevel, mc.networkType, isBinary, bandwidthUnitType, mc.hotSpareCount)
+            newResults.weka = buildWekaResult(mc.dataNodeCount, mc.ssdSize, mc.protectionLevel, mc.networkType, isBinary, bandwidthUnitType, mc.hotSpareCount, mc.nvmePerNode)
           } else {
             const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
             const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
@@ -578,42 +578,50 @@ function StorplanApp() {
 
   const handleWekaDataNodeCountChange = (newCount: number) => {
     if (!results.weka || newCount < WEKA_CONSTANTS.MIN_TOTAL_NODES - WEKA_CONSTANTS.HOT_SPARE) return
-    const { ssdSize, protectionLevel, networkType, hotSpareCount } = results.weka
+    const { ssdSize, protectionLevel, networkType, hotSpareCount, nvmePerNode } = results.weka
     try {
-      const newCapacityTiB = wekaCapacity(newCount, ssdSize, protectionLevel)
-      setManualConfig(prev => ({ ...prev, weka: { dataNodeCount: newCount, ssdSize, protectionLevel, networkType, hotSpareCount } }))
+      const newCapacityTiB = wekaCapacity(newCount, ssdSize, protectionLevel, nvmePerNode)
+      setManualConfig(prev => ({ ...prev, weka: { dataNodeCount: newCount, ssdSize, protectionLevel, networkType, hotSpareCount, nvmePerNode } }))
       setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
     } catch { /* 无效节点数忽略 */ }
   }
 
   const handleWekaHotSpareChange = (newHotSpare: number) => {
     if (!results.weka || newHotSpare < 0) return
-    const { dataNodeCount, ssdSize, protectionLevel, networkType } = results.weka
-    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel, networkType, hotSpareCount: newHotSpare } }))
+    const { dataNodeCount, ssdSize, protectionLevel, networkType, nvmePerNode } = results.weka
+    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel, networkType, hotSpareCount: newHotSpare, nvmePerNode } }))
   }
 
   const handleWekaDiskChange = (newSsdSize: number) => {
     if (!results.weka) return
-    const { dataNodeCount, protectionLevel, networkType, hotSpareCount } = results.weka
-    const newCapacityTiB = wekaCapacity(dataNodeCount, newSsdSize, protectionLevel)
-    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize: newSsdSize, protectionLevel, networkType, hotSpareCount } }))
+    const { dataNodeCount, protectionLevel, networkType, hotSpareCount, nvmePerNode } = results.weka
+    const newCapacityTiB = wekaCapacity(dataNodeCount, newSsdSize, protectionLevel, nvmePerNode)
+    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize: newSsdSize, protectionLevel, networkType, hotSpareCount, nvmePerNode } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleWekaProtectionChange = (newLevel: number) => {
     if (!results.weka) return
-    const { dataNodeCount, ssdSize, networkType, hotSpareCount } = results.weka
+    const { dataNodeCount, ssdSize, networkType, hotSpareCount, nvmePerNode } = results.weka
     try {
-      const newCapacityTiB = wekaCapacity(dataNodeCount, ssdSize, newLevel)
-      setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel: newLevel, networkType, hotSpareCount } }))
+      const newCapacityTiB = wekaCapacity(dataNodeCount, ssdSize, newLevel, nvmePerNode)
+      setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel: newLevel, networkType, hotSpareCount, nvmePerNode } }))
       setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
     } catch { /* 无效保护级别忽略 */ }
   }
 
   const handleWekaNetworkChange = (newNetwork: string) => {
     if (!results.weka) return
-    const { dataNodeCount, ssdSize, protectionLevel, hotSpareCount } = results.weka
-    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel, networkType: newNetwork, hotSpareCount } }))
+    const { dataNodeCount, ssdSize, protectionLevel, hotSpareCount, nvmePerNode } = results.weka
+    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel, networkType: newNetwork, hotSpareCount, nvmePerNode } }))
+  }
+
+  const handleWekaNvmeCountChange = (newNvmeCount: number) => {
+    if (!results.weka) return
+    const { dataNodeCount, ssdSize, protectionLevel, networkType, hotSpareCount } = results.weka
+    const newCapacityTiB = wekaCapacity(dataNodeCount, ssdSize, protectionLevel, newNvmeCount)
+    setManualConfig(prev => ({ ...prev, weka: { dataNodeCount, ssdSize, protectionLevel, networkType, hotSpareCount, nvmePerNode: newNvmeCount } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const hasSelection = selectedStorages.size > 0
@@ -774,7 +782,7 @@ function StorplanApp() {
                 </div>
               )}
               {results.weka && (
-                <WekaResult data={results.weka} onDataNodeCountChange={handleWekaDataNodeCountChange} onHotSpareChange={handleWekaHotSpareChange} onDiskChange={handleWekaDiskChange} onProtectionChange={handleWekaProtectionChange} onNetworkChange={handleWekaNetworkChange} />
+                <WekaResult data={results.weka} onDataNodeCountChange={handleWekaDataNodeCountChange} onHotSpareChange={handleWekaHotSpareChange} onDiskChange={handleWekaDiskChange} onNvmeCountChange={handleWekaNvmeCountChange} onProtectionChange={handleWekaProtectionChange} onNetworkChange={handleWekaNetworkChange} />
               )}
             </div>
           )}
@@ -1769,11 +1777,12 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
   )
 }
 
-function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChange, onProtectionChange, onNetworkChange }: {
+function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChange, onNvmeCountChange, onProtectionChange, onNetworkChange }: {
   data: WekaPlanResult;
   onDataNodeCountChange: (n: number) => void;
   onHotSpareChange: (n: number) => void;
   onDiskChange: (n: number) => void;
+  onNvmeCountChange: (n: number) => void;
   onProtectionChange: (n: number) => void;
   onNetworkChange: (s: string) => void;
 }) {
@@ -1881,7 +1890,9 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
             <div className="flex justify-between items-center">
               <dt className="text-gray-500">数据盘</dt>
               <dd className="flex items-center gap-1">
-                <span>{data.nvmePerNode}</span>
+                <select value={data.nvmePerNode} onChange={(e) => onNvmeCountChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {WEKA_CONSTANTS.NVME_COUNTS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
                 <span>×</span>
                 <select value={data.ssdSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
                   {WEKA_CONSTANTS.SSD_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
