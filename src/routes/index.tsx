@@ -409,11 +409,15 @@ function StorplanApp() {
 
   const handleCephNodeCountChange = (newCount: number) => {
     if (!results.ceph || newCount < CEPH_CONSTANTS.MIN_NODES || newCount > CEPH_CONSTANTS.MAX_NODES) return
-    const { disksPerNode, diskSize, redundancy } = results.ceph
-    // 若当前策略在新节点数下仍允许则保留，否则回退默认策略
-    const stillAllowed = getCephAllowedSchemes(newCount).find(s => s.scheme === redundancy)
-    const newCapacityTiB = cephCapacity(newCount, disksPerNode, diskSize, stillAllowed?.efficiency)
-    setManualConfig(prev => ({ ...prev, ceph: { nodeCount: newCount, disksPerNode, diskSize, redundancy: stillAllowed?.scheme } }))
+    const { disksPerNode, diskSize, redundancy, nodeCount } = results.ceph
+    // 增加节点数时自动选择得盘率最大的策略（即该节点数的默认策略）；
+    // 减少节点数时若当前策略仍允许则保留，否则回退默认策略
+    const allowed = getCephAllowedSchemes(newCount)
+    const scheme = newCount > nodeCount
+      ? allowed.reduce((a, b) => (b.efficiency > a.efficiency ? b : a))
+      : (allowed.find(s => s.scheme === redundancy) ?? allowed[0])
+    const newCapacityTiB = cephCapacity(newCount, disksPerNode, diskSize, scheme.efficiency)
+    setManualConfig(prev => ({ ...prev, ceph: { nodeCount: newCount, disksPerNode, diskSize, redundancy: scheme.scheme } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
