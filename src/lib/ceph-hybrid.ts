@@ -58,7 +58,10 @@ export const CONSTANTS = {
   TB_TO_TIB: CEPH_CONSTANTS.TB_TO_TIB,
   BALANCE_FACTOR: CEPH_CONSTANTS.BALANCE_FACTOR,
   // 索引盘（NVMe SSD）：总容量 ≥ HDD 总容量 / 80
+  // 索引盘全部可选规格（UI 手动选择）
   CACHE_DISK_SIZES: [1.6, 1.92, 3.2, 3.84, 6.4, 7.68, 12.8, 15.36] as const,
+  // 自动选型仅使用的规格（1.92/3.84/7.68/15.36 仅供手动选择）
+  AUTO_CACHE_DISK_SIZES: [1.6, 3.2, 6.4, 12.8] as const,
   MIN_CACHE_DISKS: 1,
   MAX_CACHE_DISKS: 4,
   CACHE_RATIO: 80,
@@ -77,11 +80,11 @@ export function calculateCacheConfig(disksPerNode: number, diskSizeTB: number): 
   const requiredCacheTB = (disksPerNode * diskSizeTB) / CONSTANTS.CACHE_RATIO;
 
   let bestCount = CONSTANTS.MAX_CACHE_DISKS;
-  let bestSize = CONSTANTS.CACHE_DISK_SIZES[CONSTANTS.CACHE_DISK_SIZES.length - 1];
+  let bestSize = CONSTANTS.AUTO_CACHE_DISK_SIZES[CONSTANTS.AUTO_CACHE_DISK_SIZES.length - 1];
   let bestWaste = Infinity;
 
   for (let count = CONSTANTS.MIN_CACHE_DISKS; count <= CONSTANTS.MAX_CACHE_DISKS; count++) {
-    for (const sizePerDisk of CONSTANTS.CACHE_DISK_SIZES) {
+    for (const sizePerDisk of CONSTANTS.AUTO_CACHE_DISK_SIZES) {
       const totalSize = count * sizePerDisk;
       if (totalSize >= requiredCacheTB) {
         const waste = totalSize - requiredCacheTB;
