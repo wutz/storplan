@@ -8,6 +8,8 @@ import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPF
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
 import { planCeph, buildCephResult, getMemoryConfig as getCephMemory, getStorageNetworkConfig as getCephStorageNetwork, getMdsMemoryConfig as getCephMdsMemory, getMdsStorageNetworkConfig as getCephMdsStorageNetwork, getPerDiskPerformance as getCephPerDisk, getAllowedRedundancySchemes as getCephAllowedSchemes, RGW_PER_DISK as CEPH_RGW_PER_DISK, calculateCapacityTiB as cephCapacity, CONSTANTS as CEPH_CONSTANTS } from '#/lib/ceph'
 import type { CephPlanResult } from '#/lib/ceph'
+import { planCephHybrid, buildCephHybridResult, calculateCacheConfig as cephHybridCacheConfig, calculateCapacityTiB as cephHybridCapacity, getAllowedRedundancySchemes as getCephHybridAllowedSchemes, RGW_HYBRID_PER_DISK, CONSTANTS as CEPH_HYBRID_CONSTANTS } from '#/lib/ceph-hybrid'
+import type { CephHybridPlanResult } from '#/lib/ceph-hybrid'
 import { formatBandwidth, formatCapacity, MIB_TO_MB } from '#/lib/utils'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
@@ -17,6 +19,7 @@ type PlanResults = {
   vastdata?: VastDataPlanResult
   'gpfs-ece'?: GPFSECEPlanResult
   ceph?: CephPlanResult
+  'ceph-hybrid'?: CephHybridPlanResult
 }
 
 // 每个存储产品的官网主题色（Tailwind 静态类名，避免运行时拼接导致 JIT 漏扫）
@@ -72,7 +75,7 @@ const THEME: Record<string, Theme> = {
   },
   ceph: {
     // Ceph 官网品牌色：红 #EF5C55
-    label: 'Ceph（统一存储）',
+    label: 'Ceph（全闪统一存储）',
     accentText: 'text-[#C43E38]',
     accentBgSoft: 'bg-[#EF5C55]/10',
     accentBorder: 'border-[#EF5C55]',
@@ -82,9 +85,21 @@ const THEME: Record<string, Theme> = {
     dot: 'bg-[#EF5C55]',
     accentBar: 'bg-[#EF5C55]',
   },
+  'ceph-hybrid': {
+    // Ceph 官网品牌色（混闪用更深的暗红区分全闪）
+    label: 'Ceph 混闪（对象存储）',
+    accentText: 'text-[#9A2E29]',
+    accentBgSoft: 'bg-[#9A2E29]/10',
+    accentBorder: 'border-[#9A2E29]',
+    chip: 'bg-[#9A2E29]/15 text-[#9A2E29]',
+    bigValue: 'text-[#9A2E29]',
+    selectedCard: 'border-[#9A2E29] bg-[#9A2E29]/10 ring-1 ring-[#9A2E29]',
+    dot: 'bg-[#9A2E29]',
+    accentBar: 'bg-[#9A2E29]',
+  },
 }
 
-const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'xeos', 'ceph'] as const
+const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'xeos', 'ceph', 'ceph-hybrid'] as const
 
 function convertTibToUnit(tib: number, unit: string): string {
   switch (unit) {
@@ -158,6 +173,7 @@ function StorplanApp() {
     vastdata?: { eboxCount: number; diskSize: number };
     'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number };
     ceph?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; mdsNodeCount?: number };
+    'ceph-hybrid'?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; cacheCount: number; cacheSizePerDisk: number };
   }>({})
 
   useEffect(() => {
@@ -260,6 +276,24 @@ function StorplanApp() {
           }
         } catch (err) {
           newErrors.ceph = err instanceof Error ? err.message : 'Unknown error'
+        }
+      }
+
+      if (selectedStorages.has('ceph-hybrid')) {
+        try {
+          if (manualConfig['ceph-hybrid']) {
+            const mc = manualConfig['ceph-hybrid']
+            newResults['ceph-hybrid'] = buildCephHybridResult(mc.nodeCount, mc.disksPerNode, mc.diskSize, isBinary, bandwidthUnitType, mc.redundancy, mc.cacheCount, mc.cacheSizePerDisk)
+          } else {
+            const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
+            const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
+            const result = planCephHybrid({ capacity, readBandwidth: readBW || undefined, writeBandwidth: writeBW || undefined })
+            result.formatted.rgwReadBandwidth = formatBandwidth(result.rgwPerformance.readBandwidth, bandwidthUnitType)
+            result.formatted.rgwWriteBandwidth = formatBandwidth(result.rgwPerformance.writeBandwidth, bandwidthUnitType)
+            newResults['ceph-hybrid'] = result
+          }
+        } catch (err) {
+          newErrors['ceph-hybrid'] = err instanceof Error ? err.message : 'Unknown error'
         }
       }
     } catch (err) {
@@ -453,6 +487,62 @@ function StorplanApp() {
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
+  const handleCephHybridNodeCountChange = (newCount: number) => {
+    if (!results['ceph-hybrid'] || newCount < CEPH_HYBRID_CONSTANTS.MIN_NODES || newCount > CEPH_HYBRID_CONSTANTS.MAX_NODES) return
+    const { disksPerNode, diskSize, redundancy, nodeCount, cacheConfig } = results['ceph-hybrid']
+    const allowed = getCephHybridAllowedSchemes(newCount)
+    const scheme = newCount > nodeCount
+      ? allowed.reduce((a, b) => (b.efficiency > a.efficiency ? b : a))
+      : (allowed.find(s => s.scheme === redundancy) ?? allowed[0])
+    const newCapacityTiB = cephHybridCapacity(newCount, disksPerNode, diskSize, scheme.efficiency)
+    setManualConfig(prev => ({ ...prev, 'ceph-hybrid': { nodeCount: newCount, disksPerNode, diskSize, redundancy: scheme.scheme, cacheCount: cacheConfig.count, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleCephHybridDisksPerNodeChange = (newDisksPerNode: number) => {
+    if (!results['ceph-hybrid']) return
+    const { nodeCount, diskSize, redundancy, efficiency } = results['ceph-hybrid']
+    const newCapacityTiB = cephHybridCapacity(nodeCount, newDisksPerNode, diskSize, efficiency)
+    const cache = cephHybridCacheConfig(newDisksPerNode, diskSize)
+    setManualConfig(prev => ({ ...prev, 'ceph-hybrid': { nodeCount, disksPerNode: newDisksPerNode, diskSize, redundancy, cacheCount: cache.count, cacheSizePerDisk: cache.sizePerDisk } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleCephHybridDiskChange = (newDiskSize: number) => {
+    if (!results['ceph-hybrid']) return
+    const { nodeCount, disksPerNode, redundancy, efficiency } = results['ceph-hybrid']
+    const newCapacityTiB = cephHybridCapacity(nodeCount, disksPerNode, newDiskSize, efficiency)
+    const cache = cephHybridCacheConfig(disksPerNode, newDiskSize)
+    setManualConfig(prev => ({ ...prev, 'ceph-hybrid': { nodeCount, disksPerNode, diskSize: newDiskSize, redundancy, cacheCount: cache.count, cacheSizePerDisk: cache.sizePerDisk } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleCephHybridRedundancyChange = (scheme: string) => {
+    if (!results['ceph-hybrid']) return
+    const { nodeCount, disksPerNode, diskSize, cacheConfig } = results['ceph-hybrid']
+    const s = getCephHybridAllowedSchemes(nodeCount).find(x => x.scheme === scheme)
+    if (!s) return
+    const newCapacityTiB = cephHybridCapacity(nodeCount, disksPerNode, diskSize, s.efficiency)
+    setManualConfig(prev => ({ ...prev, 'ceph-hybrid': { nodeCount, disksPerNode, diskSize, redundancy: scheme, cacheCount: cacheConfig.count, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleCephHybridCacheCountChange = (newCount: number) => {
+    if (!results['ceph-hybrid']) return
+    const { nodeCount, disksPerNode, diskSize, redundancy, cacheConfig } = results['ceph-hybrid']
+    const requiredCacheTB = (disksPerNode * diskSize) / CEPH_HYBRID_CONSTANTS.CACHE_RATIO
+    if (newCount * cacheConfig.sizePerDisk < requiredCacheTB) return
+    setManualConfig(prev => ({ ...prev, 'ceph-hybrid': { nodeCount, disksPerNode, diskSize, redundancy, cacheCount: newCount, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
+  }
+
+  const handleCephHybridCacheSizeChange = (newSize: number) => {
+    if (!results['ceph-hybrid']) return
+    const { nodeCount, disksPerNode, diskSize, redundancy, cacheConfig } = results['ceph-hybrid']
+    const requiredCacheTB = (disksPerNode * diskSize) / CEPH_HYBRID_CONSTANTS.CACHE_RATIO
+    if (cacheConfig.count * newSize < requiredCacheTB) return
+    setManualConfig(prev => ({ ...prev, 'ceph-hybrid': { nodeCount, disksPerNode, diskSize, redundancy, cacheCount: cacheConfig.count, cacheSizePerDisk: newSize } }))
+  }
+
   const hasSelection = selectedStorages.size > 0
   const selectClass = "border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 transition"
   const inputClass = "flex-1 border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-400 transition"
@@ -628,6 +718,19 @@ function StorplanApp() {
               )}
             </div>
           )}
+          {selectedStorages.has('ceph-hybrid') && (
+            <div>
+              <StorageInfo storage="ceph-hybrid" />
+              {errors['ceph-hybrid'] && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <p className="text-red-800">{errors['ceph-hybrid']}</p>
+                </div>
+              )}
+              {results['ceph-hybrid'] && (
+                <CephHybridResult data={results['ceph-hybrid']} onNodeCountChange={handleCephHybridNodeCountChange} onDisksPerNodeChange={handleCephHybridDisksPerNodeChange} onDiskChange={handleCephHybridDiskChange} onRedundancyChange={handleCephHybridRedundancyChange} onCacheCountChange={handleCephHybridCacheCountChange} onCacheSizeChange={handleCephHybridCacheSizeChange} />
+              )}
+            </div>
+          )}
         </div>
 
         <footer className="text-center text-sm text-gray-400 mt-12 pb-8 space-y-1">
@@ -661,7 +764,7 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
     limits: ['启用多租户支持时，容量起步和扩容步长均为 50TiB', '启用多租户时，K8s 只能使用 hostPath，不能使用基于 CSI 的 PVC 方式'],
   },
   ceph: {
-    description: 'Ceph 是开源分布式统一存储系统，单一集群同时提供块、对象和文件存储服务。',
+    description: 'Ceph 是开源分布式统一存储系统，本方案为全闪配置，单一集群同时提供块、对象和文件存储服务。',
     pros: [
       '开源软件，无需购买软件授权',
       '支持多租户',
@@ -682,6 +785,25 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
     limits: [
       '文件系统热数据数量不建议超过 5 千万（大约消耗 200G 内存）',
       '文件系统不建议应用于 AI 场景',
+    ],
+  },
+  'ceph-hybrid': {
+    description: 'Ceph 混闪配置基于大量 HDD 和少量 NVMe SSD 构建，混闪下仅建议配置为对象存储 Ceph RGW，适合海量非结构化数据低成本存储。',
+    pros: [
+      '开源软件，无需购买软件授权',
+      '支持多租户',
+      '大容量 HDD 硬件成本低',
+      '支持同一集群使用不同容量磁盘',
+    ],
+    cons: [
+      '不支持折叠纠删码，起步节点少时得盘率低',
+      '每盘容量均衡度低，总可用容量进一步锐减，通常按 70% 计算',
+      'Ceph RGW 的 QoS 较弱',
+      '无技术支持',
+    ],
+    limits: [
+      '混闪配置仅建议用作对象存储（Ceph RGW），不建议配置块存储和文件系统',
+      '单集群 HDD 总数不建议超过 20000 块',
     ],
   },
 }
@@ -1383,6 +1505,172 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
           <div>容量计算：(节点数 − 1) × 冗余得盘率 × 单节点盘数 × 单盘容量 × 0.7（数据均衡损失）</div>
           <div>性能计算：集群盘总数 × 每盘平均性能（{data.redundancy}：读 {perDisk.readMiBps} MiB/s、写 {perDisk.writeMiBps} MiB/s、读 IOPS {(perDisk.readIOPS / 1000)}k、写 IOPS {(perDisk.writeIOPS / 1000)}k）</div>
           <div>RGW 每盘平均性能：读 {CEPH_RGW_PER_DISK.readMiBps} MiB/s、写 {CEPH_RGW_PER_DISK.writeMiBps} MiB/s、读 OPS {CEPH_RGW_PER_DISK.readOPS}、写 OPS {CEPH_RGW_PER_DISK.writeOPS}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDiskChange, onRedundancyChange, onCacheCountChange, onCacheSizeChange }: {
+  data: CephHybridPlanResult;
+  onNodeCountChange: (n: number) => void;
+  onDisksPerNodeChange: (n: number) => void;
+  onDiskChange: (n: number) => void;
+  onRedundancyChange: (s: string) => void;
+  onCacheCountChange: (n: number) => void;
+  onCacheSizeChange: (n: number) => void;
+}) {
+  const t = THEME['ceph-hybrid']
+  const totalDisks = data.nodeCount * data.disksPerNode
+  const effectiveRate = data.actualCapacity / data.rawCapacity
+  const requiredCacheTB = (data.disksPerNode * data.diskSize) / CEPH_HYBRID_CONSTANTS.CACHE_RATIO
+  const isCacheSufficient = data.cacheConfig.totalSize >= requiredCacheTB
+  const perTiBReadBW = data.rgwPerformance.readBandwidth / data.actualCapacity
+  const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
+
+  return (
+    <div className="relative overflow-hidden bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6">
+      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
+      <h2 className="text-xl font-bold text-gray-900 mb-4">Ceph 混闪对象存储规划方案</h2>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
+            <dl className="space-y-1 text-sm">
+              <div className="flex justify-between items-center">
+                <dt className="text-gray-500">数据节点数量</dt>
+                <dd className="flex items-center gap-1">
+                  <button onClick={() => onNodeCountChange(data.nodeCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.nodeCount <= 3}>−</button>
+                  <NumberInput
+                    value={data.nodeCount}
+                    onChange={onNodeCountChange}
+                    min={3}
+                    className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
+                  />
+                  <button onClick={() => onNodeCountChange(data.nodeCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs">+</button>
+                  <span className="ml-0.5">台</span>
+                </dd>
+              </div>
+              <div className="flex justify-between items-center">
+                <dt className="text-gray-500">数据冗余策略</dt>
+                <dd className="flex items-center gap-1">
+                  <select value={data.redundancy} onChange={(e) => onRedundancyChange(e.target.value)} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                    {getCephHybridAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（生产环境不建议）' : ''}</option>)}
+                  </select>
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">冗余得盘率</dt>
+                <dd>{(data.efficiency * 100).toFixed(1)}%</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">容错能力</dt>
+                <dd>容忍 {data.tolerance} 台节点离线</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">集群 HDD 总数</dt>
+                <dd className={totalDisks > CEPH_HYBRID_CONSTANTS.MAX_TOTAL_DISKS ? 'text-red-600 font-semibold' : ''}>{totalDisks.toLocaleString()} / {CEPH_HYBRID_CONSTANTS.MAX_TOTAL_DISKS.toLocaleString()} 块 {totalDisks > CEPH_HYBRID_CONSTANTS.MAX_TOTAL_DISKS && '⚠️ 超出上限'}</dd>
+              </div>
+            </dl>
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-700 mb-2">容量</h3>
+            <dl className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-gray-500">可用容量</dt>
+                <dd className={`text-xl font-bold ${t.bigValue}`}>{data.formatted.capacity}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-500">裸容量</dt>
+                <dd>{data.formatted.rawCapacity}</dd>
+              </div>
+              <div className="flex justify-between text-xs text-gray-400">
+                <dt>综合得盘率</dt>
+                <dd>{(effectiveRate * 100).toFixed(1)}%（含预留 1 节点 × 均衡损失 70%）</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">每台数据节点配置（混闪）</h3>
+          <dl className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-500">处理器</dt>
+              <dd>2 × Intel Xeon 4134</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">内存</dt>
+              <dd>8 × 32GB DDR4（共 256GB）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">系统盘</dt>
+              <dd>2 × 960GB SATA SSD（RAID1）</dd>
+            </div>
+            <div className="flex justify-between items-center">
+              <dt className="text-gray-500">数据盘</dt>
+              <dd className="flex items-center gap-1">
+                <select value={data.disksPerNode} onChange={(e) => onDisksPerNodeChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {CEPH_HYBRID_CONSTANTS.DISKS_PER_NODE_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+                <span>×</span>
+                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {CEPH_HYBRID_CONSTANTS.DISK_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
+                </select>
+                <span>HDD</span>
+              </dd>
+            </div>
+            <div className="flex justify-between items-center">
+              <dt className="text-gray-500">索引缓存盘</dt>
+              <dd className="flex items-center gap-1">
+                <select value={data.cacheConfig.count} onChange={(e) => onCacheCountChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {[1, 2, 3, 4].map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <span>×</span>
+                <select value={data.cacheConfig.sizePerDisk} onChange={(e) => onCacheSizeChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
+                  {CEPH_HYBRID_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
+                </select>
+                <span className="text-xs">NVMe SSD（DWPD ≥ 3）</span>
+                {!isCacheSufficient && <span className="text-red-600 text-xs">⚠️ 不足</span>}
+              </dd>
+            </div>
+            <div className="flex justify-between text-xs text-gray-400">
+              <dt>缓存容量要求</dt>
+              <dd>≥ {requiredCacheTB.toFixed(2)}TB（实际 {data.cacheConfig.totalSize.toFixed(2)}TB）</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">网卡</dt>
+              <dd>2 × 双口 25Gb ETH NIC</dd>
+            </div>
+          </dl>
+        </div>
+        <div>
+          <h3 className="font-semibold text-gray-700 mb-2">性能（RGW 对象存储预测数据）</h3>
+          <dl className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-gray-500">读 BW (4MiB)</dt>
+              <dd className="font-medium">{data.formatted.rgwReadBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">写 BW (4MiB)</dt>
+              <dd className="font-medium">{data.formatted.rgwWriteBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">每 TiB 读 BW (4MiB)</dt>
+              <dd className="font-medium">{perTiBReadBWFormatted}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">读 OPS (4KiB)</dt>
+              <dd className="font-medium">{data.formatted.rgwReadOPS}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">写 OPS (4KiB)</dt>
+              <dd className="font-medium">{data.formatted.rgwWriteOPS}</dd>
+            </div>
+          </dl>
+        </div>
+        <div className="text-xs text-gray-400 space-y-0.5">
+          <div>容量计算：(节点数 − 1) × 冗余得盘率 × 单节点盘数 × 单盘容量 × 0.7（数据均衡损失）</div>
+          <div>RGW 每 HDD 平均性能：读 {(RGW_HYBRID_PER_DISK.readMiBps * MIB_TO_MB).toFixed(0)} MB/s、写 {(RGW_HYBRID_PER_DISK.writeMiBps * MIB_TO_MB).toFixed(0)} MB/s、读 OPS {RGW_HYBRID_PER_DISK.readOPS}、写 OPS {RGW_HYBRID_PER_DISK.writeOPS}</div>
         </div>
       </div>
     </div>
