@@ -847,13 +847,6 @@ const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[] }[] =
     title: '高性能文件系统',
     rows: [
       {
-        key: 'gpfs-ece',
-        name: 'GPFS ECE',
-        pros: '高性能，广泛使用，软件授权费用低',
-        cons: '不支持多租户（需为每个租户单独建设），缺少原厂技术支持（第三方技术支持不足）',
-        scenarios: '单租户高性能场景，预算有限',
-      },
-      {
         key: 'vastdata',
         name: 'VastData',
         pros: '支持多种存储协议可平替 Ceph，支持多租户，支持 QoS，支持去重建设成本低（平摊下软件授权费用），原厂技术支持',
@@ -861,11 +854,25 @@ const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[] }[] =
         scenarios: '多租户场景，需要 QoS 和技术支持',
       },
       {
+        key: 'gpfs-ece',
+        name: 'GPFS ECE',
+        pros: '高性能，广泛使用，软件授权费用低',
+        cons: '多租户支持弱，第三方厂商技术支持',
+        scenarios: '单租户高性能场景，预算有限',
+      },
+      {
         key: 'weka',
         name: 'Weka',
         pros: '比 GPFS ECE 性能更高，支持多租户',
-        cons: '软件授权费用高，缺少原厂技术支持',
+        cons: '软件授权费用高，第三方厂商技术支持',
         scenarios: '极致性能需求，预算充足',
+      },
+      {
+        key: 'ceph',
+        name: 'CephFS',
+        pros: '开源无软件授权费用，支持多租户',
+        cons: '不支持 QoS，元数据缓存受节点内存限制，不足时性能锐减，运维成本高，无技术支持',
+        scenarios: '预算有限，非 AI 场景的通用共享文件存储',
       },
     ],
     notes: ['CephFS 不建议应用于 AI 场景'],
