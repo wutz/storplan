@@ -734,17 +734,7 @@ function StorplanApp() {
           </div>
         </div>
 
-        {!hasSelection && (
-          <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-12 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-              <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 0 1-3-3m3 3a3 3 0 1 0 0 6h13.5a3 3 0 1 0 0-6m-16.5-3a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3m-19.5 0a4.5 4.5 0 0 1 .9-2.7L5.737 5.1a3.375 3.375 0 0 1 2.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 0 1 .9 2.7m0 0a3 3 0 0 1-3 3m0 3h.008v.008h-.008v-.008Zm0-6h.008v.008h-.008v-.008Zm-3 6h.008v.008h-.008v-.008Zm0-6h.008v.008h-.008v-.008Z" />
-              </svg>
-            </div>
-            <h3 className="text-base font-semibold text-gray-900">请选择存储方案</h3>
-            <p className="mt-1 text-sm text-gray-500">在上方勾选一个或多个存储产品，开始容量与性能规划。</p>
-          </div>
-        )}
+        {!hasSelection && <SelectionGuide onSelect={toggleStorage} />}
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {selectedStorages.has('vastdata') && (
@@ -838,6 +828,149 @@ function StorplanApp() {
           </div>
           <div className="text-xs">构建时间：{__BUILD_TIME__}（Asia/Shanghai）</div>
         </footer>
+      </div>
+    </div>
+  )
+}
+
+// 存储选型参考（迁移自 infra-skills / storage-planner-router）
+type GuideRow = {
+  key?: string // 对应本工具中的方案 key，可点击选择
+  name: string
+  pros: string
+  cons: string
+  scenarios: string
+}
+
+const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[] }[] = [
+  {
+    title: '高性能文件系统',
+    rows: [
+      {
+        key: 'gpfs-ece',
+        name: 'GPFS ECE',
+        pros: '高性能，广泛使用，软件授权费用低',
+        cons: '不支持多租户（需为每个租户单独建设），缺少原厂技术支持（第三方技术支持不足）',
+        scenarios: '单租户高性能场景，预算有限',
+      },
+      {
+        key: 'vastdata',
+        name: 'VastData',
+        pros: '支持多种存储协议可平替 Ceph，支持多租户，支持 QoS，支持去重建设成本低（平摊下软件授权费用），原厂技术支持',
+        cons: '性能比 GPFS ECE 稍弱，采购周期较长',
+        scenarios: '多租户场景，需要 QoS 和技术支持',
+      },
+      {
+        key: 'weka',
+        name: 'Weka',
+        pros: '比 GPFS ECE 性能更高，支持多租户',
+        cons: '软件授权费用高，缺少原厂技术支持',
+        scenarios: '极致性能需求，预算充足',
+      },
+    ],
+    notes: ['CephFS 不建议应用于 AI 场景'],
+  },
+  {
+    title: '对象存储',
+    rows: [
+      {
+        key: 'xeos',
+        name: 'XSKY XEOS',
+        pros: '功能齐全，支持 QoS，原厂技术支持，支持大规模，稳定',
+        cons: '软件授权费用高',
+        scenarios: '生产环境，需要稳定性和技术支持',
+      },
+      {
+        key: 'ceph-hybrid',
+        name: 'Ceph RGW',
+        pros: '开源无软件授权费用',
+        cons: '相比 XSKY XEOS 稳定性欠缺，QoS 较弱，海量对象数稳定性未验证，无技术支持',
+        scenarios: '预算有限，非关键业务',
+      },
+      {
+        key: 'vastdata',
+        name: 'VastData S3',
+        pros: '高性能，与文件系统复用一个存储集群，支持 QoS，原厂技术支持，支持大规模',
+        cons: '由于采用全闪成本高只适合高性能场景',
+        scenarios: '高性能对象存储需求',
+      },
+    ],
+  },
+  {
+    title: '块存储',
+    rows: [
+      {
+        key: 'vastdata',
+        name: 'VastData Block',
+        pros: '高性能，原厂技术支持',
+        cons: '当前版本还未支持 QoS',
+        scenarios: '高性能块存储需求，可接受新产品',
+      },
+      {
+        key: 'ceph',
+        name: 'Ceph RBD',
+        pros: '开源无软件授权费用，块存储系统成熟',
+        cons: '全闪配置性能普通，无技术支持',
+        scenarios: '预算有限，虚拟机/数据库等通用块存储',
+      },
+    ],
+  },
+]
+
+function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6 sm:p-8">
+      <div className="mb-6 text-center">
+        <h3 className="text-base font-semibold text-gray-900">存储选型参考</h3>
+        <p className="mt-1 text-sm text-gray-500">根据存储类型对比各方案优缺点，点击方案名称开始容量与性能规划。</p>
+      </div>
+      <div className="space-y-8">
+        {SELECTION_GUIDE.map((section) => (
+          <div key={section.title}>
+            <h4 className="text-sm font-semibold text-gray-800 mb-3">{section.title}</h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 border-b border-gray-200">
+                    <th className="py-2 pr-4 font-medium whitespace-nowrap">方案</th>
+                    <th className="py-2 pr-4 font-medium">优点</th>
+                    <th className="py-2 pr-4 font-medium">缺点</th>
+                    <th className="py-2 font-medium">适用场景</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {section.rows.map((row) => {
+                    const t = row.key ? THEME[row.key] : undefined
+                    return (
+                      <tr key={row.name} className="border-b border-gray-100 align-top">
+                        <td className="py-2.5 pr-4 whitespace-nowrap">
+                          {row.key && t ? (
+                            <button
+                              type="button"
+                              onClick={() => onSelect(row.key!)}
+                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${t.chip} hover:opacity-80 transition`}
+                            >
+                              <span className={`h-1.5 w-1.5 rounded-full ${t.dot}`} />
+                              {row.name}
+                            </button>
+                          ) : (
+                            <span className="font-medium text-gray-700">{row.name}</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 pr-4 text-gray-600">{row.pros}</td>
+                        <td className="py-2.5 pr-4 text-gray-600">{row.cons}</td>
+                        <td className="py-2.5 text-gray-600">{row.scenarios}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {section.notes && section.notes.map((n, i) => (
+              <p key={i} className="mt-2 text-xs text-gray-400">注：{n}</p>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   )
