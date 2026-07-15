@@ -1,13 +1,13 @@
 import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth } from './utils';
 import { EBOX_CAPACITY_DATA, EBOX_PERFORMANCE_DATA } from './vastdata-data';
 
-interface EboxCapacityEntry {
+interface NodeCapacityEntry {
   ebox_count: number;
   usable_tib: number;
   raw_per_ebox_tib: number;
 }
 
-interface EboxPerformanceEntry {
+interface NodePerformanceEntry {
   ebox_count: number;
   read_bw_gbs: number;
   sustained_write_bw_gbs: number;
@@ -23,8 +23,8 @@ export interface VastDataPlanRequest {
 }
 
 export interface VastDataPlanResult {
-  mode: 'ebox';
-  eboxCount: number;
+  mode: 'node';
+  nodeCount: number;
   diskConfig: string;
   diskSize: number;
   actualCapacity: number;
@@ -48,27 +48,27 @@ export interface VastDataPlanResult {
 }
 
 export const CONSTANTS = {
-  MIN_EBOX: 11,
-  MAX_EBOX: 250,
+  MIN_NODES: 11,
+  MAX_NODES: 250,
   TB_TO_TIB: 0.909,
-  EBOX_CONFIGS: [
-    { diskSize: 15.36, label: '2×800GB SCM + 8×15.36TB NVMe', rawPerEbox: 122.88 },
-    { diskSize: 30.72, label: '2×1.6TB SCM + 8×30.72TB NVMe', rawPerEbox: 245.76 },
-    { diskSize: 61.44, label: '3×1.6TB SCM + 7×61.44TB NVMe', rawPerEbox: 430.08 },
-  ] as { diskSize: number; label: string; rawPerEbox: number }[],
+  NODE_CONFIGS: [
+    { diskSize: 15.36, label: '2×800GB SCM + 8×15.36TB NVMe', rawPerNode: 122.88 },
+    { diskSize: 30.72, label: '2×1.6TB SCM + 8×30.72TB NVMe', rawPerNode: 245.76 },
+    { diskSize: 61.44, label: '3×1.6TB SCM + 7×61.44TB NVMe', rawPerNode: 430.08 },
+  ] as { diskSize: number; label: string; rawPerNode: number }[],
 };
 
-export function calculateCapacityTiB(eboxCount: number, diskSize: number): number {
+export function calculateCapacityTiB(nodeCount: number, diskSize: number): number {
   const data = EBOX_CAPACITY_DATA[diskSize];
   if (!data) throw new Error(`Unknown disk size: ${diskSize}`);
-  const entry = data.find((e: EboxCapacityEntry) => e.ebox_count === eboxCount);
-  if (!entry) throw new Error(`No capacity data for ${eboxCount} EBox`);
+  const entry = data.find((e: NodeCapacityEntry) => e.ebox_count === nodeCount);
+  if (!entry) throw new Error(`No capacity data for ${nodeCount} nodes`);
   return entry.usable_tib;
 }
 
-function getPerformance(eboxCount: number) {
-  const perf = EBOX_PERFORMANCE_DATA.find((p: EboxPerformanceEntry) => p.ebox_count === eboxCount);
-  if (!perf) throw new Error(`No performance data for ${eboxCount} EBox`);
+function getPerformance(nodeCount: number) {
+  const perf = EBOX_PERFORMANCE_DATA.find((p: NodePerformanceEntry) => p.ebox_count === nodeCount);
+  if (!perf) throw new Error(`No performance data for ${nodeCount} nodes`);
   return {
     readBandwidth: perf.read_bw_gbs * 1000 / 1.024,
     writeBandwidth: perf.sustained_write_bw_gbs * 1000 / 1.024,
@@ -78,24 +78,24 @@ function getPerformance(eboxCount: number) {
   };
 }
 
-function calculateEboxConfig(eboxCount: number, diskConfig: typeof CONSTANTS.EBOX_CONFIGS[0]) {
+function calculateNodeConfig(nodeCount: number, diskConfig: typeof CONSTANTS.NODE_CONFIGS[0]) {
   const capacityData = EBOX_CAPACITY_DATA[diskConfig.diskSize];
   if (!capacityData) throw new Error(`Unknown disk size: ${diskConfig.diskSize}`);
-  const capEntry = capacityData.find((e: EboxCapacityEntry) => e.ebox_count === eboxCount);
-  if (!capEntry) throw new Error(`No capacity data for ${eboxCount} EBox`);
+  const capEntry = capacityData.find((e: NodeCapacityEntry) => e.ebox_count === nodeCount);
+  if (!capEntry) throw new Error(`No capacity data for ${nodeCount} nodes`);
 
   return {
-    eboxCount,
+    nodeCount,
     diskSize: diskConfig.diskSize,
     diskConfig: diskConfig.label,
     actualCapacity: capEntry.usable_tib,
-    rawCapacity: eboxCount * capEntry.raw_per_ebox_tib,
-    performance: getPerformance(eboxCount),
+    rawCapacity: nodeCount * capEntry.raw_per_ebox_tib,
+    performance: getPerformance(nodeCount),
   };
 }
 
 export function buildVastDataResult(
-  eboxCount: number,
+  nodeCount: number,
   diskSize: number,
   diskConfig: string,
   isBinary: boolean,
@@ -103,22 +103,22 @@ export function buildVastDataResult(
 ): VastDataPlanResult {
   const capacityData = EBOX_CAPACITY_DATA[diskSize];
   if (!capacityData) throw new Error(`Unknown disk size: ${diskSize}`);
-  const capEntry = capacityData.find((e: EboxCapacityEntry) => e.ebox_count === eboxCount);
-  if (!capEntry) throw new Error(`No capacity data for ${eboxCount} EBox`);
+  const capEntry = capacityData.find((e: NodeCapacityEntry) => e.ebox_count === nodeCount);
+  if (!capEntry) throw new Error(`No capacity data for ${nodeCount} nodes`);
 
-  const performance = getPerformance(eboxCount);
+  const performance = getPerformance(nodeCount);
 
   return {
-    mode: 'ebox',
-    eboxCount,
+    mode: 'node',
+    nodeCount,
     diskSize,
     diskConfig,
     actualCapacity: capEntry.usable_tib,
-    rawCapacity: eboxCount * capEntry.raw_per_ebox_tib,
+    rawCapacity: nodeCount * capEntry.raw_per_ebox_tib,
     performance,
     formatted: {
       capacity: formatCapacity(capEntry.usable_tib, isBinary),
-      rawCapacity: formatCapacity(eboxCount * capEntry.raw_per_ebox_tib, isBinary),
+      rawCapacity: formatCapacity(nodeCount * capEntry.raw_per_ebox_tib, isBinary),
       readBandwidth: formatBandwidth(performance.readBandwidth, bandwidthUnitType),
       writeBandwidth: formatBandwidth(performance.writeBandwidth, bandwidthUnitType),
       burstWriteBandwidth: formatBandwidth(performance.burstWriteBandwidth, bandwidthUnitType),
@@ -145,13 +145,13 @@ export function planVastData(req: VastDataPlanRequest): VastDataPlanResult {
   }
 
   let bestConfig = null;
-  for (const diskConfig of CONSTANTS.EBOX_CONFIGS) {
+  for (const diskConfig of CONSTANTS.NODE_CONFIGS) {
     const capacityData = EBOX_CAPACITY_DATA[diskConfig.diskSize];
     if (!capacityData) continue;
 
-    for (let ebox = CONSTANTS.MIN_EBOX; ebox <= CONSTANTS.MAX_EBOX; ebox++) {
-      const capEntry = capacityData.find((e: EboxCapacityEntry) => e.ebox_count === ebox);
-      const perfEntry = EBOX_PERFORMANCE_DATA.find((p: EboxPerformanceEntry) => p.ebox_count === ebox);
+    for (let node = CONSTANTS.MIN_NODES; node <= CONSTANTS.MAX_NODES; node++) {
+      const capEntry = capacityData.find((e: NodeCapacityEntry) => e.ebox_count === node);
+      const perfEntry = EBOX_PERFORMANCE_DATA.find((p: NodePerformanceEntry) => p.ebox_count === node);
       if (!capEntry || !perfEntry) continue;
 
       const ok =
@@ -160,8 +160,8 @@ export function planVastData(req: VastDataPlanRequest): VastDataPlanResult {
         (!writeBwGbs || perfEntry.sustained_write_bw_gbs >= writeBwGbs);
 
       if (ok) {
-        if (!bestConfig || ebox < bestConfig.eboxCount) {
-          bestConfig = calculateEboxConfig(ebox, diskConfig);
+        if (!bestConfig || node < bestConfig.nodeCount) {
+          bestConfig = calculateNodeConfig(node, diskConfig);
         }
         break;
       }
@@ -169,13 +169,13 @@ export function planVastData(req: VastDataPlanRequest): VastDataPlanResult {
   }
 
   if (!bestConfig) {
-    throw new Error('无法找到满足需求的配置（超出 250 EBox 限制）');
+    throw new Error('无法找到满足需求的配置（超出 250 节点限制）');
   }
 
   const bandwidthUnitType = 'decimal-byte';
 
   return {
-    mode: 'ebox',
+    mode: 'node',
     ...bestConfig,
     formatted: {
       capacity: formatCapacity(bestConfig.actualCapacity, capacityInfo.isBinary),
