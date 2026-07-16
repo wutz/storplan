@@ -185,7 +185,7 @@ function StorplanApp() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [manualConfig, setManualConfig] = useState<{
     xeos?: { serverCount: number; disksPerServer: number; diskSize: number; ecEfficiency: number; cacheCount: number; cacheSizePerDisk: number };
-    vastdata?: { nodeCount: number; diskSize: number };
+    vastdata?: { eboxCount: number; diskSize: number };
     'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number };
     ceph?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; mdsNodeCount?: number };
     'ceph-hybrid'?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; cacheCount: number; cacheSizePerDisk: number };
@@ -240,8 +240,8 @@ function StorplanApp() {
         try {
           if (manualConfig.vastdata) {
             const mc = manualConfig.vastdata
-            const config = VAST_CONSTANTS.NODE_CONFIGS.find(c => c.diskSize === mc.diskSize)!
-            newResults.vastdata = buildVastDataResult(mc.nodeCount, mc.diskSize, config.label, isBinary, bandwidthUnitType)
+            const config = VAST_CONSTANTS.EBOX_CONFIGS.find(c => c.diskSize === mc.diskSize)!
+            newResults.vastdata = buildVastDataResult(mc.eboxCount, mc.diskSize, config.label, isBinary, bandwidthUnitType)
           } else {
             const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
             const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
@@ -423,19 +423,19 @@ function StorplanApp() {
     setManualConfig(prev => ({ ...prev, xeos: { serverCount, disksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cacheConfig.count, cacheSizePerDisk: newSize } }))
   }
 
-  const handleVastDataNodeCountChange = (newCount: number) => {
-    if (!results.vastdata || newCount < VAST_CONSTANTS.MIN_NODES || newCount > VAST_CONSTANTS.MAX_NODES) return
+  const handleVastDataEboxCountChange = (newCount: number) => {
+    if (!results.vastdata || newCount < VAST_CONSTANTS.MIN_EBOX || newCount > VAST_CONSTANTS.MAX_EBOX) return
     const { diskSize } = results.vastdata
     const newCapacityTiB = vastCapacity(newCount, diskSize)
-    setManualConfig(prev => ({ ...prev, vastdata: { nodeCount: newCount, diskSize } }))
+    setManualConfig(prev => ({ ...prev, vastdata: { eboxCount: newCount, diskSize } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleVastDataDiskChange = (newDiskSize: number) => {
     if (!results.vastdata) return
-    const { nodeCount } = results.vastdata
-    const newCapacityTiB = vastCapacity(nodeCount, newDiskSize)
-    setManualConfig(prev => ({ ...prev, vastdata: { nodeCount, diskSize: newDiskSize } }))
+    const { eboxCount } = results.vastdata
+    const newCapacityTiB = vastCapacity(eboxCount, newDiskSize)
+    setManualConfig(prev => ({ ...prev, vastdata: { eboxCount, diskSize: newDiskSize } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
@@ -746,7 +746,7 @@ function StorplanApp() {
                 </div>
               )}
               {results.vastdata && (
-                <VastDataResult data={results.vastdata} onNodeCountChange={handleVastDataNodeCountChange} onDiskChange={handleVastDataDiskChange} />
+                <VastDataResult data={results.vastdata} onEboxCountChange={handleVastDataEboxCountChange} onDiskChange={handleVastDataDiskChange} />
               )}
             </div>
           )}
@@ -1300,7 +1300,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
   )
 }
 
-function VastDataResult({ data, onNodeCountChange, onDiskChange }: { data: VastDataPlanResult; onNodeCountChange: (n: number) => void; onDiskChange: (n: number) => void }) {
+function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastDataPlanResult; onEboxCountChange: (n: number) => void; onDiskChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
   const t = THEME.vastdata
@@ -1315,17 +1315,17 @@ function VastDataResult({ data, onNodeCountChange, onDiskChange }: { data: VastD
             <h3 className="font-semibold text-gray-700 mb-2">集群配置</h3>
             <dl className="space-y-1 text-sm">
             <div className="flex justify-between items-center">
-              <dt className="text-gray-500">节点数量</dt>
+              <dt className="text-gray-500">EBox 数量</dt>
               <dd className="flex items-center gap-1">
-                <button onClick={() => onNodeCountChange(data.nodeCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.nodeCount <= 11}>−</button>
+                <button onClick={() => onEboxCountChange(data.eboxCount - 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.eboxCount <= 11}>−</button>
                 <NumberInput
-                  value={data.nodeCount}
-                  onChange={onNodeCountChange}
+                  value={data.eboxCount}
+                  onChange={onEboxCountChange}
                   min={11}
                   max={250}
                   className="w-14 text-center border border-gray-200 rounded px-1 py-0.5 text-sm"
                 />
-                <button onClick={() => onNodeCountChange(data.nodeCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.nodeCount >= 250}>+</button>
+                <button onClick={() => onEboxCountChange(data.eboxCount + 1)} className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs" disabled={data.eboxCount >= 250}>+</button>
                 <span className="ml-0.5">台</span>
               </dd>
             </div>
@@ -1350,7 +1350,7 @@ function VastDataResult({ data, onNodeCountChange, onDiskChange }: { data: VastD
         </div>
         </div>
         <div>
-          <h3 className="font-semibold text-gray-700 mb-2">每台节点配置</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">每台 EBox 配置</h3>
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
               <dt className="text-gray-500">处理器</dt>
@@ -1368,7 +1368,7 @@ function VastDataResult({ data, onNodeCountChange, onDiskChange }: { data: VastD
               <dt className="text-gray-500">数据盘</dt>
               <dd>
                 <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="border border-gray-200 rounded px-1.5 py-0.5 text-sm">
-                  {VAST_CONSTANTS.NODE_CONFIGS.map(c => <option key={c.diskSize} value={c.diskSize}>{c.label}</option>)}
+                  {VAST_CONSTANTS.EBOX_CONFIGS.map(c => <option key={c.diskSize} value={c.diskSize}>{c.label}</option>)}
                 </select>
               </dd>
             </div>
