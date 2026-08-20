@@ -53,16 +53,16 @@ const THEME: Record<string, Theme> = {
     accentBar: 'bg-[#23D1FE]',
   },
   'gpfs-ece': {
-    // IBM 经典黑色 logo 配色：黑 #111111
+    // IBM 品牌蓝 #0F62FE（Carbon Blue 60），与默认墨色区分
     label: 'GPFS/Scale（文件系统）',
-    accentText: 'text-[#111111]',
-    accentBgSoft: 'bg-[#111111]/5',
-    accentBorder: 'border-[#111111]',
-    chip: 'bg-[#111111]/10 text-[#111111]',
-    bigValue: 'text-[#111111]',
-    selectedCard: 'border-[#111111] bg-[#111111]/5 ring-1 ring-[#111111]',
-    dot: 'bg-[#111111]',
-    accentBar: 'bg-[#111111]',
+    accentText: 'text-[#0F62FE]',
+    accentBgSoft: 'bg-[#0F62FE]/10',
+    accentBorder: 'border-[#0F62FE]',
+    chip: 'bg-[#0F62FE]/10 text-[#0F62FE]',
+    bigValue: 'text-[#0F62FE]',
+    selectedCard: 'border-[#0F62FE] bg-[#0F62FE]/10 ring-1 ring-[#0F62FE]',
+    dot: 'bg-[#0F62FE]',
+    accentBar: 'bg-[#0F62FE]',
   },
   xeos: {
     // XSKY 官网品牌色：紫 #704BFF
@@ -757,8 +757,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="vastdata" />
               {errors.vastdata && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors.vastdata}</p>
+                <div className="rounded-lg border border-error-soft bg-error-soft/30 p-4 mb-4">
+                  <p className="text-error-deep">{errors.vastdata}</p>
                 </div>
               )}
               {results.vastdata && (
@@ -771,8 +771,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="gpfs-ece" />
               {errors['gpfs-ece'] && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors['gpfs-ece']}</p>
+                <div className="rounded-lg border border-error-soft bg-error-soft/30 p-4 mb-4">
+                  <p className="text-error-deep">{errors['gpfs-ece']}</p>
                 </div>
               )}
               {results['gpfs-ece'] && (
@@ -785,8 +785,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="weka" />
               {errors.weka && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors.weka}</p>
+                <div className="rounded-lg border border-error-soft bg-error-soft/30 p-4 mb-4">
+                  <p className="text-error-deep">{errors.weka}</p>
                 </div>
               )}
               {results.weka && (
@@ -799,8 +799,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="xeos" />
               {errors.xeos && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors.xeos}</p>
+                <div className="rounded-lg border border-error-soft bg-error-soft/30 p-4 mb-4">
+                  <p className="text-error-deep">{errors.xeos}</p>
                 </div>
               )}
               {results.xeos && (
@@ -812,8 +812,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="ceph" />
               {errors.ceph && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors.ceph}</p>
+                <div className="rounded-lg border border-error-soft bg-error-soft/30 p-4 mb-4">
+                  <p className="text-error-deep">{errors.ceph}</p>
                 </div>
               )}
               {results.ceph && (
@@ -825,8 +825,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="ceph-hybrid" />
               {errors['ceph-hybrid'] && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors['ceph-hybrid']}</p>
+                <div className="rounded-lg border border-error-soft bg-error-soft/30 p-4 mb-4">
+                  <p className="text-error-deep">{errors['ceph-hybrid']}</p>
                 </div>
               )}
               {results['ceph-hybrid'] && (
@@ -1077,13 +1077,13 @@ function StorageInfo({ storage }: { storage: string }) {
       <p className="mb-4 text-sm text-body">{info.description}</p>
       <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
         <div>
-          <h3 className="mb-2 text-xs font-medium text-green-700">优势</h3>
+          <h3 className="mb-2 text-xs font-medium text-success">优势</h3>
           <ul className="space-y-1 text-body">
             {info.pros.map((p, i) => <li key={i}>• {p}</li>)}
           </ul>
         </div>
         <div>
-          <h3 className="mb-2 text-xs font-medium text-orange-700">劣势</h3>
+          <h3 className="mb-2 text-xs font-medium text-warning-deep">劣势</h3>
           <ul className="space-y-1 text-body">
             {info.cons.map((c, i) => <li key={i}>• {c}</li>)}
           </ul>
@@ -1091,7 +1091,7 @@ function StorageInfo({ storage }: { storage: string }) {
       </div>
       {info.limits && (
         <div className="mt-4 text-sm">
-          <h3 className="mb-2 text-xs font-medium text-red-700">限制</h3>
+          <h3 className="mb-2 text-xs font-medium text-error-deep">限制</h3>
           <ul className="space-y-1 text-body">
             {info.limits.map((l, i) => <li key={i}>• {l}</li>)}
           </ul>
@@ -1151,7 +1151,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             </div>
             <div className="flex justify-between">
               <dt className="text-body">{ul ? '二级集群 HDD 总数' : '集群 HDD 总数'}</dt>
-              <dd className={totalDisks > hddLimit ? 'text-red-600 font-semibold' : ''}>{totalDisks.toLocaleString()} / {hddLimit.toLocaleString()} 块 {totalDisks > hddLimit && '⚠️ 超出上限'}</dd>
+              <dd className={totalDisks > hddLimit ? 'text-error-deep font-semibold' : ''}>{totalDisks.toLocaleString()} / {hddLimit.toLocaleString()} 块 {totalDisks > hddLimit && '⚠️ 超出上限'}</dd>
             </div>
             {ul && (
               <div className="flex justify-between">
@@ -1257,7 +1257,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
                   {XEOS_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
                 </select>
                 <span className="text-xs">NVMe SSD（DWPD ≥ 3）</span>
-                {!isCacheSufficient && <span className="text-red-600 text-xs">⚠️ 不足</span>}
+                {!isCacheSufficient && <span className="text-error-deep text-xs">⚠️ 不足</span>}
               </dd>
             </div>
             <div className="flex justify-between text-xs text-mute">
@@ -1888,7 +1888,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
                   {CEPH_HYBRID_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
                 </select>
                 <span className="text-xs">NVMe SSD</span>
-                {!isCacheSufficient && <span className="text-red-600 text-xs">⚠️ 不足</span>}
+                {!isCacheSufficient && <span className="text-error-deep text-xs">⚠️ 不足</span>}
               </dd>
             </div>
             <div className="flex justify-between text-xs text-mute">
