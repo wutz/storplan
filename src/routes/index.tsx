@@ -654,6 +654,17 @@ function StorplanApp() {
 
       <div className="mx-auto max-w-7xl p-4 sm:p-8">
 
+        <section className="relative mb-8 overflow-hidden rounded-xl border border-hairline bg-canvas p-6 sm:p-10">
+          <div className="hero-mesh" aria-hidden="true" />
+          <div className="relative">
+            <div className="font-mono text-xs text-mute">STORAGE · PLANNING</div>
+            <h2 className="mt-3 text-2xl font-semibold text-ink sm:text-3xl">存储容量与性能规划</h2>
+            <p className="mt-2 max-w-2xl text-sm text-body sm:text-base">
+              输入目标容量与带宽，一键对比 XSKY XEOS、VastData、GPFS/Scale、Weka 与 Ceph 的硬件方案与容量得盘率。
+            </p>
+          </div>
+        </section>
+
         <div className="card p-6 mb-8">
           <label className="block text-sm font-medium text-ink mb-3">存储方案</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">

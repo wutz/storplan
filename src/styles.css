@@ -44,6 +44,18 @@
       0 2px 2px rgba(0, 0, 0, 0.06);
   }
 
+  /* Hero 品牌网纹渐变（DESIGN.md 多段 mesh gradient，仅供装饰图层使用） */
+  .hero-mesh {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(45% 70% at 15% 0%, rgba(0, 124, 240, 0.16), transparent 60%),
+      radial-gradient(40% 70% at 50% 0%, rgba(121, 40, 202, 0.12), transparent 60%),
+      radial-gradient(40% 70% at 82% 0%, rgba(255, 0, 128, 0.13), transparent 60%),
+      radial-gradient(45% 70% at 100% 30%, rgba(249, 203, 40, 0.10), transparent 62%);
+  }
+
   /* 表单控件：6px 圆角 + 发丝线（DESIGN.md form-input-sm） */
   .field {
     @apply inline-flex h-8 items-center rounded-md border border-hairline bg-canvas px-2 text-[13px] text-ink transition
