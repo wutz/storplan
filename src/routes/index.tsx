@@ -627,8 +627,8 @@ function StorplanApp() {
   }
 
   const hasSelection = selectedStorages.size > 0
-  const selectClass = "h-10 rounded-md border border-hairline bg-canvas px-3 text-sm text-ink transition focus:border-hairline-strong focus:outline-none"
-  const inputClass = "h-10 flex-1 rounded-md border border-hairline bg-canvas px-3 text-sm text-ink placeholder:text-mute transition focus:border-hairline-strong focus:outline-none"
+  const selectClass = "h-10 rounded-md border border-hairline bg-canvas px-3 text-sm text-ink transition focus:border-link focus:outline-none focus:ring-2 focus:ring-link/20"
+  const inputClass = "h-10 flex-1 rounded-md border border-hairline bg-canvas px-3 text-sm text-ink placeholder:text-mute transition focus:border-link focus:outline-none focus:ring-2 focus:ring-link/20"
 
   return (
     <div className="min-h-screen bg-canvas-soft">
@@ -665,7 +665,7 @@ function StorplanApp() {
                   key={key}
                   type="button"
                   onClick={() => toggleStorage(key)}
-                  className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-left transition ${active ? t.selectedCard : 'border-hairline bg-canvas hover:border-hairline-strong hover:bg-canvas-soft'}`}
+                  className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-left transition ${active ? t.selectedCard : 'border-hairline bg-canvas hover:border-hairline-strong hover:bg-canvas-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-link/30'}`}
                 >
                   <span className={`h-2.5 w-2.5 rounded-full ${active ? t.dot : 'bg-hairline-strong'}`} />
                   <span className={`text-sm font-medium ${active ? t.accentText : 'text-body'}`}>{t.label}</span>

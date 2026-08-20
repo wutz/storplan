@@ -1,3 +1,4 @@
+@import "@fontsource-variable/inter";
 @import "tailwindcss";
 
 @theme {
@@ -22,8 +23,9 @@
   --color-warning-soft: #ffefcf;
   --color-warning-deep: #ab570a;
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Mono",
     "PingFang SC", monospace;
 }
@@ -45,13 +47,14 @@
   /* 表单控件：6px 圆角 + 发丝线（DESIGN.md form-input-sm） */
   .field {
     @apply inline-flex h-8 items-center rounded-md border border-hairline bg-canvas px-2 text-[13px] text-ink transition
-      focus:outline-none focus:border-hairline-strong disabled:opacity-40;
+      focus:outline-none focus:border-link focus:ring-2 focus:ring-link/20 disabled:opacity-40;
   }
 
   /* 步进按钮（−/+） */
   .stepper-btn {
     @apply inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-hairline bg-canvas px-1
       text-xs leading-none text-ink transition hover:bg-canvas-soft-2
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-link/40
       disabled:opacity-40 disabled:hover:bg-canvas;
   }
 
