@@ -633,12 +633,22 @@ function StorplanApp() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="max-w-7xl mx-auto">
-        <header className="mb-8">
-          <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="" width={36} height={36} className="h-9 w-9 shrink-0" />
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Storplan</h1>
+        <header className="mb-8 flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <img src="/logo.svg" alt="" width={36} height={36} className="h-9 w-9 shrink-0" />
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">Storplan</h1>
+            </div>
+            <p className="text-gray-500 mt-1">存储容量和性能规划工具</p>
           </div>
-          <p className="text-gray-500 mt-1">存储容量和性能规划工具</p>
+          <a
+            href="https://wutz.dev/"
+            target="_blank"
+            rel="noreferrer"
+            className="shrink-0 rounded-lg px-2.5 py-1.5 text-sm text-gray-600 transition hover:bg-gray-100 sm:px-3"
+          >
+            wutz.dev ↗
+          </a>
         </header>
 
         <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/70 p-6 mb-8">
