@@ -1,5 +1,6 @@
 name = "storplan"
 compatibility_date = "2026-06-03"
+workers_dev = true
 compatibility_flags = ["nodejs_compat"]
 main = "@tanstack/react-start/server-entry"
 

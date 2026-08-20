@@ -23,7 +23,7 @@ function RootLayout() {
       <head>
         <HeadContent />
       </head>
-      <body className="min-h-screen bg-gray-50 font-sans antialiased">
+      <body className="min-h-screen bg-canvas-soft font-sans antialiased">
         <Outlet />
         <Scripts />
       </body>
