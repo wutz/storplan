@@ -634,7 +634,10 @@ function StorplanApp() {
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
       <div className="max-w-7xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Storplan</h1>
+          <div className="flex items-center gap-3">
+            <img src="/logo.svg" alt="" width={36} height={36} className="h-9 w-9 shrink-0" />
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Storplan</h1>
+          </div>
           <p className="text-gray-500 mt-1">存储容量和性能规划工具</p>
         </header>
 
