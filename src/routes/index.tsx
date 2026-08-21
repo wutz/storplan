@@ -42,43 +42,43 @@ type Theme = {
 
 const THEME: Record<string, Theme> = {
   vastdata: {
-    // VastData 官网品牌色：亮青 #23D1FE 配深藏蓝文字 #0D1021
+    // VastData 官网品牌色：亮青 #1FD9FE 配深藏蓝文字 #0D1021
     label: 'VastData（统一存储）',
     category: '文件 · 对象 · 块',
     accentText: 'text-[#0D1021]',
-    accentBgSoft: 'bg-[#23D1FE]/10',
-    accentBorder: 'border-[#23D1FE]',
-    chip: 'bg-[#23D1FE]/20 text-[#0D1021]',
+    accentBgSoft: 'bg-[#1FD9FE]/10',
+    accentBorder: 'border-[#1FD9FE]',
+    chip: 'bg-[#1FD9FE]/20 text-[#0D1021]',
     bigValue: 'text-[#0D1021]',
-    selectedCard: 'border-[#23D1FE] bg-[#23D1FE]/10',
-    dot: 'bg-[#23D1FE]',
-    accentBar: 'bg-[#23D1FE]',
+    selectedCard: 'border-[#1FD9FE] bg-[#1FD9FE]/10',
+    dot: 'bg-[#1FD9FE]',
+    accentBar: 'bg-[#1FD9FE]',
   },
   'gpfs-ece': {
-    // IBM 经典黑色 logo 配色：黑 #111111
+    // IBM 官网品牌色：IBM 蓝 #0F62FE
     label: 'GPFS/Scale（文件系统）',
     category: '并行文件系统',
-    accentText: 'text-[#111111]',
-    accentBgSoft: 'bg-[#111111]/5',
-    accentBorder: 'border-[#111111]',
-    chip: 'bg-[#111111]/10 text-[#111111]',
-    bigValue: 'text-[#111111]',
-    selectedCard: 'border-[#111111] bg-[#111111]/5',
-    dot: 'bg-[#111111]',
-    accentBar: 'bg-[#111111]',
+    accentText: 'text-[#0F62FE]',
+    accentBgSoft: 'bg-[#0F62FE]/10',
+    accentBorder: 'border-[#0F62FE]',
+    chip: 'bg-[#0F62FE]/15 text-[#0F62FE]',
+    bigValue: 'text-[#0F62FE]',
+    selectedCard: 'border-[#0F62FE] bg-[#0F62FE]/10',
+    dot: 'bg-[#0F62FE]',
+    accentBar: 'bg-[#0F62FE]',
   },
   xeos: {
-    // XSKY 官网品牌色：紫 #704BFF
+    // XSKY 官网品牌色：星辰紫 #7855FA
     label: 'XSKY XEOS（对象存储）',
     category: '对象存储',
-    accentText: 'text-[#704BFF]',
-    accentBgSoft: 'bg-[#704BFF]/10',
-    accentBorder: 'border-[#704BFF]',
-    chip: 'bg-[#704BFF]/15 text-[#704BFF]',
-    bigValue: 'text-[#704BFF]',
-    selectedCard: 'border-[#704BFF] bg-[#704BFF]/10',
-    dot: 'bg-[#704BFF]',
-    accentBar: 'bg-[#704BFF]',
+    accentText: 'text-[#7855FA]',
+    accentBgSoft: 'bg-[#7855FA]/10',
+    accentBorder: 'border-[#7855FA]',
+    chip: 'bg-[#7855FA]/15 text-[#7855FA]',
+    bigValue: 'text-[#7855FA]',
+    selectedCard: 'border-[#7855FA] bg-[#7855FA]/10',
+    dot: 'bg-[#7855FA]',
+    accentBar: 'bg-[#7855FA]',
   },
   ceph: {
     // Ceph 官网品牌色：红 #EF5C55
@@ -107,17 +107,17 @@ const THEME: Record<string, Theme> = {
     accentBar: 'bg-[#9A2E29]',
   },
   weka: {
-    // Weka 主题色：品红紫 #A21CAF（偏红的紫，与 XSKY 的蓝紫 #704BFF 区分）
+    // Weka 官网品牌色：紫罗兰 #7C03EC
     label: 'Weka（文件系统）',
     category: '并行文件系统',
-    accentText: 'text-[#A21CAF]',
-    accentBgSoft: 'bg-[#A21CAF]/10',
-    accentBorder: 'border-[#A21CAF]',
-    chip: 'bg-[#A21CAF]/15 text-[#A21CAF]',
-    bigValue: 'text-[#A21CAF]',
-    selectedCard: 'border-[#A21CAF] bg-[#A21CAF]/10',
-    dot: 'bg-[#A21CAF]',
-    accentBar: 'bg-[#A21CAF]',
+    accentText: 'text-[#7C03EC]',
+    accentBgSoft: 'bg-[#7C03EC]/10',
+    accentBorder: 'border-[#7C03EC]',
+    chip: 'bg-[#7C03EC]/15 text-[#7C03EC]',
+    bigValue: 'text-[#7C03EC]',
+    selectedCard: 'border-[#7C03EC] bg-[#7C03EC]/10',
+    dot: 'bg-[#7C03EC]',
+    accentBar: 'bg-[#7C03EC]',
   },
 }
 
