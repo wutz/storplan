@@ -1322,7 +1322,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
           </dl>
         </div>
         {ul && mc && (
-          <div className="border-t border-hairline pt-4">
+          <div className="pt-4">
             <h3 className="eyebrow mb-3">一级元数据集群（全闪 NVMe）</h3>
             <dl className="spec-list text-sm">
               <div className="flex justify-between"><dt className="text-body">节点数</dt><dd>{mc.nodeCount} 台（{mc.ecScheme}，范围 6–20）</dd></div>

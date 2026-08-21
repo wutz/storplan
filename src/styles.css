@@ -98,14 +98,13 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* 规格列表：行间发丝线分隔 + 表格数字对齐 */
+  /* 规格列表：无分隔线 + 表格数字对齐 */
   .spec-list > div {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
     padding: 6px 0;
-    border-bottom: 1px solid var(--color-hairline);
   }
   .spec-list > div:first-child {
     padding-top: 0;
