@@ -686,8 +686,8 @@ function StorplanApp() {
           <div aria-hidden className="pointer-events-none absolute inset-0" style={HERO_MESH} />
           <div className="relative px-6 py-10 sm:px-10 sm:py-14">
             <p className="font-mono text-xs font-medium uppercase tracking-[0.15em] text-mute">Storage Capacity &amp; Performance Planner</p>
-            <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-ink sm:text-4xl">存储容量和性能规划工具.</h2>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-body">
+            <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-ink sm:text-4xl">存储容量和性能规划工具.</h2>
+            <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-body">
               输入容量与带宽需求，对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 不同方案的集群规模、硬件配置与性能指标。
             </p>
           </div>
@@ -996,7 +996,7 @@ function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
     <div className="card p-6 sm:p-8">
       <div className="mb-6 text-center">
         <h3 className="text-base font-semibold text-ink">存储选型参考</h3>
-        <p className="mt-1 text-sm text-body">根据存储类型对比各方案优缺点，点击方案名称开始容量与性能规划。</p>
+        <p className="mt-1 text-pretty text-sm text-body">根据存储类型对比各方案优缺点，点击方案名称开始容量与性能规划。</p>
       </div>
       <div className="space-y-8">
         {SELECTION_GUIDE.map((section) => (
@@ -1031,9 +1031,9 @@ function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
                             <span className="font-medium text-ink">{row.name}</span>
                           )}
                         </td>
-                        <td className="py-2.5 pr-4 text-body">{row.pros}</td>
-                        <td className="py-2.5 pr-4 text-body">{row.cons}</td>
-                        <td className="py-2.5 text-body">{row.scenarios}</td>
+                        <td className="py-2.5 pr-4 leading-relaxed text-body">{row.pros}</td>
+                        <td className="py-2.5 pr-4 leading-relaxed text-body">{row.cons}</td>
+                        <td className="py-2.5 leading-relaxed text-body">{row.scenarios}</td>
                       </tr>
                     )
                   })}
@@ -1125,26 +1125,26 @@ function StorageInfo({ storage }: { storage: string }) {
   return (
     <div className="card overflow-hidden p-6 mb-4">
       <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
-      <p className="mb-4 text-sm text-body">{info.description}</p>
+      <p className="mb-4 text-pretty text-sm leading-relaxed text-body">{info.description}</p>
       <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
         <div>
           <h3 className="mb-2 text-xs font-semibold text-cyan-deep">优势</h3>
-          <ul className="space-y-1 text-body">
-            {info.pros.map((p, i) => <li key={i}>• {p}</li>)}
+          <ul className="dot-list">
+            {info.pros.map((p, i) => <li key={i}>{p}</li>)}
           </ul>
         </div>
         <div>
           <h3 className="mb-2 text-xs font-semibold text-warning-deep">劣势</h3>
-          <ul className="space-y-1 text-body">
-            {info.cons.map((c, i) => <li key={i}>• {c}</li>)}
+          <ul className="dot-list">
+            {info.cons.map((c, i) => <li key={i}>{c}</li>)}
           </ul>
         </div>
       </div>
       {info.limits && (
         <div className="mt-4 text-sm">
           <h3 className="mb-2 text-xs font-semibold text-error-deep">限制</h3>
-          <ul className="space-y-1 text-body">
-            {info.limits.map((l, i) => <li key={i}>• {l}</li>)}
+          <ul className="dot-list">
+            {info.limits.map((l, i) => <li key={i}>{l}</li>)}
           </ul>
         </div>
       )}

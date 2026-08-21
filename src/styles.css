@@ -37,6 +37,18 @@
   color: #f2f2f2;
 }
 
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  body {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
 @layer components {
   /* 卡片：白底 + 发丝线边框 + 轻量堆叠阴影（DESIGN.md Level 2） */
   .card {
@@ -48,7 +60,7 @@
 
   /* 表单控件（32px，DESIGN.md form-input-sm）：发丝线 + 聚焦环 + 悬停态 */
   .field {
-    @apply inline-flex h-8 items-center rounded-md border border-hairline bg-canvas px-2 text-[13px] text-ink transition
+    @apply inline-flex h-8 items-center rounded-md border border-hairline bg-canvas px-2 text-[13px] text-ink transition tabular-nums
       hover:border-hairline-strong
       focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-ink/10
       disabled:opacity-40;
@@ -56,7 +68,7 @@
 
   /* 表单控件（40px，DESIGN.md form-input）：用于顶部规划参数区 */
   .field-lg {
-    @apply inline-flex h-10 items-center rounded-md border border-hairline bg-canvas px-3 text-sm text-ink transition placeholder:text-mute
+    @apply inline-flex h-10 items-center rounded-md border border-hairline bg-canvas px-3 text-sm text-ink transition placeholder:text-mute tabular-nums
       hover:border-hairline-strong
       focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-ink/10
       disabled:opacity-40;
@@ -102,9 +114,28 @@
     border-bottom: none;
     padding-bottom: 0;
   }
+  .spec-list dt {
+    overflow-wrap: break-word;
+  }
   .spec-list dd {
     font-variant-numeric: tabular-nums;
     text-align: right;
+    overflow-wrap: break-word;
+  }
+
+  /* 列表项：悬挂缩进 + 项目符号，多行自动对齐 */
+  .dot-list {
+    @apply space-y-1.5 leading-relaxed text-body;
+  }
+  .dot-list li {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+  }
+  .dot-list li::before {
+    content: '•';
+    color: var(--color-mute);
+    flex-shrink: 0;
   }
 
   /* 错误提示框（语义色令牌） */
