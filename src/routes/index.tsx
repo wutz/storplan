@@ -685,7 +685,7 @@ function StorplanApp() {
         <section className="relative mt-6 overflow-hidden rounded-2xl border border-hairline bg-canvas sm:mt-8">
           <div aria-hidden className="pointer-events-none absolute inset-0" style={HERO_MESH} />
           <div className="relative px-6 py-10 sm:px-10 sm:py-14">
-            <p className="font-mono text-xs font-medium uppercase tracking-[0.15em] text-mute">Storage Capacity &amp; Performance Planner</p>
+            <p className="font-mono text-xs font-normal uppercase text-mute">Storage Capacity &amp; Performance Planner</p>
             <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-ink sm:text-4xl">存储容量和性能规划工具.</h2>
             <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-body">
               输入容量与带宽需求，对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 不同方案的集群规模、硬件配置与性能指标。

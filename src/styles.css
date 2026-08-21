@@ -86,9 +86,11 @@
       disabled:opacity-40 disabled:pointer-events-none;
   }
 
-  /* 分组小标题（技术标签层） */
+  /* 分组小标题（DESIGN.md caption-mono：等宽 · 12px · 400 · 中性字距） */
   .eyebrow {
-    @apply text-[11px] font-semibold uppercase tracking-[0.1em] text-mute;
+    @apply text-xs font-normal uppercase text-mute;
+    font-family: var(--font-mono);
+    letter-spacing: 0;
   }
 
   /* 性能指标网格：浅底统计卡片 */
