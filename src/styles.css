@@ -46,6 +46,8 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* 中英文 / 数字混排自动留白（CJK 与拉丁字母、数字之间） */
+    text-autospace: normal;
   }
 }
 
