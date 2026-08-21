@@ -11,6 +11,21 @@
   --color-canvas-soft: #fafafa;
   --color-canvas-soft-2: #f5f5f5;
 
+  /* 语义色（DESIGN.md Colors > Semantic / Brand & Accent） */
+  --color-link: #0070f3;
+  --color-link-deep: #0761d1;
+  --color-success: #0070f3;
+  --color-error: #ee0000;
+  --color-error-deep: #c50000;
+  --color-error-soft: #f7d4d6;
+  --color-error-bg: #fdf2f3;
+  --color-warning: #f5a623;
+  --color-warning-deep: #ab570a;
+  --color-warning-soft: #ffefcf;
+  --color-cyan: #50e3c2;
+  --color-cyan-deep: #29bc9b;
+  --color-violet: #7928ca;
+
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Mono",
@@ -22,6 +37,20 @@
   color: #f2f2f2;
 }
 
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  body {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* 中英文 / 数字混排自动留白（CJK 与拉丁字母、数字之间） */
+    text-autospace: normal;
+  }
+}
+
 @layer components {
   /* 卡片：白底 + 发丝线边框 + 轻量堆叠阴影（DESIGN.md Level 2） */
   .card {
@@ -31,41 +60,55 @@
       0 2px 2px rgba(0, 0, 0, 0.06);
   }
 
-  /* 表单控件：6px 圆角 + 发丝线（DESIGN.md form-input-sm） */
+  /* 表单控件（32px，DESIGN.md form-input-sm）：发丝线 + 聚焦环 + 悬停态 */
   .field {
-    @apply inline-flex h-8 items-center rounded-md border border-hairline bg-canvas px-2 text-[13px] text-ink transition
-      focus:outline-none focus:border-hairline-strong disabled:opacity-40;
+    @apply inline-flex h-8 items-center rounded-md border border-hairline bg-canvas px-2 text-[13px] text-ink transition tabular-nums
+      hover:border-hairline-strong
+      focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-ink/10
+      disabled:opacity-40;
+  }
+
+  /* 表单控件（40px，DESIGN.md form-input）：用于顶部规划参数区 */
+  .field-lg {
+    @apply inline-flex h-10 items-center rounded-md border border-hairline bg-canvas px-3 text-sm text-ink transition placeholder:text-mute tabular-nums
+      hover:border-hairline-strong
+      focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-ink/10
+      disabled:opacity-40;
   }
 
   /* 步进按钮（−/+） */
   .stepper-btn {
     @apply inline-flex h-6 min-w-6 items-center justify-center rounded-md border border-hairline bg-canvas px-1
-      text-xs leading-none text-ink transition hover:bg-canvas-soft-2
-      disabled:opacity-40 disabled:hover:bg-canvas;
+      text-xs leading-none text-ink transition select-none
+      hover:border-hairline-strong hover:bg-canvas-soft-2
+      active:bg-canvas-soft-2
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10
+      disabled:opacity-40 disabled:pointer-events-none;
   }
 
-  /* 分组小标题（技术标签层） */
+  /* 分组小标题（DESIGN.md caption-mono：等宽 · 12px · 400 · 中性字距） */
   .eyebrow {
-    @apply text-xs font-medium text-mute;
+    @apply text-xs font-normal uppercase text-mute;
+    font-family: var(--font-mono);
+    letter-spacing: 0;
   }
 
   /* 性能指标网格：浅底统计卡片 */
   .stat-grid > div {
-    @apply rounded-lg bg-canvas-soft px-3 py-2;
+    @apply rounded-lg bg-canvas-soft px-3 py-2.5;
   }
   .stat-grid dd {
     @apply mt-0.5 font-medium text-ink;
     font-variant-numeric: tabular-nums;
   }
 
-  /* 规格列表：行间发丝线分隔 + 表格数字对齐 */
+  /* 规格列表：无分隔线 + 表格数字对齐 */
   .spec-list > div {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
     padding: 6px 0;
-    border-bottom: 1px solid var(--color-hairline);
   }
   .spec-list > div:first-child {
     padding-top: 0;
@@ -74,8 +117,73 @@
     border-bottom: none;
     padding-bottom: 0;
   }
+  .spec-list dt {
+    overflow-wrap: break-word;
+  }
   .spec-list dd {
     font-variant-numeric: tabular-nums;
     text-align: right;
+    overflow-wrap: break-word;
   }
+
+  /* 列表项：悬挂缩进 + 项目符号，多行自动对齐 */
+  .dot-list {
+    @apply space-y-1.5 leading-relaxed text-body;
+  }
+  .dot-list li {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+  }
+  .dot-list li::before {
+    content: '•';
+    color: var(--color-mute);
+    flex-shrink: 0;
+  }
+
+  /* 错误提示框（语义色令牌） */
+  .error-box {
+    @apply rounded-md border border-error-soft bg-error-bg px-4 py-3 text-sm text-error-deep;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────
+   未分层规则：优先级高于 @layer（组件层与工具类层），
+   用于覆盖内联工具类与原生控件外观。
+   ──────────────────────────────────────────────────────────── */
+
+/* 原生 select：去掉系统箭头，改用品牌灰色 chevron */
+select.field,
+select.field-lg {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  padding-right: 28px;
+}
+
+/* number 输入：去掉系统上下微调按钮（已有 −/+ 步进按钮） */
+input[type="number"].field,
+input[type="number"].field-lg {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+input[type="number"].field::-webkit-outer-spin-button,
+input[type="number"].field::-webkit-inner-spin-button,
+input[type="number"].field-lg::-webkit-outer-spin-button,
+input[type="number"].field-lg::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 统计卡片：标签更小更轻、数值更醒目 */
+.stat-grid dt {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-mute);
+}
+.stat-grid dd {
+  font-size: 14px;
+  font-weight: 600;
 }

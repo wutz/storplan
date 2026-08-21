@@ -29,6 +29,7 @@ type PlanResults = {
 // VastData → 品牌紫 / GPFS·Scale（IBM）→ IBM 蓝 / XSKY → 天空青
 type Theme = {
   label: string
+  category: string
   accentText: string
   accentBgSoft: string
   accentBorder: string
@@ -41,80 +42,106 @@ type Theme = {
 
 const THEME: Record<string, Theme> = {
   vastdata: {
-    // VastData 官网品牌色：亮青 #23D1FE 配深藏蓝文字 #0D1021
+    // VastData 官网品牌色：亮青 #1FD9FE 配深藏蓝文字 #0D1021
     label: 'VastData（统一存储）',
+    category: '文件 · 对象 · 块',
     accentText: 'text-[#0D1021]',
-    accentBgSoft: 'bg-[#23D1FE]/10',
-    accentBorder: 'border-[#23D1FE]',
-    chip: 'bg-[#23D1FE]/20 text-[#0D1021]',
+    accentBgSoft: 'bg-[#1FD9FE]/10',
+    accentBorder: 'border-[#1FD9FE]',
+    chip: 'bg-[#1FD9FE]/20 text-[#0D1021]',
     bigValue: 'text-[#0D1021]',
-    selectedCard: 'border-[#23D1FE] bg-[#23D1FE]/10 ring-1 ring-[#23D1FE]',
-    dot: 'bg-[#23D1FE]',
-    accentBar: 'bg-[#23D1FE]',
+    selectedCard: 'border-[#1FD9FE] bg-[#1FD9FE]/10',
+    dot: 'bg-[#1FD9FE]',
+    accentBar: 'bg-[#1FD9FE]',
   },
   'gpfs-ece': {
-    // IBM 经典黑色 logo 配色：黑 #111111
+    // IBM 官网品牌色：IBM 蓝 #0F62FE
     label: 'GPFS/Scale（文件系统）',
-    accentText: 'text-[#111111]',
-    accentBgSoft: 'bg-[#111111]/5',
-    accentBorder: 'border-[#111111]',
-    chip: 'bg-[#111111]/10 text-[#111111]',
-    bigValue: 'text-[#111111]',
-    selectedCard: 'border-[#111111] bg-[#111111]/5 ring-1 ring-[#111111]',
-    dot: 'bg-[#111111]',
-    accentBar: 'bg-[#111111]',
+    category: '并行文件系统',
+    accentText: 'text-[#0F62FE]',
+    accentBgSoft: 'bg-[#0F62FE]/10',
+    accentBorder: 'border-[#0F62FE]',
+    chip: 'bg-[#0F62FE]/15 text-[#0F62FE]',
+    bigValue: 'text-[#0F62FE]',
+    selectedCard: 'border-[#0F62FE] bg-[#0F62FE]/10',
+    dot: 'bg-[#0F62FE]',
+    accentBar: 'bg-[#0F62FE]',
   },
   xeos: {
-    // XSKY 官网品牌色：紫 #704BFF
+    // XSKY 官网品牌色：星辰紫 #7855FA
     label: 'XSKY XEOS（对象存储）',
-    accentText: 'text-[#704BFF]',
-    accentBgSoft: 'bg-[#704BFF]/10',
-    accentBorder: 'border-[#704BFF]',
-    chip: 'bg-[#704BFF]/15 text-[#704BFF]',
-    bigValue: 'text-[#704BFF]',
-    selectedCard: 'border-[#704BFF] bg-[#704BFF]/10 ring-1 ring-[#704BFF]',
-    dot: 'bg-[#704BFF]',
-    accentBar: 'bg-[#704BFF]',
+    category: '对象存储',
+    accentText: 'text-[#7855FA]',
+    accentBgSoft: 'bg-[#7855FA]/10',
+    accentBorder: 'border-[#7855FA]',
+    chip: 'bg-[#7855FA]/15 text-[#7855FA]',
+    bigValue: 'text-[#7855FA]',
+    selectedCard: 'border-[#7855FA] bg-[#7855FA]/10',
+    dot: 'bg-[#7855FA]',
+    accentBar: 'bg-[#7855FA]',
   },
   ceph: {
     // Ceph 官网品牌色：红 #EF5C55
     label: 'Ceph（全闪统一存储）',
+    category: '块 · 对象 · 文件',
     accentText: 'text-[#C43E38]',
     accentBgSoft: 'bg-[#EF5C55]/10',
     accentBorder: 'border-[#EF5C55]',
     chip: 'bg-[#EF5C55]/15 text-[#C43E38]',
     bigValue: 'text-[#C43E38]',
-    selectedCard: 'border-[#EF5C55] bg-[#EF5C55]/10 ring-1 ring-[#EF5C55]',
+    selectedCard: 'border-[#EF5C55] bg-[#EF5C55]/10',
     dot: 'bg-[#EF5C55]',
     accentBar: 'bg-[#EF5C55]',
   },
   'ceph-hybrid': {
     // Ceph 官网品牌色（混闪用更深的暗红区分全闪）
     label: 'Ceph（混闪对象存储）',
+    category: '混闪对象存储',
     accentText: 'text-[#9A2E29]',
     accentBgSoft: 'bg-[#9A2E29]/10',
     accentBorder: 'border-[#9A2E29]',
     chip: 'bg-[#9A2E29]/15 text-[#9A2E29]',
     bigValue: 'text-[#9A2E29]',
-    selectedCard: 'border-[#9A2E29] bg-[#9A2E29]/10 ring-1 ring-[#9A2E29]',
+    selectedCard: 'border-[#9A2E29] bg-[#9A2E29]/10',
     dot: 'bg-[#9A2E29]',
     accentBar: 'bg-[#9A2E29]',
   },
   weka: {
-    // Weka 主题色：品红紫 #A21CAF（偏红的紫，与 XSKY 的蓝紫 #704BFF 区分）
+    // Weka 官网品牌色：紫罗兰 #7C03EC
     label: 'Weka（文件系统）',
-    accentText: 'text-[#A21CAF]',
-    accentBgSoft: 'bg-[#A21CAF]/10',
-    accentBorder: 'border-[#A21CAF]',
-    chip: 'bg-[#A21CAF]/15 text-[#A21CAF]',
-    bigValue: 'text-[#A21CAF]',
-    selectedCard: 'border-[#A21CAF] bg-[#A21CAF]/10 ring-1 ring-[#A21CAF]',
-    dot: 'bg-[#A21CAF]',
-    accentBar: 'bg-[#A21CAF]',
+    category: '并行文件系统',
+    accentText: 'text-[#7C03EC]',
+    accentBgSoft: 'bg-[#7C03EC]/10',
+    accentBorder: 'border-[#7C03EC]',
+    chip: 'bg-[#7C03EC]/15 text-[#7C03EC]',
+    bigValue: 'text-[#7C03EC]',
+    selectedCard: 'border-[#7C03EC] bg-[#7C03EC]/10',
+    dot: 'bg-[#7C03EC]',
+    accentBar: 'bg-[#7C03EC]',
   },
 }
 
 const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'weka', 'xeos', 'ceph', 'ceph-hybrid'] as const
+
+// 勾选指示图标（用于方案选择卡片）
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className={className}>
+      <path d="M2.5 6.2 5 8.7l4.5-4.9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+// 品牌网格渐变（DESIGN.md：蓝 / 紫 / 琥珀 / 青多色 mesh，仅 hero 尺度装饰）
+const HERO_MESH: React.CSSProperties = {
+  backgroundImage: [
+    'radial-gradient(50% 80% at 12% 0%, rgba(0,124,240,0.16) 0%, transparent 60%)',
+    'radial-gradient(45% 70% at 88% 8%, rgba(121,40,202,0.15) 0%, transparent 62%)',
+    'radial-gradient(55% 75% at 55% 110%, rgba(249,203,40,0.13) 0%, transparent 58%)',
+    'radial-gradient(38% 55% at 100% 88%, rgba(0,223,216,0.14) 0%, transparent 60%)',
+    'radial-gradient(42% 60% at 0% 96%, rgba(255,0,128,0.08) 0%, transparent 60%)',
+  ].join(', '),
+}
 
 function convertTibToUnit(tib: number, unit: string): string {
   switch (unit) {
@@ -627,17 +654,17 @@ function StorplanApp() {
   }
 
   const hasSelection = selectedStorages.size > 0
-  const selectClass = "h-10 rounded-md border border-hairline bg-canvas px-3 text-sm text-ink transition focus:border-hairline-strong focus:outline-none"
-  const inputClass = "h-10 flex-1 rounded-md border border-hairline bg-canvas px-3 text-sm text-ink placeholder:text-mute transition focus:border-hairline-strong focus:outline-none"
+  const selectClass = "field-lg min-w-[5.5rem] shrink-0"
+  const inputClass = "field-lg flex-1"
 
   return (
     <div className="min-h-screen bg-canvas-soft">
       <header className="sticky top-0 z-20 border-b border-hairline bg-canvas/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-8">
           <div className="flex min-w-0 items-center gap-3">
-            <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 shrink-0" />
+            <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 shrink-0 rounded-lg" />
             <div className="min-w-0">
-              <h1 className="text-base font-semibold tracking-tight text-ink">Storplan</h1>
+              <h1 className="text-[15px] font-semibold tracking-tight text-ink">Storplan</h1>
               <p className="text-xs text-mute">存储容量和性能规划工具</p>
             </div>
           </div>
@@ -645,16 +672,32 @@ function StorplanApp() {
             href="https://wutz.dev/"
             target="_blank"
             rel="noreferrer"
-            className="shrink-0 rounded-md px-2.5 py-1.5 text-sm text-body transition hover:bg-canvas-soft-2"
+            className="shrink-0 rounded-md px-2.5 py-1.5 text-sm text-body transition hover:bg-canvas-soft-2 hover:text-ink"
           >
             wutz.dev ↗
           </a>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl p-4 sm:p-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-8">
 
-        <div className="card p-6 mb-8">
+        {/* 品牌 hero：多色 mesh 渐变背景（DESIGN.md hero-band） */}
+        <section className="relative mt-6 overflow-hidden rounded-2xl border border-hairline bg-canvas sm:mt-8">
+          <div aria-hidden className="pointer-events-none absolute inset-0" style={HERO_MESH} />
+          <div className="relative px-6 py-10 sm:px-10 sm:py-14">
+            <p className="font-mono text-xs font-normal uppercase text-mute">Storage Capacity &amp; Performance Planner</p>
+            <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-ink sm:text-4xl">存储容量和性能规划工具.</h2>
+            <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-body">
+              输入容量与带宽需求，对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 不同方案的集群规模、硬件配置与性能指标。
+            </p>
+          </div>
+        </section>
+
+        <div className="card mt-8 mb-8 p-6 sm:p-8">
+          <div className="mb-6">
+            <p className="eyebrow">规划参数</p>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">选择方案并输入需求</h2>
+          </div>
           <label className="block text-sm font-medium text-ink mb-3">存储方案</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
             {STORAGE_ORDER.map((key) => {
@@ -665,10 +708,18 @@ function StorplanApp() {
                   key={key}
                   type="button"
                   onClick={() => toggleStorage(key)}
-                  className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-left transition ${active ? t.selectedCard : 'border-hairline bg-canvas hover:border-hairline-strong hover:bg-canvas-soft'}`}
+                  aria-pressed={active}
+                  className={`group flex items-start gap-3 rounded-xl border p-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${active ? t.selectedCard : 'border-hairline bg-canvas hover:border-hairline-strong hover:bg-canvas-soft'}`}
                 >
-                  <span className={`h-2.5 w-2.5 rounded-full ${active ? t.dot : 'bg-hairline-strong'}`} />
-                  <span className={`text-sm font-medium ${active ? t.accentText : 'text-body'}`}>{t.label}</span>
+                  <span
+                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition ${active ? `${t.dot} ${t.accentBorder} border` : 'border-hairline-strong bg-canvas group-hover:border-ink/40'}`}
+                  >
+                    {active && <CheckIcon className="h-3 w-3 text-white" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className={`block text-sm font-medium leading-tight ${active ? t.accentText : 'text-ink'}`}>{t.label}</span>
+                    <span className="mt-1 block text-xs text-mute">{t.category}</span>
+                  </span>
                 </button>
               )
             })}
@@ -757,8 +808,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="vastdata" />
               {errors.vastdata && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors.vastdata}</p>
+                <div className="error-box mb-4">
+                  <p>{errors.vastdata}</p>
                 </div>
               )}
               {results.vastdata && (
@@ -771,8 +822,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="gpfs-ece" />
               {errors['gpfs-ece'] && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors['gpfs-ece']}</p>
+                <div className="error-box mb-4">
+                  <p>{errors['gpfs-ece']}</p>
                 </div>
               )}
               {results['gpfs-ece'] && (
@@ -785,8 +836,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="weka" />
               {errors.weka && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors.weka}</p>
+                <div className="error-box mb-4">
+                  <p>{errors.weka}</p>
                 </div>
               )}
               {results.weka && (
@@ -799,8 +850,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="xeos" />
               {errors.xeos && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors.xeos}</p>
+                <div className="error-box mb-4">
+                  <p>{errors.xeos}</p>
                 </div>
               )}
               {results.xeos && (
@@ -812,8 +863,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="ceph" />
               {errors.ceph && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors.ceph}</p>
+                <div className="error-box mb-4">
+                  <p>{errors.ceph}</p>
                 </div>
               )}
               {results.ceph && (
@@ -825,8 +876,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="ceph-hybrid" />
               {errors['ceph-hybrid'] && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors['ceph-hybrid']}</p>
+                <div className="error-box mb-4">
+                  <p>{errors['ceph-hybrid']}</p>
                 </div>
               )}
               {results['ceph-hybrid'] && (
@@ -865,30 +916,30 @@ const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[] }[] =
       {
         key: 'vastdata',
         name: 'VastData',
-        pros: '支持多种存储协议可平替 Ceph，支持多租户，支持 QoS，支持去重建设成本低（平摊下软件授权费用），原厂技术支持',
-        cons: '性能比 GPFS ECE 稍弱，采购周期较长',
-        scenarios: '多租户场景，需要 QoS 和技术支持',
+        pros: '支持多种存储协议、可平替 Ceph；支持多租户、QoS 与去重；软件授权摊薄后建设成本低；原厂技术支持',
+        cons: '性能略低于 GPFS ECE，采购周期较长',
+        scenarios: '多租户场景，需要 QoS 与技术支持',
       },
       {
         key: 'gpfs-ece',
         name: 'GPFS ECE',
-        pros: '高性能，广泛使用，软件授权费用低',
-        cons: '多租户支持弱，第三方厂商技术支持',
+        pros: '性能高、生态成熟，软件授权费用低',
+        cons: '多租户支持弱，依赖第三方厂商技术支持',
         scenarios: '单租户高性能场景，预算有限',
       },
       {
         key: 'weka',
         name: 'Weka',
-        pros: '比 GPFS ECE 性能更高，支持多租户',
-        cons: '软件授权费用高，第三方厂商技术支持',
+        pros: '性能高于 GPFS ECE，支持多租户',
+        cons: '软件授权费用高，依赖第三方厂商技术支持',
         scenarios: '极致性能需求，预算充足',
       },
       {
         key: 'ceph',
         name: 'CephFS',
-        pros: '开源无软件授权费用，支持多租户',
-        cons: '不支持 QoS，元数据缓存受节点内存限制，不足时性能锐减，运维成本高，无技术支持',
-        scenarios: '预算有限，非 AI 场景的通用共享文件存储',
+        pros: '开源、无软件授权费用，支持多租户',
+        cons: '不支持 QoS；元数据缓存受节点内存限制，内存不足时性能锐减；运维成本高；无技术支持',
+        scenarios: '预算有限、非 AI 场景的通用共享文件存储',
       },
     ],
     notes: ['CephFS 不建议应用于 AI 场景'],
@@ -899,22 +950,22 @@ const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[] }[] =
       {
         key: 'xeos',
         name: 'XSKY XEOS',
-        pros: '功能齐全，支持 QoS，原厂技术支持，支持大规模，稳定',
+        pros: '功能齐全、稳定，支持大规模扩展与 QoS，原厂技术支持',
         cons: '软件授权费用高',
-        scenarios: '生产环境，需要稳定性和技术支持',
+        scenarios: '生产环境，需要稳定性与技术支持',
       },
       {
         key: 'ceph-hybrid',
         name: 'Ceph RGW',
-        pros: '开源无软件授权费用',
-        cons: '相比 XSKY XEOS 稳定性欠缺，QoS 较弱，海量对象数稳定性未验证，无技术支持',
-        scenarios: '预算有限，非关键业务',
+        pros: '开源、无软件授权费用',
+        cons: '稳定性不及 XSKY XEOS，QoS 较弱，海量对象场景未充分验证，无技术支持',
+        scenarios: '预算有限、非关键业务',
       },
       {
         key: 'vastdata',
         name: 'VastData S3',
-        pros: '高性能，与文件系统复用一个存储集群，支持 QoS，原厂技术支持，支持大规模',
-        cons: '由于采用全闪成本高只适合高性能场景',
+        pros: '性能高，可与文件系统共用同一集群，支持 QoS 与大规模扩展，原厂技术支持',
+        cons: '全闪架构成本较高，仅适合高性能场景',
         scenarios: '高性能对象存储需求',
       },
     ],
@@ -926,15 +977,15 @@ const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[] }[] =
         key: 'vastdata',
         name: 'VastData Block',
         pros: '高性能，原厂技术支持',
-        cons: '当前版本还未支持 QoS',
+        cons: '当前版本暂不支持 QoS',
         scenarios: '高性能块存储需求，可接受新产品',
       },
       {
         key: 'ceph',
         name: 'Ceph RBD',
-        pros: '开源无软件授权费用，块存储系统成熟',
+        pros: '开源、无软件授权费用，块存储方案成熟',
         cons: '全闪配置性能普通，无技术支持',
-        scenarios: '预算有限，虚拟机/数据库等通用块存储',
+        scenarios: '预算有限的虚拟机、数据库等通用块存储',
       },
     ],
   },
@@ -945,7 +996,7 @@ function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
     <div className="card p-6 sm:p-8">
       <div className="mb-6 text-center">
         <h3 className="text-base font-semibold text-ink">存储选型参考</h3>
-        <p className="mt-1 text-sm text-body">根据存储类型对比各方案优缺点，点击方案名称开始容量与性能规划。</p>
+        <p className="mt-1 text-pretty text-sm text-body">根据存储类型对比各方案优缺点，点击方案名称开始容量与性能规划。</p>
       </div>
       <div className="space-y-8">
         {SELECTION_GUIDE.map((section) => (
@@ -980,9 +1031,9 @@ function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
                             <span className="font-medium text-ink">{row.name}</span>
                           )}
                         </td>
-                        <td className="py-2.5 pr-4 text-body">{row.pros}</td>
-                        <td className="py-2.5 pr-4 text-body">{row.cons}</td>
-                        <td className="py-2.5 text-body">{row.scenarios}</td>
+                        <td className="py-2.5 pr-4 leading-relaxed text-body">{row.pros}</td>
+                        <td className="py-2.5 pr-4 leading-relaxed text-body">{row.cons}</td>
+                        <td className="py-2.5 leading-relaxed text-body">{row.scenarios}</td>
                       </tr>
                     )
                   })}
@@ -1003,40 +1054,40 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
   xeos: {
     description: 'XSKY XEOS 是分布式对象存储系统，基于大量 HDD 和少量 NVMe SSD 构建混闪对象存储，适合海量非结构化数据存储。',
     pros: ['支持超大规模集群', '支持 QoS', '稳定可靠', '支持 CRC64 校验', '原厂技术支持'],
-    cons: ['软件授权较贵', '得盘率稍低提升成本'],
+    cons: ['软件授权较贵', '得盘率稍低，整体成本偏高'],
   },
   vastdata: {
     description: 'VastData 是全闪统一存储平台，单一系统同时提供文件、对象和块存储服务，基于 NVMe SSD 和 SCM 构建。',
-    pros: ['支持多存储协议可以平替 Ceph', '支持多租户', '去重与压缩提升集群可用容量', '支持 QoS 以及元数据 QoS', '原厂技术支持'],
-    cons: ['采购费用高于 GPFS', '采用 QLC 大盘性能低于 GPFS 等采用 TLC 小盘的存储系统', '采购周期较长'],
+    pros: ['支持多存储协议、可平替 Ceph', '支持多租户', '去重与压缩提升集群可用容量', '支持 QoS（含元数据 QoS）', '原厂技术支持'],
+    cons: ['采购费用高于 GPFS', 'QLC 大盘，性能低于采用 TLC 小盘的 GPFS 等方案', '采购周期较长'],
   },
   'gpfs-ece': {
     description: 'IBM GPFS/Scale ECE（Erasure Coding Edition）是高性能并行文件系统，基于 NVMe SSD 和 RDMA 网络构建。',
     pros: ['性能高', '采购成本低'],
     cons: ['多租户支持弱', '运维成本高', '原厂支持弱'],
-    limits: ['启用多租户支持时，容量起步和扩容步长均为 50TiB', '启用多租户时，K8s 只能使用 hostPath，不能使用基于 CSI 的 PVC 方式'],
+    limits: ['启用多租户时，容量起步与扩容步长均为 50 TiB', '启用多租户时，K8s 仅支持 hostPath，不支持基于 CSI 的 PVC'],
   },
   ceph: {
     description: 'Ceph 是开源分布式统一存储系统，本方案为全闪配置，单一集群同时提供块、对象和文件存储服务。',
     pros: [
       '开源软件，无需购买软件授权',
       '支持多租户',
-      '统一存储：支持块、对象存储和文件系统',
+      '统一存储：同时提供块、对象与文件服务',
       '块存储系统成熟',
       '支持同一集群使用不同容量磁盘',
     ],
     cons: [
       '不支持折叠纠删码，起步节点少时得盘率低',
-      '每盘容量均衡度低，总可用容量进一步锐减，通常按 70% 计算',
-      '全闪配置性能普通，有高性能需求时需要堆盘',
-      '文件系统元数据缓存上限受节点内存大小限制，不足时性能锐减',
-      '文件系统元数据需要额外配置多个大内存节点',
+      '每盘容量均衡度低，总可用容量进一步缩减，通常按 70% 计算',
+      '全闪性能普通，高性能需求下需增加磁盘数量',
+      '文件系统元数据缓存受节点内存限制，内存不足时性能锐减',
+      '文件系统元数据需额外配置多个大内存节点',
       '文件系统运维成本高',
       'CephFS 不支持 QoS，Ceph RGW 的 QoS 较弱',
       '无技术支持',
     ],
     limits: [
-      '文件系统热数据数量不建议超过 5 千万（大约消耗 200G 内存）',
+      '文件系统热数据量建议不超过 5000 万（约需 200GB 内存）',
       '文件系统不建议应用于 AI 场景',
     ],
   },
@@ -1050,7 +1101,7 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
     ],
     cons: [
       '不支持折叠纠删码，起步节点少时得盘率低',
-      '每盘容量均衡度低，总可用容量进一步锐减，通常按 70% 计算',
+      '每盘容量均衡度低，总可用容量进一步缩减，通常按 70% 计算',
       'Ceph RGW 的 QoS 较弱',
       '无技术支持',
     ],
@@ -1060,7 +1111,7 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
   },
   weka: {
     description: 'Weka（WekaFS）是高性能并行文件系统，基于 NVMe SSD 和高速网络构建全闪架构，适合 AI/HPC 等高性能场景。',
-    pros: ['性能极高，已知存储系统中最高性能', '支持分层到对象存储实现低成本混闪文件系统', '支持多租户', '支持QoS'],
+    pros: ['性能极高，为同类方案中最高', '支持分层到对象存储，构建低成本混闪文件系统', '支持多租户', '支持 QoS'],
     cons: ['软件授权费用较高', '第三方厂商技术支持'],
     limits: ['条带宽度 D+P 限制在 5–20 之间，且 D 必须大于 P'],
   },
@@ -1074,26 +1125,26 @@ function StorageInfo({ storage }: { storage: string }) {
   return (
     <div className="card overflow-hidden p-6 mb-4">
       <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
-      <p className="mb-4 text-sm text-body">{info.description}</p>
+      <p className="mb-4 text-pretty text-sm leading-relaxed text-body">{info.description}</p>
       <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
         <div>
-          <h3 className="mb-2 text-xs font-medium text-green-700">优势</h3>
-          <ul className="space-y-1 text-body">
-            {info.pros.map((p, i) => <li key={i}>• {p}</li>)}
+          <h3 className="mb-2 text-xs font-semibold text-cyan-deep">优势</h3>
+          <ul className="dot-list">
+            {info.pros.map((p, i) => <li key={i}>{p}</li>)}
           </ul>
         </div>
         <div>
-          <h3 className="mb-2 text-xs font-medium text-orange-700">劣势</h3>
-          <ul className="space-y-1 text-body">
-            {info.cons.map((c, i) => <li key={i}>• {c}</li>)}
+          <h3 className="mb-2 text-xs font-semibold text-warning-deep">劣势</h3>
+          <ul className="dot-list">
+            {info.cons.map((c, i) => <li key={i}>{c}</li>)}
           </ul>
         </div>
       </div>
       {info.limits && (
         <div className="mt-4 text-sm">
-          <h3 className="mb-2 text-xs font-medium text-red-700">限制</h3>
-          <ul className="space-y-1 text-body">
-            {info.limits.map((l, i) => <li key={i}>• {l}</li>)}
+          <h3 className="mb-2 text-xs font-semibold text-error-deep">限制</h3>
+          <ul className="dot-list">
+            {info.limits.map((l, i) => <li key={i}>{l}</li>)}
           </ul>
         </div>
       )}
@@ -1151,7 +1202,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             </div>
             <div className="flex justify-between">
               <dt className="text-body">{ul ? '二级集群 HDD 总数' : '集群 HDD 总数'}</dt>
-              <dd className={totalDisks > hddLimit ? 'text-red-600 font-semibold' : ''}>{totalDisks.toLocaleString()} / {hddLimit.toLocaleString()} 块 {totalDisks > hddLimit && '⚠️ 超出上限'}</dd>
+              <dd className={totalDisks > hddLimit ? 'text-error-deep font-semibold' : ''}>{totalDisks.toLocaleString()} / {hddLimit.toLocaleString()} 块 {totalDisks > hddLimit && '⚠️ 超出上限'}</dd>
             </div>
             {ul && (
               <div className="flex justify-between">
@@ -1257,7 +1308,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
                   {XEOS_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
                 </select>
                 <span className="text-xs">NVMe SSD（DWPD ≥ 3）</span>
-                {!isCacheSufficient && <span className="text-red-600 text-xs">⚠️ 不足</span>}
+                {!isCacheSufficient && <span className="text-error-deep text-xs">⚠️ 不足</span>}
               </dd>
             </div>
             <div className="flex justify-between text-xs text-mute">
@@ -1271,7 +1322,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
           </dl>
         </div>
         {ul && mc && (
-          <div className="border-t border-hairline pt-4">
+          <div className="pt-4">
             <h3 className="eyebrow mb-3">一级元数据集群（全闪 NVMe）</h3>
             <dl className="spec-list text-sm">
               <div className="flex justify-between"><dt className="text-body">节点数</dt><dd>{mc.nodeCount} 台（{mc.ecScheme}，范围 6–20）</dd></div>
@@ -1888,7 +1939,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
                   {CEPH_HYBRID_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
                 </select>
                 <span className="text-xs">NVMe SSD</span>
-                {!isCacheSufficient && <span className="text-red-600 text-xs">⚠️ 不足</span>}
+                {!isCacheSufficient && <span className="text-error-deep text-xs">⚠️ 不足</span>}
               </dd>
             </div>
             <div className="flex justify-between text-xs text-mute">
