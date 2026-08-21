@@ -28,7 +28,10 @@ type PlanResults = {
 // 每个存储产品的官网主题色（Tailwind 静态类名，避免运行时拼接导致 JIT 漏扫）
 // VastData → 品牌紫 / GPFS·Scale（IBM）→ IBM 蓝 / XSKY → 天空青
 type Theme = {
+  /** 选择卡上的完整名称（含类型说明） */
   label: string
+  /** 方案卡头的短名称 */
+  title: string
   category: string
   accentText: string
   accentBgSoft: string
@@ -44,6 +47,7 @@ const THEME: Record<string, Theme> = {
   vastdata: {
     // VastData 官网品牌色：亮青 #1FD9FE 配深藏蓝文字 #0D1021
     label: 'VastData（统一存储）',
+    title: 'VastData',
     category: '文件 · 对象 · 块',
     accentText: 'text-[#0D1021]',
     accentBgSoft: 'bg-[#1FD9FE]/10',
@@ -57,6 +61,7 @@ const THEME: Record<string, Theme> = {
   'gpfs-ece': {
     // IBM 官网品牌色：IBM 蓝 #0F62FE
     label: 'GPFS/Scale（文件系统）',
+    title: 'GPFS/Scale',
     category: '并行文件系统',
     accentText: 'text-[#0F62FE]',
     accentBgSoft: 'bg-[#0F62FE]/10',
@@ -70,6 +75,7 @@ const THEME: Record<string, Theme> = {
   xeos: {
     // XSKY 官网品牌色：星辰紫 #7855FA
     label: 'XSKY XEOS（对象存储）',
+    title: 'XSKY XEOS',
     category: '对象存储',
     accentText: 'text-[#7855FA]',
     accentBgSoft: 'bg-[#7855FA]/10',
@@ -83,6 +89,7 @@ const THEME: Record<string, Theme> = {
   ceph: {
     // Ceph 官网品牌色：红 #EF5C55
     label: 'Ceph（全闪统一存储）',
+    title: 'Ceph（全闪）',
     category: '块 · 对象 · 文件',
     accentText: 'text-[#C43E38]',
     accentBgSoft: 'bg-[#EF5C55]/10',
@@ -96,6 +103,7 @@ const THEME: Record<string, Theme> = {
   'ceph-hybrid': {
     // Ceph 官网品牌色（混闪用更深的暗红区分全闪）
     label: 'Ceph（混闪对象存储）',
+    title: 'Ceph（混闪）',
     category: '混闪对象存储',
     accentText: 'text-[#9A2E29]',
     accentBgSoft: 'bg-[#9A2E29]/10',
@@ -109,6 +117,7 @@ const THEME: Record<string, Theme> = {
   weka: {
     // Weka 官网品牌色：紫罗兰 #7C03EC
     label: 'Weka（文件系统）',
+    title: 'Weka',
     category: '并行文件系统',
     accentText: 'text-[#7C03EC]',
     accentBgSoft: 'bg-[#7C03EC]/10',
@@ -128,6 +137,26 @@ function CheckIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className={className}>
       <path d="M2.5 6.2 5 8.7l4.5-4.9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+// 告警图标（替代 emoji，保持 DESIGN.md 的中性技术调性）
+function WarnIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className={className}>
+      <path d="M6 1.4 11 10.6H1L6 1.4Z" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" />
+      <path d="M6 4.9v2.4" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+      <circle cx="6" cy="9" r="0.6" fill="currentColor" />
+    </svg>
+  )
+}
+
+// 折叠指示箭头（展开时旋转 180°）
+function ChevronIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className={className}>
+      <path d="M2.5 4.5 6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -153,13 +182,15 @@ function convertTibToUnit(tib: number, unit: string): string {
   }
 }
 
-function NumberInput({ value, onChange, min, max, disabled, className }: {
+function NumberInput({ value, onChange, min, max, disabled, className, label }: {
   value: number;
   onChange: (n: number) => void;
   min?: number;
   max?: number;
   disabled?: boolean;
   className?: string;
+  /** 无可见 label 时提供可访问名称 */
+  label?: string;
 }) {
   const [localValue, setLocalValue] = useState(String(value))
 
@@ -196,8 +227,44 @@ function NumberInput({ value, onChange, min, max, disabled, className }: {
       min={min}
       max={max}
       disabled={disabled}
+      aria-label={label}
       className={className}
     />
+  )
+}
+
+// 数量步进器：−/+ 按钮 + 数字输入，配可访问名称（DESIGN.md form-input-sm 尺度）
+function Stepper({ label, value, unit, onChange, min, max }: {
+  label: string;
+  value: number;
+  unit?: string;
+  onChange: (n: number) => void;
+  min?: number;
+  max?: number;
+}) {
+  return (
+    <dd className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => onChange(value - 1)}
+        className="stepper-btn"
+        disabled={min !== undefined && value <= min}
+        aria-label={`减少${label}`}
+      >
+        −
+      </button>
+      <NumberInput value={value} onChange={onChange} min={min} max={max} label={label} className="w-16 text-center field" />
+      <button
+        type="button"
+        onClick={() => onChange(value + 1)}
+        className="stepper-btn"
+        disabled={max !== undefined && value >= max}
+        aria-label={`增加${label}`}
+      >
+        +
+      </button>
+      {unit && <span className="ml-0.5">{unit}</span>}
+    </dd>
   )
 }
 
@@ -657,6 +724,41 @@ function StorplanApp() {
   const selectClass = "field-lg min-w-[5.5rem] shrink-0"
   const inputClass = "field-lg flex-1"
 
+  const clearSelection = () => {
+    setSelectedStorages(new Set())
+    setManualConfig({})
+  }
+
+  // 结果区内容：每个方案的规划结果，由 SchemePanel 提供卡壳与卡头
+  const renderResult = (key: (typeof STORAGE_ORDER)[number]) => {
+    switch (key) {
+      case 'vastdata':
+        return results.vastdata && (
+          <VastDataResult data={results.vastdata} onEboxCountChange={handleVastDataEboxCountChange} onDiskChange={handleVastDataDiskChange} />
+        )
+      case 'gpfs-ece':
+        return results['gpfs-ece'] && (
+          <GPFSECEResult data={results['gpfs-ece']} onServerCountChange={handleGpfsServerCountChange} onDiskChange={handleGpfsDiskChange} onEcChange={handleGpfsEcChange} onSsdCountChange={handleGpfsSsdCountChange} />
+        )
+      case 'weka':
+        return results.weka && (
+          <WekaResult data={results.weka} onDataNodeCountChange={handleWekaDataNodeCountChange} onHotSpareChange={handleWekaHotSpareChange} onDiskChange={handleWekaDiskChange} onNvmeCountChange={handleWekaNvmeCountChange} onProtectionChange={handleWekaProtectionChange} onNetworkChange={handleWekaNetworkChange} />
+        )
+      case 'xeos':
+        return results.xeos && (
+          <XEOSResult data={results.xeos} onServerCountChange={handleXeosServerCountChange} onDiskChange={handleXeosDiskChange} onDisksPerServerChange={handleXeosDisksPerServerChange} onEcChange={handleXeosEcChange} onCacheCountChange={handleXeosCacheCountChange} onCacheSizeChange={handleXeosCacheSizeChange} />
+        )
+      case 'ceph':
+        return results.ceph && (
+          <CephResult data={results.ceph} onNodeCountChange={handleCephNodeCountChange} onMdsNodeCountChange={handleCephMdsNodeCountChange} onDisksPerNodeChange={handleCephDisksPerNodeChange} onDiskChange={handleCephDiskChange} onRedundancyChange={handleCephRedundancyChange} />
+        )
+      case 'ceph-hybrid':
+        return results['ceph-hybrid'] && (
+          <CephHybridResult data={results['ceph-hybrid']} onNodeCountChange={handleCephHybridNodeCountChange} onDisksPerNodeChange={handleCephHybridDisksPerNodeChange} onDiskChange={handleCephHybridDiskChange} onRedundancyChange={handleCephHybridRedundancyChange} onCacheCountChange={handleCephHybridCacheCountChange} onCacheSizeChange={handleCephHybridCacheSizeChange} />
+        )
+    }
+  }
+
   return (
     <div className="min-h-screen bg-canvas-soft">
       <header className="sticky top-0 z-20 border-b border-hairline bg-canvas/80 backdrop-blur">
@@ -684,12 +786,14 @@ function StorplanApp() {
         {/* 品牌 hero：多色 mesh 渐变背景（DESIGN.md hero-band） */}
         <section className="relative mt-6 overflow-hidden rounded-2xl border border-hairline bg-canvas sm:mt-8">
           <div aria-hidden className="pointer-events-none absolute inset-0" style={HERO_MESH} />
-          <div className="relative px-6 py-10 sm:px-10 sm:py-14">
+          <div className={`relative px-6 sm:px-10 ${hasSelection ? 'py-7 sm:py-8' : 'py-10 sm:py-14'}`}>
             <p className="font-mono text-xs font-normal uppercase text-mute">Storage Capacity &amp; Performance Planner</p>
-            <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-ink sm:text-4xl">存储容量和性能规划工具.</h2>
-            <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-body">
-              输入容量与带宽需求，对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 不同方案的集群规模、硬件配置与性能指标。
-            </p>
+            <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-ink sm:text-4xl">把容量与带宽需求，换算成可采购的集群配置.</h2>
+            {!hasSelection && (
+              <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-body">
+                输入容量与带宽需求，对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 不同方案的集群规模、硬件配置与性能指标。
+              </p>
+            )}
           </div>
         </section>
 
@@ -698,8 +802,22 @@ function StorplanApp() {
             <p className="eyebrow">规划参数</p>
             <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">选择方案并输入需求</h2>
           </div>
-          <label className="block text-sm font-medium text-ink mb-3">存储方案</label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-ink">存储方案</span>
+            {hasSelection && (
+              <span className="flex items-center gap-2 text-xs text-mute">
+                已选 {selectedStorages.size} 个
+                <button
+                  type="button"
+                  onClick={clearSelection}
+                  className="rounded-md px-1.5 py-0.5 text-xs text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
+                >
+                  清空
+                </button>
+              </span>
+            )}
+          </div>
+          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {STORAGE_ORDER.map((key) => {
               const t = THEME[key]
               const active = selectedStorages.has(key)
@@ -709,7 +827,7 @@ function StorplanApp() {
                   type="button"
                   onClick={() => toggleStorage(key)}
                   aria-pressed={active}
-                  className={`group flex items-start gap-3 rounded-xl border p-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${active ? t.selectedCard : 'border-hairline bg-canvas hover:border-hairline-strong hover:bg-canvas-soft'}`}
+                  className={`group flex items-start gap-3 rounded-lg border p-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${active ? t.selectedCard : 'border-hairline bg-canvas hover:border-hairline-strong hover:bg-canvas-soft'}`}
                 >
                   <span
                     className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition ${active ? `${t.dot} ${t.accentBorder} border` : 'border-hairline-strong bg-canvas group-hover:border-ink/40'}`}
@@ -725,11 +843,12 @@ function StorplanApp() {
             })}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">容量</label>
+              <label htmlFor="capacity" className="mb-1.5 block text-sm font-medium text-ink">容量</label>
               <div className="flex gap-2">
                 <input
+                  id="capacity"
                   type="number"
                   value={capacityValue}
                   onChange={(e) => { setCapacityValue(e.target.value); setManualConfig({}) }}
@@ -742,6 +861,7 @@ function StorplanApp() {
                   value={capacityUnit}
                   onChange={(e) => { setCapacityUnit(e.target.value); setManualConfig({}) }}
                   className={selectClass}
+                  aria-label="容量单位"
                 >
                   <option value="TiB">TiB</option>
                   <option value="PiB">PiB</option>
@@ -751,140 +871,62 @@ function StorplanApp() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">{bwLabels.read}</label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={downloadBWValue}
-                  onChange={(e) => { setDownloadBWValue(e.target.value); setManualConfig({}) }}
-                  placeholder="20"
-                  className={inputClass}
-                  min="0"
-                  step="0.1"
-                />
-                <select
-                  value={bwUnit}
-                  onChange={(e) => { setBwUnit(e.target.value); setManualConfig({}) }}
-                  className={selectClass}
-                >
-                  <option value="MB/s">MB/s</option>
-                  <option value="GB/s">GB/s</option>
-                  <option value="Mbps">Mbps</option>
-                  <option value="Gbps">Gbps</option>
-                </select>
-              </div>
+              <label htmlFor="read-bw" className="mb-1.5 block text-sm font-medium text-ink">{bwLabels.read}</label>
+              <input
+                id="read-bw"
+                type="number"
+                value={downloadBWValue}
+                onChange={(e) => { setDownloadBWValue(e.target.value); setManualConfig({}) }}
+                placeholder="20"
+                className="field-lg w-full"
+                min="0"
+                step="0.1"
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">{bwLabels.write}</label>
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={uploadBWValue}
-                  onChange={(e) => { setUploadBWValue(e.target.value); setManualConfig({}) }}
-                  placeholder="10"
-                  className={inputClass}
-                  min="0"
-                  step="0.1"
-                />
-                <select
-                  value={bwUnit}
-                  onChange={(e) => { setBwUnit(e.target.value); setManualConfig({}) }}
-                  className={selectClass}
-                >
-                  <option value="MB/s">MB/s</option>
-                  <option value="GB/s">GB/s</option>
-                  <option value="Mbps">Mbps</option>
-                  <option value="Gbps">Gbps</option>
-                </select>
-              </div>
+              <label htmlFor="write-bw" className="mb-1.5 block text-sm font-medium text-ink">{bwLabels.write}</label>
+              <input
+                id="write-bw"
+                type="number"
+                value={uploadBWValue}
+                onChange={(e) => { setUploadBWValue(e.target.value); setManualConfig({}) }}
+                placeholder="10"
+                className="field-lg w-full"
+                min="0"
+                step="0.1"
+              />
+            </div>
+            <div>
+              <label htmlFor="bw-unit" className="mb-1.5 block text-sm font-medium text-ink">带宽单位</label>
+              <select
+                id="bw-unit"
+                value={bwUnit}
+                onChange={(e) => { setBwUnit(e.target.value); setManualConfig({}) }}
+                className="field-lg w-full"
+              >
+                <option value="MB/s">MB/s</option>
+                <option value="GB/s">GB/s</option>
+                <option value="Mbps">Mbps</option>
+                <option value="Gbps">Gbps</option>
+              </select>
             </div>
           </div>
+          <p className="mt-3 text-xs text-mute">带宽留空时仅按容量规划；填写后按容量与带宽中要求更高的一项确定集群规模。</p>
         </div>
 
         {!hasSelection && <SelectionGuide onSelect={toggleStorage} />}
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {selectedStorages.has('vastdata') && (
-            <div>
-              <StorageInfo storage="vastdata" />
-              {errors.vastdata && (
-                <div className="error-box mb-4">
-                  <p>{errors.vastdata}</p>
-                </div>
-              )}
-              {results.vastdata && (
-                <VastDataResult data={results.vastdata} onEboxCountChange={handleVastDataEboxCountChange} onDiskChange={handleVastDataDiskChange} />
-              )}
-            </div>
-          )}
-
-          {selectedStorages.has('gpfs-ece') && (
-            <div>
-              <StorageInfo storage="gpfs-ece" />
-              {errors['gpfs-ece'] && (
-                <div className="error-box mb-4">
-                  <p>{errors['gpfs-ece']}</p>
-                </div>
-              )}
-              {results['gpfs-ece'] && (
-                <GPFSECEResult data={results['gpfs-ece']} onServerCountChange={handleGpfsServerCountChange} onDiskChange={handleGpfsDiskChange} onEcChange={handleGpfsEcChange} onSsdCountChange={handleGpfsSsdCountChange} />
-              )}
-            </div>
-          )}
-
-          {selectedStorages.has('weka') && (
-            <div>
-              <StorageInfo storage="weka" />
-              {errors.weka && (
-                <div className="error-box mb-4">
-                  <p>{errors.weka}</p>
-                </div>
-              )}
-              {results.weka && (
-                <WekaResult data={results.weka} onDataNodeCountChange={handleWekaDataNodeCountChange} onHotSpareChange={handleWekaHotSpareChange} onDiskChange={handleWekaDiskChange} onNvmeCountChange={handleWekaNvmeCountChange} onProtectionChange={handleWekaProtectionChange} onNetworkChange={handleWekaNetworkChange} />
-              )}
-            </div>
-          )}
-
-          {selectedStorages.has('xeos') && (
-            <div>
-              <StorageInfo storage="xeos" />
-              {errors.xeos && (
-                <div className="error-box mb-4">
-                  <p>{errors.xeos}</p>
-                </div>
-              )}
-              {results.xeos && (
-                <XEOSResult data={results.xeos} onServerCountChange={handleXeosServerCountChange} onDiskChange={handleXeosDiskChange} onDisksPerServerChange={handleXeosDisksPerServerChange} onEcChange={handleXeosEcChange} onCacheCountChange={handleXeosCacheCountChange} onCacheSizeChange={handleXeosCacheSizeChange} />
-              )}
-            </div>
-          )}
-          {selectedStorages.has('ceph') && (
-            <div>
-              <StorageInfo storage="ceph" />
-              {errors.ceph && (
-                <div className="error-box mb-4">
-                  <p>{errors.ceph}</p>
-                </div>
-              )}
-              {results.ceph && (
-                <CephResult data={results.ceph} onNodeCountChange={handleCephNodeCountChange} onMdsNodeCountChange={handleCephMdsNodeCountChange} onDisksPerNodeChange={handleCephDisksPerNodeChange} onDiskChange={handleCephDiskChange} onRedundancyChange={handleCephRedundancyChange} />
-              )}
-            </div>
-          )}
-          {selectedStorages.has('ceph-hybrid') && (
-            <div>
-              <StorageInfo storage="ceph-hybrid" />
-              {errors['ceph-hybrid'] && (
-                <div className="error-box mb-4">
-                  <p>{errors['ceph-hybrid']}</p>
-                </div>
-              )}
-              {results['ceph-hybrid'] && (
-                <CephHybridResult data={results['ceph-hybrid']} onNodeCountChange={handleCephHybridNodeCountChange} onDisksPerNodeChange={handleCephHybridDisksPerNodeChange} onDiskChange={handleCephHybridDiskChange} onRedundancyChange={handleCephHybridRedundancyChange} onCacheCountChange={handleCephHybridCacheCountChange} onCacheSizeChange={handleCephHybridCacheSizeChange} />
-              )}
-            </div>
-          )}
+        <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-2">
+          {STORAGE_ORDER.filter(key => selectedStorages.has(key)).map(key => (
+            <SchemePanel
+              key={key}
+              storage={key}
+              badge={key === 'xeos' && results.xeos?.ultraLarge ? '超大规模架构（两级）' : undefined}
+              error={errors[key]}
+            >
+              {renderResult(key)}
+            </SchemePanel>
+          ))}
         </div>
 
         <footer className="mt-12 space-y-1 pb-8 text-center text-xs text-mute">
@@ -991,6 +1033,22 @@ const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[] }[] =
   },
 ]
 
+// 选型参考里的方案名：可点击的品牌色 chip（无对应方案 key 时退化为纯文本）
+function GuideName({ row, onSelect }: { row: GuideRow; onSelect: (key: string) => void }) {
+  const t = row.key ? THEME[row.key] : undefined
+  if (!row.key || !t) return <span className="font-medium text-ink">{row.name}</span>
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(row.key!)}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${t.chip}`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${t.dot}`} />
+      {row.name}
+    </button>
+  )
+}
+
 function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
   return (
     <div className="card p-6 sm:p-8">
@@ -1002,7 +1060,8 @@ function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
         {SELECTION_GUIDE.map((section) => (
           <div key={section.title}>
             <h4 className="text-sm font-semibold text-ink mb-3">{section.title}</h4>
-            <div className="overflow-x-auto">
+            {/* 宽屏：四列对比表 */}
+            <div className="hidden overflow-x-auto sm:block">
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="text-left text-xs text-mute border-b border-hairline">
@@ -1013,33 +1072,41 @@ function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {section.rows.map((row) => {
-                    const t = row.key ? THEME[row.key] : undefined
-                    return (
-                      <tr key={row.name} className="border-b border-hairline align-top">
-                        <td className="py-2.5 pr-4 whitespace-nowrap">
-                          {row.key && t ? (
-                            <button
-                              type="button"
-                              onClick={() => onSelect(row.key!)}
-                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${t.chip} hover:opacity-80 transition`}
-                            >
-                              <span className={`h-1.5 w-1.5 rounded-full ${t.dot}`} />
-                              {row.name}
-                            </button>
-                          ) : (
-                            <span className="font-medium text-ink">{row.name}</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 pr-4 leading-relaxed text-body">{row.pros}</td>
-                        <td className="py-2.5 pr-4 leading-relaxed text-body">{row.cons}</td>
-                        <td className="py-2.5 leading-relaxed text-body">{row.scenarios}</td>
-                      </tr>
-                    )
-                  })}
+                  {section.rows.map((row) => (
+                    <tr key={row.name} className="border-b border-hairline align-top">
+                      <td className="py-2.5 pr-4 whitespace-nowrap">
+                        <GuideName row={row} onSelect={onSelect} />
+                      </td>
+                      <td className="py-2.5 pr-4 leading-relaxed text-body">{row.pros}</td>
+                      <td className="py-2.5 pr-4 leading-relaxed text-body">{row.cons}</td>
+                      <td className="py-2.5 leading-relaxed text-body">{row.scenarios}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
+            {/* 窄屏：堆叠卡片，避免四列中文表格被挤成竖条 */}
+            <ul className="space-y-3 sm:hidden">
+              {section.rows.map((row) => (
+                <li key={row.name} className="rounded-lg border border-hairline bg-canvas-soft p-3.5">
+                  <GuideName row={row} onSelect={onSelect} />
+                  <dl className="mt-3 space-y-2 text-sm">
+                    <div>
+                      <dt className="eyebrow">优点</dt>
+                      <dd className="mt-0.5 leading-relaxed text-body">{row.pros}</dd>
+                    </div>
+                    <div>
+                      <dt className="eyebrow">缺点</dt>
+                      <dd className="mt-0.5 leading-relaxed text-body">{row.cons}</dd>
+                    </div>
+                    <div>
+                      <dt className="eyebrow">适用场景</dt>
+                      <dd className="mt-0.5 leading-relaxed text-body">{row.scenarios}</dd>
+                    </div>
+                  </dl>
+                </li>
+              ))}
+            </ul>
             {section.notes && section.notes.map((n, i) => (
               <p key={i} className="mt-2 text-xs text-mute">注：{n}</p>
             ))}
@@ -1117,18 +1184,70 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
   },
 }
 
-function StorageInfo({ storage }: { storage: string }) {
-  const info = STORAGE_INFO[storage]
-  if (!info) return null
+/**
+ * 单个方案的外壳：品牌色顶条 + 卡头（名称 / 类别 / 徽标）+ 可折叠的优劣与限制 + 规划结果。
+ * 一个方案一张卡，避免说明与结果各占一张卡、顶条重复。
+ */
+function SchemePanel({ storage, badge, error, children }: {
+  storage: string;
+  badge?: string;
+  error?: string;
+  children?: React.ReactNode;
+}) {
   const t = THEME[storage]
+  const info = STORAGE_INFO[storage]
+  const [notesOpen, setNotesOpen] = useState(false)
+  // 说明区展开时它自带下边框，卡体需要补回上内边距
+  const bodyPad = notesOpen ? 'px-6 pt-6 pb-6' : 'px-6 pb-6'
 
   return (
-    <div className="card overflow-hidden p-6 mb-4">
+    <section className="card overflow-hidden">
       <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
-      <p className="mb-4 text-pretty text-sm leading-relaxed text-body">{info.description}</p>
-      <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 p-6">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-semibold tracking-tight text-ink">{t.title}</h2>
+            {badge && <span className={`rounded-full px-2 py-0.5 text-xs ${t.chip}`}>{badge}</span>}
+          </div>
+          <p className="mt-1 text-xs text-mute">{t.category}</p>
+        </div>
+        {info && (
+          <button
+            type="button"
+            onClick={() => setNotesOpen(v => !v)}
+            aria-expanded={notesOpen}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-hairline bg-canvas px-2.5 text-[13px] text-body transition hover:border-hairline-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
+          >
+            优劣与限制
+            <ChevronIcon className={`h-3 w-3 transition-transform ${notesOpen ? 'rotate-180' : ''}`} />
+          </button>
+        )}
+        {info && <p className="w-full text-pretty text-sm leading-relaxed text-body">{info.description}</p>}
+      </div>
+
+      {info && notesOpen && <SchemeNotes info={info} />}
+
+      {(error || children) && (
+        <div className={`space-y-4 ${bodyPad}`}>
+          {error && (
+            <div className="error-box">
+              <p>{error}</p>
+            </div>
+          )}
+          {children}
+        </div>
+      )}
+    </section>
+  )
+}
+
+// 优势 / 劣势 / 限制：卡内浅底内嵌区（DESIGN.md card-soft）
+function SchemeNotes({ info }: { info: (typeof STORAGE_INFO)[string] }) {
+  return (
+    <div className="border-y border-hairline bg-canvas-soft px-6 py-5">
+      <div className="grid grid-cols-1 gap-5 text-sm md:grid-cols-2">
         <div>
-          <h3 className="mb-2 text-xs font-semibold text-cyan-deep">优势</h3>
+          <h3 className="mb-2 text-xs font-semibold text-link-deep">优势</h3>
           <ul className="dot-list">
             {info.pros.map((p, i) => <li key={i}>{p}</li>)}
           </ul>
@@ -1139,15 +1258,15 @@ function StorageInfo({ storage }: { storage: string }) {
             {info.cons.map((c, i) => <li key={i}>{c}</li>)}
           </ul>
         </div>
+        {info.limits && (
+          <div className="md:col-span-2">
+            <h3 className="mb-2 text-xs font-semibold text-error-deep">限制</h3>
+            <ul className="dot-list">
+              {info.limits.map((l, i) => <li key={i}>{l}</li>)}
+            </ul>
+          </div>
+        )}
       </div>
-      {info.limits && (
-        <div className="mt-4 text-sm">
-          <h3 className="mb-2 text-xs font-semibold text-error-deep">限制</h3>
-          <ul className="dot-list">
-            {info.limits.map((l, i) => <li key={i}>{l}</li>)}
-          </ul>
-        </div>
-      )}
     </div>
   )
 }
@@ -1175,37 +1294,29 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
   const t = THEME.xeos
 
   return (
-    <div className="card overflow-hidden p-6">
-      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
-      <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-xl font-semibold tracking-tight text-ink">XSKY XEOS 规划方案</h2>
-        {ul && <span className={`text-xs ${t.chip} px-2 py-0.5 rounded-full`}>超大规模架构（两级）</span>}
-      </div>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <h3 className="eyebrow mb-3">集群配置</h3>
             <dl className="spec-list text-sm">
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">{ul ? '二级总服务器台数' : '服务器台数'}</dt>
-              <dd className="flex items-center gap-1">
-                <button onClick={() => onServerCountChange(data.serverCount - 1)} className="stepper-btn" disabled={data.serverCount <= 3}>−</button>
-                <NumberInput
-                  value={data.serverCount}
-                  onChange={onServerCountChange}
-                  min={3}
-                  className="w-16 text-center field"
-                />
-                <button onClick={() => onServerCountChange(data.serverCount + 1)} className="stepper-btn">+</button>
-                <span className="ml-0.5">台</span>
+              <Stepper label={ul ? '二级总服务器台数' : '服务器台数'} value={data.serverCount} unit="台" onChange={onServerCountChange} min={3} />
+            </div>
+            <div>
+              <dt className="text-body">{ul ? '二级集群 HDD 总数' : '集群 HDD 总数'}</dt>
+              <dd className={totalDisks > hddLimit ? 'text-error-deep font-semibold' : ''}>
+                {totalDisks.toLocaleString()} / {hddLimit.toLocaleString()} 块
+                {totalDisks > hddLimit && (
+                  <span className="ml-1 inline-flex items-center gap-1">
+                    <WarnIcon className="h-3 w-3" />
+                    超出上限
+                  </span>
+                )}
               </dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-body">{ul ? '二级集群 HDD 总数' : '集群 HDD 总数'}</dt>
-              <dd className={totalDisks > hddLimit ? 'text-error-deep font-semibold' : ''}>{totalDisks.toLocaleString()} / {hddLimit.toLocaleString()} 块 {totalDisks > hddLimit && '⚠️ 超出上限'}</dd>
-            </div>
             {ul && (
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">二级数据集群</dt>
                 <dd>{ul.lastClusterNodes === ul.nodesPerCluster
                   ? `${ul.tier2ClusterCount} 个 × ${ul.nodesPerCluster} 节点`
@@ -1213,21 +1324,21 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
               </div>
             )}
             {ul ? (
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">纠删码方案</dt>
                 <dd>EC8+2（每集群 2 池）</dd>
               </div>
             ) : (
-              <div className="flex justify-between items-center">
+              <div>
                 <dt className="text-body">纠删码方案</dt>
                 <dd>
-                  <select value={data.ecScheme} onChange={(e) => { const s = XEOS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} className="field">
+                  <select value={data.ecScheme} onChange={(e) => { const s = XEOS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} aria-label="纠删码方案" className="field">
                     {getAllowedEcSchemes(data.serverCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}</option>)}
                   </select>
                 </dd>
               </div>
             )}
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">容错能力</dt>
               <dd>{ul
                 ? (lastClusterIsFull
@@ -1236,7 +1347,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
                 : `容忍 ${data.tolerance} 台节点离线`}</dd>
             </div>
             {data.poolConfig && (
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">池数</dt>
                 <dd>{data.poolConfig.poolCount} 个池</dd>
               </div>
@@ -1246,21 +1357,21 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
         <div>
           <h3 className="eyebrow mb-3">容量</h3>
           <dl className="spec-list text-sm">
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">可用容量</dt>
               <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">裸容量</dt>
               <dd>{data.formatted.rawCapacity}</dd>
             </div>
             {ul && (
               <>
-                <div className="flex justify-between">
+                <div>
                   <dt className="text-body">单集群可用容量</dt>
                   <dd>{formatCapacity(ul.tier2PerClusterCapacity, data.capacityUnitPreference)}</dd>
                 </div>
-                <div className="flex justify-between">
+                <div>
                   <dt className="text-body">二级 SSD 总容量</dt>
                   <dd>{ul.tier2CacheSSDTotal.toLocaleString()} TB</dd>
                 </div>
@@ -1272,50 +1383,55 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
         <div>
           <h3 className="eyebrow mb-3">{ul ? '每台二级数据节点配置（混闪）' : '每台服务器配置'}</h3>
           <dl className="spec-list text-sm">
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">处理器</dt>
               <dd>2 × Intel Xeon 4134</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">内存</dt>
               <dd>8 × 32GB DDR4（共 256GB）</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">系统盘</dt>
               <dd>2 × 960GB SATA SSD（RAID1）</dd>
             </div>
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">数据盘</dt>
               <dd className="flex items-center gap-1">
-                <select value={data.disksPerServer} onChange={(e) => onDisksPerServerChange(Number(e.target.value))} className="field">
+                <select value={data.disksPerServer} onChange={(e) => onDisksPerServerChange(Number(e.target.value))} aria-label="每台数据盘数量" className="field">
                   {XEOS_CONSTANTS.DISKS_PER_SERVER_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
                 <span>×</span>
-                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="field">
+                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} aria-label="单盘容量" className="field">
                   {XEOS_CONSTANTS.DISK_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
                 </select>
                 <span>HDD</span>
               </dd>
             </div>
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">索引缓存盘</dt>
               <dd className="flex items-center gap-1">
-                <select value={data.cacheConfig.count} onChange={(e) => onCacheCountChange(Number(e.target.value))} className="field">
+                <select value={data.cacheConfig.count} onChange={(e) => onCacheCountChange(Number(e.target.value))} aria-label="缓存盘数量" className="field">
                   {[1, 2, 3, 4].map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <span>×</span>
-                <select value={data.cacheConfig.sizePerDisk} onChange={(e) => onCacheSizeChange(Number(e.target.value))} className="field">
+                <select value={data.cacheConfig.sizePerDisk} onChange={(e) => onCacheSizeChange(Number(e.target.value))} aria-label="单块缓存盘容量" className="field">
                   {XEOS_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
                 </select>
                 <span className="text-xs">NVMe SSD（DWPD ≥ 3）</span>
-                {!isCacheSufficient && <span className="text-error-deep text-xs">⚠️ 不足</span>}
+                {!isCacheSufficient && (
+                  <span className="inline-flex items-center gap-1 text-xs text-error-deep">
+                    <WarnIcon className="h-3 w-3" />
+                    不足
+                  </span>
+                )}
               </dd>
             </div>
-            <div className="flex justify-between text-xs text-mute">
+            <div className="text-xs text-mute">
               <dt>缓存容量要求</dt>
               <dd>≥ {requiredCacheTB.toFixed(2)}TB（实际 {data.cacheConfig.totalSize.toFixed(2)}TB）</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">网卡</dt>
               <dd>2 × 双口 25Gb ETH NIC</dd>
             </div>
@@ -1325,15 +1441,15 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
           <div className="pt-4">
             <h3 className="eyebrow mb-3">一级元数据集群（全闪 NVMe）</h3>
             <dl className="spec-list text-sm">
-              <div className="flex justify-between"><dt className="text-body">节点数</dt><dd>{mc.nodeCount} 台（{mc.ecScheme}，范围 6–20）</dd></div>
-              <div className="flex justify-between"><dt className="text-body">处理器</dt><dd>2 × Intel 6330</dd></div>
-              <div className="flex justify-between"><dt className="text-body">内存</dt><dd>256GB</dd></div>
-              <div className="flex justify-between"><dt className="text-body">系统盘</dt><dd>2 × 960GB SATA SSD（RAID1）</dd></div>
-              <div className="flex justify-between"><dt className="text-body">数据盘</dt><dd>{mc.disksPerNode} × {mc.diskSize}TB NVMe SSD（DWPD ≥ 3）</dd></div>
-              <div className="flex justify-between"><dt className="text-body">NVMe 总容量</dt><dd>{mc.totalSize.toLocaleString()} TB</dd></div>
-              <div className="flex justify-between"><dt className="text-body">网卡</dt><dd>2 × 双口 25Gb ETH NIC</dd></div>
-              <div className="flex justify-between"><dt className="text-body">容错能力</dt><dd>容忍 {mc.tolerance} 台节点离线</dd></div>
-              <div className="flex justify-between text-xs text-mute"><dt>容量配比</dt><dd>二级SSD总 / 一级NVMe总 = {ul.ratio.toFixed(2)}（目标 5）</dd></div>
+              <div><dt className="text-body">节点数</dt><dd>{mc.nodeCount} 台（{mc.ecScheme}，范围 6–20）</dd></div>
+              <div><dt className="text-body">处理器</dt><dd>2 × Intel 6330</dd></div>
+              <div><dt className="text-body">内存</dt><dd>256GB</dd></div>
+              <div><dt className="text-body">系统盘</dt><dd>2 × 960GB SATA SSD（RAID1）</dd></div>
+              <div><dt className="text-body">数据盘</dt><dd>{mc.disksPerNode} × {mc.diskSize}TB NVMe SSD（DWPD ≥ 3）</dd></div>
+              <div><dt className="text-body">NVMe 总容量</dt><dd>{mc.totalSize.toLocaleString()} TB</dd></div>
+              <div><dt className="text-body">网卡</dt><dd>2 × 双口 25Gb ETH NIC</dd></div>
+              <div><dt className="text-body">容错能力</dt><dd>容忍 {mc.tolerance} 台节点离线</dd></div>
+              <div className="text-xs text-mute"><dt>容量配比</dt><dd>二级SSD总 / 一级NVMe总 = {ul.ratio.toFixed(2)}（目标 5）</dd></div>
             </dl>
           </div>
         )}
@@ -1362,7 +1478,6 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             </div>
           </dl>
         </div>
-      </div>
     </div>
   )
 }
@@ -1373,30 +1488,16 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
   const t = THEME.vastdata
 
   return (
-    <div className="card overflow-hidden p-6">
-      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
-      <h2 className="text-xl font-semibold tracking-tight text-ink mb-4">VastData 统一存储规划方案</h2>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <h3 className="eyebrow mb-3">集群配置</h3>
             <dl className="spec-list text-sm">
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">EBox 数量</dt>
-              <dd className="flex items-center gap-1">
-                <button onClick={() => onEboxCountChange(data.eboxCount - 1)} className="stepper-btn" disabled={data.eboxCount <= 11}>−</button>
-                <NumberInput
-                  value={data.eboxCount}
-                  onChange={onEboxCountChange}
-                  min={11}
-                  max={250}
-                  className="w-16 text-center field"
-                />
-                <button onClick={() => onEboxCountChange(data.eboxCount + 1)} className="stepper-btn" disabled={data.eboxCount >= 250}>+</button>
-                <span className="ml-0.5">台</span>
-              </dd>
+              <Stepper label="EBox 数量" value={data.eboxCount} unit="台" onChange={onEboxCountChange} min={11} max={250} />
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">容错能力</dt>
               <dd>容忍 2 台节点离线</dd>
             </div>
@@ -1405,11 +1506,11 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
         <div>
           <h3 className="eyebrow mb-3">容量</h3>
           <dl className="spec-list text-sm">
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">可用容量</dt>
               <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">裸容量</dt>
               <dd>{data.formatted.rawCapacity}</dd>
             </div>
@@ -1419,27 +1520,27 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
         <div>
           <h3 className="eyebrow mb-3">每台 EBox 配置</h3>
           <dl className="spec-list text-sm">
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">处理器</dt>
               <dd>AMD 9454P 2.75GHz 290W</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">内存</dt>
               <dd>12 × 32GB DDR5-5600 RDIMM（共 384GB）</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">系统盘</dt>
               <dd>2 × 960GB M.2 SATA SSD</dd>
             </div>
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">数据盘</dt>
               <dd>
-                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="field">
+                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} aria-label="数据盘配置" className="field">
                   {VAST_CONSTANTS.EBOX_CONFIGS.map(c => <option key={c.diskSize} value={c.diskSize}>{c.label}</option>)}
                 </select>
               </dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">网络</dt>
               <dd>2 × 双口 200Gb RoCE/IB/ETH NIC</dd>
             </div>
@@ -1474,7 +1575,6 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
             </div>
           </dl>
         </div>
-      </div>
     </div>
   )
 }
@@ -1485,38 +1585,24 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
   const t = THEME['gpfs-ece']
 
   return (
-    <div className="card overflow-hidden p-6">
-      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
-      <h2 className="text-xl font-semibold tracking-tight text-ink mb-4">GPFS/Scale 规划方案</h2>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <h3 className="eyebrow mb-3">集群配置</h3>
             <dl className="spec-list text-sm">
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">服务器台数</dt>
-              <dd className="flex items-center gap-1">
-                <button onClick={() => onServerCountChange(data.serverCount - 1)} className="stepper-btn" disabled={data.serverCount <= 3}>−</button>
-                <NumberInput
-                  value={data.serverCount}
-                  onChange={onServerCountChange}
-                  min={3}
-                  max={GPFS_CONSTANTS.MAX_SERVERS}
-                  className="w-16 text-center field"
-                />
-                <button onClick={() => onServerCountChange(data.serverCount + 1)} className="stepper-btn" disabled={data.serverCount >= GPFS_CONSTANTS.MAX_SERVERS}>+</button>
-                <span className="ml-0.5">台</span>
-              </dd>
+              <Stepper label="服务器台数" value={data.serverCount} unit="台" onChange={onServerCountChange} min={3} max={GPFS_CONSTANTS.MAX_SERVERS} />
             </div>
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">纠删码方案</dt>
               <dd>
-                <select value={data.ecScheme} onChange={(e) => { const s = GPFS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} className="field">
+                <select value={data.ecScheme} onChange={(e) => { const s = GPFS_EC_SCHEMES.find(s => s.scheme === e.target.value); if (s) onEcChange(s.efficiency) }} aria-label="纠删码方案" className="field">
                   {getAllowedECSchemes(data.serverCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}</option>)}
                 </select>
               </dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">容错能力</dt>
               <dd>容忍 {data.tolerance} 台节点离线</dd>
             </div>
@@ -1525,11 +1611,11 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
         <div>
           <h3 className="eyebrow mb-3">容量</h3>
           <dl className="spec-list text-sm">
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">可用容量</dt>
               <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">裸容量</dt>
               <dd>{data.formatted.rawCapacity}</dd>
             </div>
@@ -1539,32 +1625,32 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
         <div>
           <h3 className="eyebrow mb-3">每台服务器配置</h3>
           <dl className="spec-list text-sm">
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">处理器</dt>
               <dd>2 × Intel Xeon 6530</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">内存</dt>
               <dd>16 × 32GB DDR5 4800（共 512GB）</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">系统盘</dt>
               <dd>2 × 960GB SATA SSD（RAID1）</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">存储网络</dt>
               <dd>2 × 双口 200Gb RoCE/IB NIC</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">管理网络</dt>
               <dd>1 × 双口 25Gb 以太网卡</dd>
             </div>
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">数据盘</dt>
               <dd>
-                <select value={data.ssdCount} onChange={(e) => onSsdCountChange(Number(e.target.value))} className="field">
+                <select value={data.ssdCount} onChange={(e) => onSsdCountChange(Number(e.target.value))} aria-label="每台数据盘数量" className="field">
                   {GPFS_CONSTANTS.SSD_COUNTS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select> × <select value={data.ssdSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="field">
+                </select> × <select value={data.ssdSize} onChange={(e) => onDiskChange(Number(e.target.value))} aria-label="单盘容量" className="field">
                   {GPFS_CONSTANTS.SSD_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
                 </select> NVMe SSD
               </dd>
@@ -1596,7 +1682,6 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
             </div>
           </dl>
         </div>
-      </div>
     </div>
   )
 }
@@ -1621,59 +1706,36 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
   const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
 
   return (
-    <div className="card overflow-hidden p-6">
-      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
-      <h2 className="text-xl font-semibold tracking-tight text-ink mb-4">Ceph 规划方案</h2>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <h3 className="eyebrow mb-3">集群配置</h3>
             <dl className="spec-list text-sm">
-              <div className="flex justify-between items-center">
+              <div>
                 <dt className="text-body">数据节点数量</dt>
-                <dd className="flex items-center gap-1">
-                  <button onClick={() => onNodeCountChange(data.nodeCount - 1)} className="stepper-btn" disabled={data.nodeCount <= 3}>−</button>
-                  <NumberInput
-                    value={data.nodeCount}
-                    onChange={onNodeCountChange}
-                    min={3}
-                    className="w-16 text-center field"
-                  />
-                  <button onClick={() => onNodeCountChange(data.nodeCount + 1)} className="stepper-btn">+</button>
-                  <span className="ml-0.5">台</span>
-                </dd>
+                <Stepper label="数据节点数量" value={data.nodeCount} unit="台" onChange={onNodeCountChange} min={3} />
               </div>
-              <div className="flex justify-between items-center">
+              <div>
                 <dt className="text-body">元数据节点数量（仅 CephFS 需要）</dt>
-                <dd className="flex items-center gap-1">
-                  <button onClick={() => onMdsNodeCountChange(data.mdsNodeCount - 1)} className="stepper-btn" disabled={data.mdsNodeCount <= CEPH_CONSTANTS.MIN_MDS_NODES}>−</button>
-                  <NumberInput
-                    value={data.mdsNodeCount}
-                    onChange={onMdsNodeCountChange}
-                    min={CEPH_CONSTANTS.MIN_MDS_NODES}
-                    className="w-16 text-center field"
-                  />
-                  <button onClick={() => onMdsNodeCountChange(data.mdsNodeCount + 1)} className="stepper-btn">+</button>
-                  <span className="ml-0.5">台</span>
-                </dd>
+                <Stepper label="元数据节点数量" value={data.mdsNodeCount} unit="台" onChange={onMdsNodeCountChange} min={CEPH_CONSTANTS.MIN_MDS_NODES} />
               </div>
-              <div className="flex justify-between items-center">
+              <div>
                 <dt className="text-body">数据冗余策略</dt>
                 <dd className="flex items-center gap-1">
-                  <select value={data.redundancy} onChange={(e) => onRedundancyChange(e.target.value)} className="field">
+                  <select value={data.redundancy} onChange={(e) => onRedundancyChange(e.target.value)} aria-label="数据冗余策略" className="field">
                     {getCephAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（生产环境不建议）' : ''}</option>)}
                   </select>
                 </dd>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">冗余得盘率</dt>
                 <dd>{(data.efficiency * 100).toFixed(1)}%</dd>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">容错能力</dt>
                 <dd>容忍 {data.tolerance} 台节点离线</dd>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">集群磁盘总数</dt>
                 <dd>{totalDisks.toLocaleString()} 块</dd>
               </div>
@@ -1682,15 +1744,15 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
           <div>
             <h3 className="eyebrow mb-3">容量</h3>
             <dl className="spec-list text-sm">
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">可用容量</dt>
                 <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">裸容量</dt>
                 <dd>{data.formatted.rawCapacity}</dd>
               </div>
-              <div className="flex justify-between text-xs text-mute">
+              <div className="text-xs text-mute">
                 <dt>综合得盘率</dt>
                 <dd>{(effectiveRate * 100).toFixed(1)}%（含预留 1 节点 × 均衡损失 70%）</dd>
               </div>
@@ -1700,34 +1762,34 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
         <div>
           <h3 className="eyebrow mb-3">每台数据节点配置</h3>
           <dl className="spec-list text-sm">
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">处理器</dt>
               <dd>2 × Intel Xeon 6530</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">内存</dt>
               <dd>{mem.dimmCount} × {mem.dimmSizeGB}GB DDR5 4800（共 {mem.totalGB}GB）</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">系统盘</dt>
               <dd>2 × 960GB SATA SSD（RAID1）</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">存储网络</dt>
               <dd>{storageNet.label}</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">管理网络（可选）</dt>
               <dd>1 × 双口 25Gb 以太网卡</dd>
             </div>
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">数据盘</dt>
               <dd className="flex items-center gap-1">
-                <select value={data.disksPerNode} onChange={(e) => onDisksPerNodeChange(Number(e.target.value))} className="field">
+                <select value={data.disksPerNode} onChange={(e) => onDisksPerNodeChange(Number(e.target.value))} aria-label="每台数据盘数量" className="field">
                   {CEPH_CONSTANTS.DISKS_PER_NODE_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
                 <span>×</span>
-                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="field">
+                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} aria-label="单盘容量" className="field">
                   {CEPH_CONSTANTS.DISK_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
                 </select>
                 <span>NVMe SSD（TLC）</span>
@@ -1738,27 +1800,27 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
         <div>
           <h3 className="eyebrow mb-3">每台元数据节点配置（仅 CephFS 需要，共 {data.mdsNodeCount} 台）</h3>
           <dl className="spec-list text-sm">
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">处理器</dt>
               <dd>2 × Intel Xeon 6530</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">内存</dt>
               <dd>{mdsMem.dimmCount} × {mdsMem.dimmSizeGB}GB DDR5 4800（共 {mdsMem.totalGB}GB）</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">系统盘</dt>
               <dd>2 × 960GB SATA SSD（RAID1）</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">存储网络</dt>
               <dd>{mdsStorageNet.label}</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">管理网络（可选）</dt>
               <dd>1 × 双口 25Gb 以太网卡</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">数据盘</dt>
               <dd>无</dd>
             </div>
@@ -1815,7 +1877,6 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
           <div>性能计算：集群盘总数 × 每盘平均性能（{data.redundancy}：读 {perDisk.readMiBps} MiB/s、写 {perDisk.writeMiBps} MiB/s、读 IOPS {(perDisk.readIOPS / 1000)}k、写 IOPS {(perDisk.writeIOPS / 1000)}k）</div>
           <div>RGW 每盘平均性能：读 {CEPH_RGW_PER_DISK.readMiBps} MiB/s、写 {CEPH_RGW_PER_DISK.writeMiBps} MiB/s、读 OPS {CEPH_RGW_PER_DISK.readOPS}、写 OPS {CEPH_RGW_PER_DISK.writeOPS}</div>
         </div>
-      </div>
     </div>
   )
 }
@@ -1838,45 +1899,32 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
   const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
 
   return (
-    <div className="card overflow-hidden p-6">
-      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
-      <h2 className="text-xl font-semibold tracking-tight text-ink mb-4">Ceph（混闪对象存储）规划方案</h2>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <h3 className="eyebrow mb-3">集群配置</h3>
             <dl className="spec-list text-sm">
-              <div className="flex justify-between items-center">
+              <div>
                 <dt className="text-body">数据节点数量</dt>
-                <dd className="flex items-center gap-1">
-                  <button onClick={() => onNodeCountChange(data.nodeCount - 1)} className="stepper-btn" disabled={data.nodeCount <= 3}>−</button>
-                  <NumberInput
-                    value={data.nodeCount}
-                    onChange={onNodeCountChange}
-                    min={3}
-                    className="w-16 text-center field"
-                  />
-                  <button onClick={() => onNodeCountChange(data.nodeCount + 1)} className="stepper-btn">+</button>
-                  <span className="ml-0.5">台</span>
-                </dd>
+                <Stepper label="数据节点数量" value={data.nodeCount} unit="台" onChange={onNodeCountChange} min={3} />
               </div>
-              <div className="flex justify-between items-center">
+              <div>
                 <dt className="text-body">数据冗余策略</dt>
                 <dd className="flex items-center gap-1">
-                  <select value={data.redundancy} onChange={(e) => onRedundancyChange(e.target.value)} className="field">
+                  <select value={data.redundancy} onChange={(e) => onRedundancyChange(e.target.value)} aria-label="数据冗余策略" className="field">
                     {getCephHybridAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（生产环境不建议）' : ''}</option>)}
                   </select>
                 </dd>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">冗余得盘率</dt>
                 <dd>{(data.efficiency * 100).toFixed(1)}%</dd>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">容错能力</dt>
                 <dd>容忍 {data.tolerance} 台节点离线</dd>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">集群 HDD 总数</dt>
                 <dd>{totalDisks.toLocaleString()} 块</dd>
               </div>
@@ -1885,15 +1933,15 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
           <div>
             <h3 className="eyebrow mb-3">容量</h3>
             <dl className="spec-list text-sm">
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">可用容量</dt>
                 <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">裸容量</dt>
                 <dd>{data.formatted.rawCapacity}</dd>
               </div>
-              <div className="flex justify-between text-xs text-mute">
+              <div className="text-xs text-mute">
                 <dt>综合得盘率</dt>
                 <dd>{(effectiveRate * 100).toFixed(1)}%（含预留 1 节点 × 均衡损失 70%）</dd>
               </div>
@@ -1903,50 +1951,55 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
         <div>
           <h3 className="eyebrow mb-3">每台数据节点配置（混闪）</h3>
           <dl className="spec-list text-sm">
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">处理器</dt>
               <dd>2 × Intel Xeon 4134</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">内存</dt>
               <dd>8 × 32GB DDR4（共 256GB）</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">系统盘</dt>
               <dd>2 × 960GB SATA SSD（RAID1）</dd>
             </div>
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">数据盘</dt>
               <dd className="flex items-center gap-1">
-                <select value={data.disksPerNode} onChange={(e) => onDisksPerNodeChange(Number(e.target.value))} className="field">
+                <select value={data.disksPerNode} onChange={(e) => onDisksPerNodeChange(Number(e.target.value))} aria-label="每台数据盘数量" className="field">
                   {CEPH_HYBRID_CONSTANTS.DISKS_PER_NODE_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
                 <span>×</span>
-                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="field">
+                <select value={data.diskSize} onChange={(e) => onDiskChange(Number(e.target.value))} aria-label="单盘容量" className="field">
                   {CEPH_HYBRID_CONSTANTS.DISK_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
                 </select>
                 <span>HDD</span>
               </dd>
             </div>
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">索引盘</dt>
               <dd className="flex items-center gap-1">
-                <select value={data.cacheConfig.count} onChange={(e) => onCacheCountChange(Number(e.target.value))} className="field">
+                <select value={data.cacheConfig.count} onChange={(e) => onCacheCountChange(Number(e.target.value))} aria-label="缓存盘数量" className="field">
                   {[1, 2, 3, 4].map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <span>×</span>
-                <select value={data.cacheConfig.sizePerDisk} onChange={(e) => onCacheSizeChange(Number(e.target.value))} className="field">
+                <select value={data.cacheConfig.sizePerDisk} onChange={(e) => onCacheSizeChange(Number(e.target.value))} aria-label="单块缓存盘容量" className="field">
                   {CEPH_HYBRID_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
                 </select>
                 <span className="text-xs">NVMe SSD</span>
-                {!isCacheSufficient && <span className="text-error-deep text-xs">⚠️ 不足</span>}
+                {!isCacheSufficient && (
+                  <span className="inline-flex items-center gap-1 text-xs text-error-deep">
+                    <WarnIcon className="h-3 w-3" />
+                    不足
+                  </span>
+                )}
               </dd>
             </div>
-            <div className="flex justify-between text-xs text-mute">
+            <div className="text-xs text-mute">
               <dt>索引盘容量要求</dt>
               <dd>≥ {requiredCacheTB.toFixed(2)}TB（实际 {data.cacheConfig.totalSize.toFixed(2)}TB）</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">网卡</dt>
               <dd>2 × 双口 25Gb ETH NIC</dd>
             </div>
@@ -1981,7 +2034,6 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
           <div>容量计算：(节点数 − 1) × 冗余得盘率 × 单节点盘数 × 单盘容量 × 0.7（数据均衡损失）</div>
           <div>RGW 每 HDD 平均性能：读 {RGW_HYBRID_PER_DISK.readMiBps} MiB/s、写 {RGW_HYBRID_PER_DISK.writeMiBps} MiB/s、读 OPS {RGW_HYBRID_PER_DISK.readOPS}、写 OPS {RGW_HYBRID_PER_DISK.writeOPS}</div>
         </div>
-      </div>
     </div>
   )
 }
@@ -2001,63 +2053,40 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
   const minDataNodes = WEKA_CONSTANTS.MIN_TOTAL_NODES - WEKA_CONSTANTS.HOT_SPARE
 
   return (
-    <div className="card overflow-hidden p-6">
-      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
-      <h2 className="text-xl font-semibold tracking-tight text-ink mb-4">Weka 规划方案</h2>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <h3 className="eyebrow mb-3">集群配置</h3>
             <dl className="spec-list text-sm">
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">总台数</dt>
                 <dd>{data.nodeCount} 台</dd>
               </div>
-              <div className="flex justify-between items-center">
+              <div>
                 <dt className="text-body">数据节点数量</dt>
-                <dd className="flex items-center gap-1">
-                  <button onClick={() => onDataNodeCountChange(data.dataNodeCount - 1)} className="stepper-btn" disabled={data.dataNodeCount <= minDataNodes}>−</button>
-                  <NumberInput
-                    value={data.dataNodeCount}
-                    onChange={onDataNodeCountChange}
-                    min={minDataNodes}
-                    className="w-16 text-center field"
-                  />
-                  <button onClick={() => onDataNodeCountChange(data.dataNodeCount + 1)} className="stepper-btn">+</button>
-                  <span className="ml-0.5">台</span>
-                </dd>
+                <Stepper label="数据节点数量" value={data.dataNodeCount} unit="台" onChange={onDataNodeCountChange} min={minDataNodes} />
               </div>
-              <div className="flex justify-between items-center">
+              <div>
                 <dt className="text-body">热备节点数量</dt>
-                <dd className="flex items-center gap-1">
-                  <button onClick={() => onHotSpareChange(data.hotSpareCount - 1)} className="stepper-btn" disabled={data.hotSpareCount <= 0}>−</button>
-                  <NumberInput
-                    value={data.hotSpareCount}
-                    onChange={onHotSpareChange}
-                    min={0}
-                    className="w-16 text-center field"
-                  />
-                  <button onClick={() => onHotSpareChange(data.hotSpareCount + 1)} className="stepper-btn">+</button>
-                  <span className="ml-0.5">台</span>
-                </dd>
+                <Stepper label="热备节点数量" value={data.hotSpareCount} unit="台" onChange={onHotSpareChange} min={0} />
               </div>
-              <div className="flex justify-between items-center">
+              <div>
                 <dt className="text-body">保护级别 (P)</dt>
                 <dd>
-                  <select value={data.protectionLevel} onChange={(e) => onProtectionChange(Number(e.target.value))} className="field">
+                  <select value={data.protectionLevel} onChange={(e) => onProtectionChange(Number(e.target.value))} aria-label="保护级别" className="field">
                     {WEKA_CONSTANTS.PROTECTION_LEVELS.map(p => <option key={p} value={p}>+{p}</option>)}
                   </select>
                 </dd>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">纠删码方案</dt>
                 <dd>{data.protection.scheme}</dd>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">得盘率</dt>
                 <dd>{(data.protection.efficiency * 100).toFixed(1)}%</dd>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">容错能力</dt>
                 <dd>容忍 {data.protection.P} 台节点离线</dd>
               </div>
@@ -2066,15 +2095,15 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
           <div>
             <h3 className="eyebrow mb-3">容量</h3>
             <dl className="spec-list text-sm">
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">可用容量</dt>
                 <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
               </div>
-              <div className="flex justify-between">
+              <div>
                 <dt className="text-body">裸容量</dt>
                 <dd>{data.formatted.rawCapacity}</dd>
               </div>
-              <div className="flex justify-between text-xs text-mute">
+              <div className="text-xs text-mute">
                 <dt>说明</dt>
                 <dd>含 10% 元数据与系统保留，热备节点不计容量</dd>
               </div>
@@ -2084,41 +2113,41 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
         <div>
           <h3 className="eyebrow mb-3">每台服务器配置</h3>
           <dl className="spec-list text-sm">
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">处理器</dt>
               <dd>2 × Intel Xeon 5418Y</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">内存</dt>
               <dd>12 × 32GB DDR5（共 384GB）</dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">系统盘</dt>
               <dd>2 × 960GB SATA SSD（RAID1）</dd>
             </div>
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">数据盘</dt>
               <dd className="flex items-center gap-1">
-                <select value={data.nvmePerNode} onChange={(e) => onNvmeCountChange(Number(e.target.value))} className="field">
+                <select value={data.nvmePerNode} onChange={(e) => onNvmeCountChange(Number(e.target.value))} aria-label="每台数据盘数量" className="field">
                   {WEKA_CONSTANTS.NVME_COUNTS.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <span>×</span>
-                <select value={data.ssdSize} onChange={(e) => onDiskChange(Number(e.target.value))} className="field">
+                <select value={data.ssdSize} onChange={(e) => onDiskChange(Number(e.target.value))} aria-label="单盘容量" className="field">
                   {WEKA_CONSTANTS.SSD_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
                 </select>
                 <span>NVMe SSD</span>
               </dd>
             </div>
-            <div className="flex justify-between items-center">
+            <div>
               <dt className="text-body">存储网络</dt>
               <dd>
-                <select value={data.networkType} onChange={(e) => onNetworkChange(e.target.value)} className="field">
+                <select value={data.networkType} onChange={(e) => onNetworkChange(e.target.value)} aria-label="存储网络" className="field">
                   <option value="100gb">2 × 双口 100Gb IB/RoCE/Eth NIC</option>
                   <option value="200gb">2 × 双口 200Gb IB/RoCE/Eth NIC</option>
                 </select>
               </dd>
             </div>
-            <div className="flex justify-between">
+            <div>
               <dt className="text-body">管理网络</dt>
               <dd>1 × 双口 25Gb 以太网卡</dd>
             </div>
@@ -2149,7 +2178,6 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
             </div>
           </dl>
         </div>
-      </div>
     </div>
   )
 }
