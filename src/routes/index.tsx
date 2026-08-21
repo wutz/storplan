@@ -29,6 +29,7 @@ type PlanResults = {
 // VastData → 品牌紫 / GPFS·Scale（IBM）→ IBM 蓝 / XSKY → 天空青
 type Theme = {
   label: string
+  category: string
   accentText: string
   accentBgSoft: string
   accentBorder: string
@@ -43,78 +44,104 @@ const THEME: Record<string, Theme> = {
   vastdata: {
     // VastData 官网品牌色：亮青 #23D1FE 配深藏蓝文字 #0D1021
     label: 'VastData（统一存储）',
+    category: '文件 · 对象 · 块',
     accentText: 'text-[#0D1021]',
     accentBgSoft: 'bg-[#23D1FE]/10',
     accentBorder: 'border-[#23D1FE]',
     chip: 'bg-[#23D1FE]/20 text-[#0D1021]',
     bigValue: 'text-[#0D1021]',
-    selectedCard: 'border-[#23D1FE] bg-[#23D1FE]/10 ring-1 ring-[#23D1FE]',
+    selectedCard: 'border-[#23D1FE] bg-[#23D1FE]/10',
     dot: 'bg-[#23D1FE]',
     accentBar: 'bg-[#23D1FE]',
   },
   'gpfs-ece': {
     // IBM 经典黑色 logo 配色：黑 #111111
     label: 'GPFS/Scale（文件系统）',
+    category: '并行文件系统',
     accentText: 'text-[#111111]',
     accentBgSoft: 'bg-[#111111]/5',
     accentBorder: 'border-[#111111]',
     chip: 'bg-[#111111]/10 text-[#111111]',
     bigValue: 'text-[#111111]',
-    selectedCard: 'border-[#111111] bg-[#111111]/5 ring-1 ring-[#111111]',
+    selectedCard: 'border-[#111111] bg-[#111111]/5',
     dot: 'bg-[#111111]',
     accentBar: 'bg-[#111111]',
   },
   xeos: {
     // XSKY 官网品牌色：紫 #704BFF
     label: 'XSKY XEOS（对象存储）',
+    category: '对象存储',
     accentText: 'text-[#704BFF]',
     accentBgSoft: 'bg-[#704BFF]/10',
     accentBorder: 'border-[#704BFF]',
     chip: 'bg-[#704BFF]/15 text-[#704BFF]',
     bigValue: 'text-[#704BFF]',
-    selectedCard: 'border-[#704BFF] bg-[#704BFF]/10 ring-1 ring-[#704BFF]',
+    selectedCard: 'border-[#704BFF] bg-[#704BFF]/10',
     dot: 'bg-[#704BFF]',
     accentBar: 'bg-[#704BFF]',
   },
   ceph: {
     // Ceph 官网品牌色：红 #EF5C55
     label: 'Ceph（全闪统一存储）',
+    category: '块 · 对象 · 文件',
     accentText: 'text-[#C43E38]',
     accentBgSoft: 'bg-[#EF5C55]/10',
     accentBorder: 'border-[#EF5C55]',
     chip: 'bg-[#EF5C55]/15 text-[#C43E38]',
     bigValue: 'text-[#C43E38]',
-    selectedCard: 'border-[#EF5C55] bg-[#EF5C55]/10 ring-1 ring-[#EF5C55]',
+    selectedCard: 'border-[#EF5C55] bg-[#EF5C55]/10',
     dot: 'bg-[#EF5C55]',
     accentBar: 'bg-[#EF5C55]',
   },
   'ceph-hybrid': {
     // Ceph 官网品牌色（混闪用更深的暗红区分全闪）
     label: 'Ceph（混闪对象存储）',
+    category: '混闪对象存储',
     accentText: 'text-[#9A2E29]',
     accentBgSoft: 'bg-[#9A2E29]/10',
     accentBorder: 'border-[#9A2E29]',
     chip: 'bg-[#9A2E29]/15 text-[#9A2E29]',
     bigValue: 'text-[#9A2E29]',
-    selectedCard: 'border-[#9A2E29] bg-[#9A2E29]/10 ring-1 ring-[#9A2E29]',
+    selectedCard: 'border-[#9A2E29] bg-[#9A2E29]/10',
     dot: 'bg-[#9A2E29]',
     accentBar: 'bg-[#9A2E29]',
   },
   weka: {
     // Weka 主题色：品红紫 #A21CAF（偏红的紫，与 XSKY 的蓝紫 #704BFF 区分）
     label: 'Weka（文件系统）',
+    category: '并行文件系统',
     accentText: 'text-[#A21CAF]',
     accentBgSoft: 'bg-[#A21CAF]/10',
     accentBorder: 'border-[#A21CAF]',
     chip: 'bg-[#A21CAF]/15 text-[#A21CAF]',
     bigValue: 'text-[#A21CAF]',
-    selectedCard: 'border-[#A21CAF] bg-[#A21CAF]/10 ring-1 ring-[#A21CAF]',
+    selectedCard: 'border-[#A21CAF] bg-[#A21CAF]/10',
     dot: 'bg-[#A21CAF]',
     accentBar: 'bg-[#A21CAF]',
   },
 }
 
 const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'weka', 'xeos', 'ceph', 'ceph-hybrid'] as const
+
+// 勾选指示图标（用于方案选择卡片）
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className={className}>
+      <path d="M2.5 6.2 5 8.7l4.5-4.9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+// 品牌网格渐变（DESIGN.md：蓝 / 紫 / 琥珀 / 青多色 mesh，仅 hero 尺度装饰）
+const HERO_MESH: React.CSSProperties = {
+  backgroundImage: [
+    'radial-gradient(50% 80% at 12% 0%, rgba(0,124,240,0.16) 0%, transparent 60%)',
+    'radial-gradient(45% 70% at 88% 8%, rgba(121,40,202,0.15) 0%, transparent 62%)',
+    'radial-gradient(55% 75% at 55% 110%, rgba(249,203,40,0.13) 0%, transparent 58%)',
+    'radial-gradient(38% 55% at 100% 88%, rgba(0,223,216,0.14) 0%, transparent 60%)',
+    'radial-gradient(42% 60% at 0% 96%, rgba(255,0,128,0.08) 0%, transparent 60%)',
+  ].join(', '),
+}
 
 function convertTibToUnit(tib: number, unit: string): string {
   switch (unit) {
@@ -627,17 +654,17 @@ function StorplanApp() {
   }
 
   const hasSelection = selectedStorages.size > 0
-  const selectClass = "h-10 rounded-md border border-hairline bg-canvas px-3 text-sm text-ink transition focus:border-hairline-strong focus:outline-none"
-  const inputClass = "h-10 flex-1 rounded-md border border-hairline bg-canvas px-3 text-sm text-ink placeholder:text-mute transition focus:border-hairline-strong focus:outline-none"
+  const selectClass = "field-lg min-w-[5.5rem] shrink-0"
+  const inputClass = "field-lg flex-1"
 
   return (
     <div className="min-h-screen bg-canvas-soft">
       <header className="sticky top-0 z-20 border-b border-hairline bg-canvas/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-8">
           <div className="flex min-w-0 items-center gap-3">
-            <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 shrink-0" />
+            <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 shrink-0 rounded-lg" />
             <div className="min-w-0">
-              <h1 className="text-base font-semibold tracking-tight text-ink">Storplan</h1>
+              <h1 className="text-[15px] font-semibold tracking-tight text-ink">Storplan</h1>
               <p className="text-xs text-mute">存储容量和性能规划工具</p>
             </div>
           </div>
@@ -645,16 +672,32 @@ function StorplanApp() {
             href="https://wutz.dev/"
             target="_blank"
             rel="noreferrer"
-            className="shrink-0 rounded-md px-2.5 py-1.5 text-sm text-body transition hover:bg-canvas-soft-2"
+            className="shrink-0 rounded-md px-2.5 py-1.5 text-sm text-body transition hover:bg-canvas-soft-2 hover:text-ink"
           >
             wutz.dev ↗
           </a>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl p-4 sm:p-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-8">
 
-        <div className="card p-6 mb-8">
+        {/* 品牌 hero：多色 mesh 渐变背景（DESIGN.md hero-band） */}
+        <section className="relative mt-6 overflow-hidden rounded-2xl border border-hairline bg-canvas sm:mt-8">
+          <div aria-hidden className="pointer-events-none absolute inset-0" style={HERO_MESH} />
+          <div className="relative px-6 py-10 sm:px-10 sm:py-14">
+            <p className="font-mono text-xs font-medium uppercase tracking-[0.15em] text-mute">Storage Capacity &amp; Performance Planner</p>
+            <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-ink sm:text-4xl">存储容量和性能规划工具.</h2>
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-body">
+              输入容量与带宽需求，对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 不同方案的集群规模、硬件配置与性能指标。
+            </p>
+          </div>
+        </section>
+
+        <div className="card mt-8 mb-8 p-6 sm:p-8">
+          <div className="mb-6">
+            <p className="eyebrow">规划参数</p>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">选择方案并输入需求</h2>
+          </div>
           <label className="block text-sm font-medium text-ink mb-3">存储方案</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
             {STORAGE_ORDER.map((key) => {
@@ -665,10 +708,18 @@ function StorplanApp() {
                   key={key}
                   type="button"
                   onClick={() => toggleStorage(key)}
-                  className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-left transition ${active ? t.selectedCard : 'border-hairline bg-canvas hover:border-hairline-strong hover:bg-canvas-soft'}`}
+                  aria-pressed={active}
+                  className={`group flex items-start gap-3 rounded-xl border p-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${active ? t.selectedCard : 'border-hairline bg-canvas hover:border-hairline-strong hover:bg-canvas-soft'}`}
                 >
-                  <span className={`h-2.5 w-2.5 rounded-full ${active ? t.dot : 'bg-hairline-strong'}`} />
-                  <span className={`text-sm font-medium ${active ? t.accentText : 'text-body'}`}>{t.label}</span>
+                  <span
+                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition ${active ? `${t.dot} ${t.accentBorder} border` : 'border-hairline-strong bg-canvas group-hover:border-ink/40'}`}
+                  >
+                    {active && <CheckIcon className="h-3 w-3 text-white" />}
+                  </span>
+                  <span className="min-w-0">
+                    <span className={`block text-sm font-medium leading-tight ${active ? t.accentText : 'text-ink'}`}>{t.label}</span>
+                    <span className="mt-1 block text-xs text-mute">{t.category}</span>
+                  </span>
                 </button>
               )
             })}
@@ -757,8 +808,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="vastdata" />
               {errors.vastdata && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors.vastdata}</p>
+                <div className="error-box mb-4">
+                  <p>{errors.vastdata}</p>
                 </div>
               )}
               {results.vastdata && (
@@ -771,8 +822,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="gpfs-ece" />
               {errors['gpfs-ece'] && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors['gpfs-ece']}</p>
+                <div className="error-box mb-4">
+                  <p>{errors['gpfs-ece']}</p>
                 </div>
               )}
               {results['gpfs-ece'] && (
@@ -785,8 +836,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="weka" />
               {errors.weka && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors.weka}</p>
+                <div className="error-box mb-4">
+                  <p>{errors.weka}</p>
                 </div>
               )}
               {results.weka && (
@@ -799,8 +850,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="xeos" />
               {errors.xeos && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors.xeos}</p>
+                <div className="error-box mb-4">
+                  <p>{errors.xeos}</p>
                 </div>
               )}
               {results.xeos && (
@@ -812,8 +863,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="ceph" />
               {errors.ceph && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors.ceph}</p>
+                <div className="error-box mb-4">
+                  <p>{errors.ceph}</p>
                 </div>
               )}
               {results.ceph && (
@@ -825,8 +876,8 @@ function StorplanApp() {
             <div>
               <StorageInfo storage="ceph-hybrid" />
               {errors['ceph-hybrid'] && (
-                <div className="rounded-lg border border-[#f7d4d6] bg-[#fdf2f3] p-4 mb-4">
-                  <p className="text-[#c50000]">{errors['ceph-hybrid']}</p>
+                <div className="error-box mb-4">
+                  <p>{errors['ceph-hybrid']}</p>
                 </div>
               )}
               {results['ceph-hybrid'] && (
@@ -1077,13 +1128,13 @@ function StorageInfo({ storage }: { storage: string }) {
       <p className="mb-4 text-sm text-body">{info.description}</p>
       <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
         <div>
-          <h3 className="mb-2 text-xs font-medium text-green-700">优势</h3>
+          <h3 className="mb-2 text-xs font-semibold text-cyan-deep">优势</h3>
           <ul className="space-y-1 text-body">
             {info.pros.map((p, i) => <li key={i}>• {p}</li>)}
           </ul>
         </div>
         <div>
-          <h3 className="mb-2 text-xs font-medium text-orange-700">劣势</h3>
+          <h3 className="mb-2 text-xs font-semibold text-warning-deep">劣势</h3>
           <ul className="space-y-1 text-body">
             {info.cons.map((c, i) => <li key={i}>• {c}</li>)}
           </ul>
@@ -1091,7 +1142,7 @@ function StorageInfo({ storage }: { storage: string }) {
       </div>
       {info.limits && (
         <div className="mt-4 text-sm">
-          <h3 className="mb-2 text-xs font-medium text-red-700">限制</h3>
+          <h3 className="mb-2 text-xs font-semibold text-error-deep">限制</h3>
           <ul className="space-y-1 text-body">
             {info.limits.map((l, i) => <li key={i}>• {l}</li>)}
           </ul>
@@ -1151,7 +1202,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             </div>
             <div className="flex justify-between">
               <dt className="text-body">{ul ? '二级集群 HDD 总数' : '集群 HDD 总数'}</dt>
-              <dd className={totalDisks > hddLimit ? 'text-red-600 font-semibold' : ''}>{totalDisks.toLocaleString()} / {hddLimit.toLocaleString()} 块 {totalDisks > hddLimit && '⚠️ 超出上限'}</dd>
+              <dd className={totalDisks > hddLimit ? 'text-error-deep font-semibold' : ''}>{totalDisks.toLocaleString()} / {hddLimit.toLocaleString()} 块 {totalDisks > hddLimit && '⚠️ 超出上限'}</dd>
             </div>
             {ul && (
               <div className="flex justify-between">
@@ -1257,7 +1308,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
                   {XEOS_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
                 </select>
                 <span className="text-xs">NVMe SSD（DWPD ≥ 3）</span>
-                {!isCacheSufficient && <span className="text-red-600 text-xs">⚠️ 不足</span>}
+                {!isCacheSufficient && <span className="text-error-deep text-xs">⚠️ 不足</span>}
               </dd>
             </div>
             <div className="flex justify-between text-xs text-mute">
@@ -1888,7 +1939,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
                   {CEPH_HYBRID_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
                 </select>
                 <span className="text-xs">NVMe SSD</span>
-                {!isCacheSufficient && <span className="text-red-600 text-xs">⚠️ 不足</span>}
+                {!isCacheSufficient && <span className="text-error-deep text-xs">⚠️ 不足</span>}
               </dd>
             </div>
             <div className="flex justify-between text-xs text-mute">
