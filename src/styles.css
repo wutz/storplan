@@ -177,6 +177,15 @@ input[type="number"].field-lg::-webkit-inner-spin-button {
   margin: 0;
 }
 
+/* 规格列表：窄屏下多控件行换行而非溢出（如「数据盘 12 × 8TB HDD」） */
+.spec-list > div {
+  flex-wrap: wrap;
+}
+.spec-list dt,
+.spec-list dd {
+  min-width: 0;
+}
+
 /* 统计卡片：标签更小更轻、数值更醒目 */
 .stat-grid dt {
   font-size: 12px;
