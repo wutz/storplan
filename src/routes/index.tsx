@@ -770,14 +770,24 @@ function StorplanApp() {
               <p className="text-xs text-mute">存储容量和性能规划工具</p>
             </div>
           </div>
-          <a
-            href="https://wutz.dev/"
-            target="_blank"
-            rel="noreferrer"
-            className="shrink-0 rounded-md px-2.5 py-1.5 text-sm text-body transition hover:bg-canvas-soft-2 hover:text-ink"
-          >
-            wutz.dev ↗
-          </a>
+          <nav className="-mr-1 flex shrink-0 items-center gap-0.5">
+            <a
+              href="https://storpath.wutz.dev/"
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 rounded-md px-2.5 py-1.5 text-sm text-body transition hover:bg-canvas-soft-2 hover:text-ink"
+            >
+              学习路径 ↗
+            </a>
+            <a
+              href="https://wutz.dev/"
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 rounded-md px-2.5 py-1.5 text-sm text-body transition hover:bg-canvas-soft-2 hover:text-ink"
+            >
+              wutz.dev ↗
+            </a>
+          </nav>
         </div>
       </header>
 
@@ -930,6 +940,12 @@ function StorplanApp() {
         </div>
 
         <footer className="mt-12 space-y-1 pb-8 text-center text-xs text-mute">
+          <div>
+            想弄懂这些数字怎么来的，看{' '}
+            <a href="https://storpath.wutz.dev/" target="_blank" rel="noreferrer" className="text-body underline underline-offset-4 transition hover:text-ink">
+              Storpath 存储运维工程师成长路径
+            </a>
+          </div>
           <div>
             <a href="https://github.com/wutz/storplan" target="_blank" rel="noopener noreferrer" className="transition hover:text-ink">
               GitHub: wutz/storplan

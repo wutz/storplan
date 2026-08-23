@@ -62,3 +62,7 @@ storplan/
 ```bash
 npm run deploy
 ```
+
+## 相关项目
+
+- [Storpath](https://storpath.wutz.dev/) —— 存储运维工程师成长路径，交互式课程（[源码](https://github.com/wutz/storpath)）。本工具算出的容量与性能口径，在那边的 L3「容量与性能规划」里有推导过程。
