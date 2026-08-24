@@ -6,7 +6,7 @@ import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calcula
 import type { VastDataPlanResult } from '#/lib/vastdata'
 import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, getAllowedECSchemes, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
-import { planGPFSHybrid, buildGPFSHybridResult, getECScheme as getGpfsHybridEcScheme, getAllowedECSchemes as getGpfsHybridAllowedSchemes, calculateCacheConfig as gpfsHybridCacheConfig, calculateCapacityTiB as gpfsHybridCapacity, PER_HDD_BANDWIDTH as GPFS_HYBRID_PER_HDD, PER_CACHE_IOPS as GPFS_HYBRID_PER_CACHE, REPORT_BASELINE as GPFS_HYBRID_BASELINE, CONSTANTS as GPFS_HYBRID_CONSTANTS } from '#/lib/gpfs-hybrid'
+import { planGPFSHybrid, buildGPFSHybridResult, getECScheme as getGpfsHybridEcScheme, getAllowedECSchemes as getGpfsHybridAllowedSchemes, calculateCacheConfig as gpfsHybridCacheConfig, calculateCapacityTiB as gpfsHybridCapacity, PER_HDD_PERF as GPFS_HYBRID_PER_HDD, PER_CACHE_PERF as GPFS_HYBRID_PER_CACHE, REPORT_BASELINE as GPFS_HYBRID_BASELINE, CONSTANTS as GPFS_HYBRID_CONSTANTS } from '#/lib/gpfs-hybrid'
 import type { GPFSHybridPlanResult } from '#/lib/gpfs-hybrid'
 import { planCeph, buildCephResult, getMemoryConfig as getCephMemory, getStorageNetworkConfig as getCephStorageNetwork, getMdsMemoryConfig as getCephMdsMemory, getMdsStorageNetworkConfig as getCephMdsStorageNetwork, getPerDiskPerformance as getCephPerDisk, getAllowedRedundancySchemes as getCephAllowedSchemes, RGW_PER_DISK as CEPH_RGW_PER_DISK, calculateCapacityTiB as cephCapacity, CONSTANTS as CEPH_CONSTANTS } from '#/lib/ceph'
 import type { CephPlanResult } from '#/lib/ceph'
@@ -396,8 +396,10 @@ function StorplanApp() {
             const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
             const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
             const result = planGPFSHybrid({ capacity, readBandwidth: readBW || undefined, writeBandwidth: writeBW || undefined })
-            result.formatted.readBandwidth = formatBandwidth(result.performance.readBandwidth, bandwidthUnitType)
-            result.formatted.writeBandwidth = formatBandwidth(result.performance.writeBandwidth, bandwidthUnitType)
+            for (const tier of ['tiered', 'hddOnly'] as const) {
+              result.formatted[tier].readBandwidth = formatBandwidth(result.performance[tier].readBandwidth, bandwidthUnitType)
+              result.formatted[tier].writeBandwidth = formatBandwidth(result.performance[tier].writeBandwidth, bandwidthUnitType)
+            }
             newResults['gpfs-hybrid'] = result
           }
         } catch (err) {
@@ -1257,17 +1259,17 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
     description: 'GPFS/Scale 混闪基于大量大容量 HDD 加少量 NVMe SSD 构建：元数据与热数据放在 NVMe 层，冷数据落在 HDD 数据层，用远低于全闪的成本换取大容量并行文件系统。',
     pros: [
       '每 TB 成本远低于全闪方案',
+      '开启分层后热数据命中 NVMe，带宽约为纯 HDD 的 1.5–2 倍，IOPS 可达 8 倍以上',
       '大块顺序读写带宽随 HDD 主轴数线性增长',
-      '小 IO 由 NVMe 层承载，元数据操作接近全闪表现',
       '与全闪 GPFS 同一套软件与运维体系，可混合组池分层',
     ],
     cons: [
-      '小文件随机性能取决于 NVMe 层命中率，命中率低时性能回落到 HDD 水平',
+      '性能强依赖 NVMe 层命中率，命中率低时回落到 HDD 水平（IOPS 差距接近一个数量级）',
       'HDD 重建时间长，重建期间性能下降明显',
       '多租户支持弱，运维成本高，原厂支持弱',
     ],
     limits: [
-      '性能基准来自浪潮 AS13000 混闪三节点实测，按 HDD 与 NVMe 数量线性外推，大规模集群需实测复核',
+      '性能基准来自浪潮 AS13000 + GPFS 5.2.3.2 十节点实测（存储池 4+2P、100G IB），按 HDD 与 NVMe 数量线性外推，大规模集群需实测复核',
       '不建议用于以小文件随机读写为主的 AI 训练场景，此类场景应选全闪方案',
       '可用容量仅统计 HDD 数据层，NVMe 层按元数据与热数据缓存计',
     ],
@@ -1837,8 +1839,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
   const totalHDD = data.nodeCount * data.hddPerNode
   const requiredCacheTB = (data.hddPerNode * data.hddSize) / GPFS_HYBRID_CONSTANTS.CACHE_RATIO
   const isCacheSufficient = data.cacheConfig.totalSize >= requiredCacheTB
-  const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
-  const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
+  const perTiB = (mibps: number) => (mibps / data.actualCapacity * MIB_TO_MB).toFixed(2) + ' MB/s'
   // 仅当规模与单机配置都与报告基准一致时才是实测值，否则均为线性外推
   const isBaselineScale = data.nodeCount === GPFS_HYBRID_BASELINE.nodeCount
     && data.hddPerNode === GPFS_HYBRID_BASELINE.hddPerNode
@@ -1905,15 +1906,15 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
           <dl className="spec-list text-sm">
             <div>
               <dt className="text-body">处理器</dt>
-              <dd>2 × Intel Xeon Gold 5520+</dd>
+              <dd>2 × Intel Xeon 5520+ 2.2GHz 28C</dd>
             </div>
             <div>
               <dt className="text-body">内存</dt>
-              <dd>16 × 32GB DDR5（共 512GB）</dd>
+              <dd>16 × 32GB ECC-RDIMM（共 512GB）</dd>
             </div>
             <div>
               <dt className="text-body">系统盘</dt>
-              <dd>2 × 960GB SATA SSD（RAID1）</dd>
+              <dd>2 × 480GB SATA SSD（RAID1）</dd>
             </div>
             <div>
               <dt className="text-body">数据盘</dt>
@@ -1925,7 +1926,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
                 <select value={data.hddSize} onChange={(e) => onHddSizeChange(Number(e.target.value))} aria-label="单盘容量" className="field">
                   {GPFS_HYBRID_CONSTANTS.HDD_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
                 </select>
-                <span>SATA HDD</span>
+                <span>SAS 7.2K HDD</span>
               </dd>
             </div>
             <div>
@@ -1953,52 +1954,82 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
             </div>
             <div>
               <dt className="text-body">存储网络</dt>
-              <dd>2 × 单口 100Gb RoCE/IB NIC</dd>
+              <dd>2 × 双口 HDR100 100Gb IB HCA</dd>
             </div>
             <div>
               <dt className="text-body">管理网络</dt>
-              <dd>1 × 万兆以太网卡</dd>
+              <dd>1 × 双口 10Gb 以太网卡</dd>
             </div>
           </dl>
         </div>
-        <div>
-          <h3 className="eyebrow mb-3">性能（{isBaselineScale ? '三节点实测数据' : '基于三节点实测线性外推'}）</h3>
-          <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
-            <div>
-              <dt className="text-body">读 BW (4MiB)</dt>
-              <dd className="font-medium">{data.formatted.readBandwidth}</dd>
-            </div>
-            <div>
-              <dt className="text-body">写 BW (4MiB)</dt>
-              <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
-            </div>
-            <div>
-              <dt className="text-body">每 TiB 读 BW (4MiB)</dt>
-              <dd className="font-medium">{perTiBReadBWFormatted}</dd>
-            </div>
-            <div>
-              <dt className="text-body">读 IOPS (4KiB)</dt>
-              <dd className="font-medium">{data.formatted.readIOPS}</dd>
-            </div>
-            <div>
-              <dt className="text-body">写 IOPS (4KiB)</dt>
-              <dd className="font-medium">{data.formatted.writeIOPS}</dd>
-            </div>
-            <div>
-              <dt className="text-body">时延（读 / 写）</dt>
-              <dd className="font-medium">{GPFS_HYBRID_BASELINE.readLatencyMs} / {GPFS_HYBRID_BASELINE.writeLatencyMs} ms</dd>
-            </div>
-          </dl>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <PerfTier
+            title={`SSD 层（开启分层）${isBaselineScale ? '' : '预测'}`}
+            hint="热数据命中 NVMe 层，随集群 NVMe 总数外推"
+            perf={data.formatted.tiered}
+            perTiBRead={perTiB(data.performance.tiered.readBandwidth)}
+            accent={t.chip}
+          />
+          <PerfTier
+            title={`HDD 层（关闭分层）${isBaselineScale ? '' : '预测'}`}
+            hint="IO 全部落在 HDD 层，随集群 HDD 总数外推"
+            perf={data.formatted.hddOnly}
+            perTiBRead={perTiB(data.performance.hddOnly.readBandwidth)}
+            accent={t.chip}
+          />
         </div>
         <div className="text-xs text-mute space-y-0.5">
           <div>容量计算：节点数 × 单节点 HDD 数 × 单盘容量 × 冗余得盘率 × 0.95（系统开销）</div>
-          <div>带宽计算：集群 HDD 总数 × 每 HDD 平均带宽（读 {GPFS_HYBRID_PER_HDD.readMiBps.toFixed(1)} MiB/s、写 {GPFS_HYBRID_PER_HDD.writeMiBps.toFixed(1)} MiB/s）</div>
-          <div>IOPS 计算：集群 NVMe 总数 × 每盘平均 IOPS（读 {Math.round(GPFS_HYBRID_PER_CACHE.readIOPS).toLocaleString()}、写 {Math.round(GPFS_HYBRID_PER_CACHE.writeIOPS).toLocaleString()}），4KiB 小 IO 假定命中 NVMe 层</div>
+          <div>SSD 层（开启分层）：集群 NVMe 总数 × 每盘性能（读 {GPFS_HYBRID_PER_CACHE.readMiBps.toFixed(0)} MiB/s、写 {GPFS_HYBRID_PER_CACHE.writeMiBps.toFixed(0)} MiB/s、读 IOPS {Math.round(GPFS_HYBRID_PER_CACHE.readIOPS).toLocaleString()}、写 IOPS {Math.round(GPFS_HYBRID_PER_CACHE.writeIOPS).toLocaleString()}）</div>
+          <div>HDD 层（关闭分层）：集群 HDD 总数 × 每盘性能（读 {GPFS_HYBRID_PER_HDD.readMiBps.toFixed(1)} MiB/s、写 {GPFS_HYBRID_PER_HDD.writeMiBps.toFixed(1)} MiB/s、读 IOPS {GPFS_HYBRID_PER_HDD.readIOPS.toFixed(0)}、写 IOPS {GPFS_HYBRID_PER_HDD.writeIOPS.toFixed(0)}）</div>
+          <div>自动规划时带宽需求按 HDD 层（关闭分层）校验，保证冷数据全部落盘时仍满足需求；实际表现取决于 NVMe 层命中率，介于两组数值之间。</div>
           <div>
             性能基准：{GPFS_HYBRID_BASELINE.source}。基准配置为 {GPFS_HYBRID_BASELINE.nodeCount} 节点 ×（{GPFS_HYBRID_BASELINE.hddPerNode} × {GPFS_HYBRID_BASELINE.hddSizeTB}TB HDD + {GPFS_HYBRID_BASELINE.cacheDisksPerNode} × {GPFS_HYBRID_BASELINE.cacheSizeTB}TB NVMe），
-            实测读 {GPFS_HYBRID_BASELINE.readBandwidthGBps} GB/s、写 {GPFS_HYBRID_BASELINE.writeBandwidthGBps} GB/s、读 IOPS {GPFS_HYBRID_BASELINE.readIOPS.toLocaleString()}、写 IOPS {GPFS_HYBRID_BASELINE.writeIOPS.toLocaleString()}
+            开启分层实测读 {GPFS_HYBRID_BASELINE.tiered.readBandwidthGBps} GB/s、写 {GPFS_HYBRID_BASELINE.tiered.writeBandwidthGBps} GB/s、读 IOPS {GPFS_HYBRID_BASELINE.tiered.readIOPS.toLocaleString()}、写 IOPS {GPFS_HYBRID_BASELINE.tiered.writeIOPS.toLocaleString()}；
+            关闭分层实测读 {GPFS_HYBRID_BASELINE.hddOnly.readBandwidthGBps} GB/s、写 {GPFS_HYBRID_BASELINE.hddOnly.writeBandwidthGBps} GB/s、读 IOPS {GPFS_HYBRID_BASELINE.hddOnly.readIOPS.toLocaleString()}、写 IOPS {GPFS_HYBRID_BASELINE.hddOnly.writeIOPS.toLocaleString()}
           </div>
         </div>
+    </div>
+  )
+}
+
+// 分层开启 / 关闭两组性能指标共用的小节
+function PerfTier({ title, hint, perf, perTiBRead, accent }: {
+  title: string;
+  hint: string;
+  perf: { readBandwidth: string; writeBandwidth: string; readIOPS: string; writeIOPS: string };
+  perTiBRead: string;
+  accent: string;
+}) {
+  return (
+    <div>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <h3 className="eyebrow">性能</h3>
+        <span className={`rounded-full px-2 py-0.5 text-xs ${accent}`}>{title}</span>
+      </div>
+      <dl className="stat-grid grid grid-cols-2 gap-2">
+        <div>
+          <dt className="text-body">读 BW (4MiB)</dt>
+          <dd className="font-medium">{perf.readBandwidth}</dd>
+        </div>
+        <div>
+          <dt className="text-body">写 BW (4MiB)</dt>
+          <dd className="font-medium">{perf.writeBandwidth}</dd>
+        </div>
+        <div>
+          <dt className="text-body">读 IOPS (4KiB)</dt>
+          <dd className="font-medium">{perf.readIOPS}</dd>
+        </div>
+        <div>
+          <dt className="text-body">写 IOPS (4KiB)</dt>
+          <dd className="font-medium">{perf.writeIOPS}</dd>
+        </div>
+        <div>
+          <dt className="text-body">每 TiB 读 BW</dt>
+          <dd className="font-medium">{perTiBRead}</dd>
+        </div>
+      </dl>
+      <p className="mt-2 text-xs text-mute">{hint}</p>
     </div>
   )
 }
