@@ -279,6 +279,35 @@ export function calculatePerformance(
   };
 }
 
+/**
+ * 自动规划时选网卡：在满足需求的前提下取最低规格（省成本）。
+ * 「满足」= 既达到给定的带宽需求，又不限制磁盘侧能力（两层都不被网络封顶）——
+ * 只按带宽需求判断会让 25Gb 恒定胜出（HDD 层本就跑不满 25Gb），
+ * 从而悄悄削掉 SSD 层性能，故要求网卡不成为瓶颈。
+ * 类型固定用默认值（RoCE）：速率是成本档位，类型是架构选择，不代为降级。
+ */
+export function pickLowestSufficientNetwork(
+  nodeCount: number,
+  hddPerNode: number,
+  cacheCount: number,
+  ecScheme: string,
+  readBWReq = 0,
+  writeBWReq = 0
+): NetworkConfig {
+  const speeds = [...CONSTANTS.NETWORK_SPEEDS].sort((a, b) => a - b);
+  let fallback: NetworkConfig | undefined;
+  for (const speed of speeds) {
+    const network = getNetworkConfig(CONSTANTS.DEFAULT_NETWORK_TYPE, speed, ecScheme);
+    const perf = calculatePerformance(nodeCount, hddPerNode, cacheCount, network);
+    fallback = network;
+    const meetsDemand = perf.hddOnly.readBandwidth >= readBWReq && perf.hddOnly.writeBandwidth >= writeBWReq;
+    const notBottleneck = !perf.networkLimited.tiered && !perf.networkLimited.hddOnly;
+    if (meetsDemand && notBottleneck) return network;
+  }
+  // 连最高规格都不满足时返回最高规格，由调用方按带宽判定该配置是否可行
+  return fallback!;
+}
+
 function formatTier(perf: TierPerformance, bandwidthUnitType: string): FormattedTierPerformance {
   return {
     readBandwidth: formatBandwidth(perf.readBandwidth, bandwidthUnitType),
@@ -345,6 +374,7 @@ export function planGPFSHybrid(req: GPFSHybridPlanRequest): GPFSHybridPlanResult
     nodeCount: number;
     hddSize: number;
     actualCapacity: number;
+    networkSpeed: number;
   }
 
   const configs: Config[] = [];
@@ -355,11 +385,12 @@ export function planGPFSHybrid(req: GPFSHybridPlanRequest): GPFSHybridPlanResult
     for (let nodes = CONSTANTS.MIN_NODES; nodes <= CONSTANTS.MAX_NODES; nodes++) {
       const ec = getBestECScheme(nodes);
       const actual = calculateCapacityTiB(nodes, hddPerNode, hddSize, ec.efficiency);
-      const net = getNetworkConfig(CONSTANTS.DEFAULT_NETWORK_TYPE, CONSTANTS.DEFAULT_NETWORK_SPEED, ec.scheme);
+      // 满足需求的前提下取最低网卡规格
+      const net = pickLowestSufficientNetwork(nodes, hddPerNode, cache.count, ec.scheme, readBWReq, writeBWReq);
       // 带宽需求按分层关闭（HDD 层）口径校验：冷数据全部落盘时仍能满足
       const perf = calculatePerformance(nodes, hddPerNode, cache.count, net).hddOnly;
       if (actual >= capacityTiB && perf.readBandwidth >= readBWReq && perf.writeBandwidth >= writeBWReq) {
-        configs.push({ nodeCount: nodes, hddSize, actualCapacity: actual });
+        configs.push({ nodeCount: nodes, hddSize, actualCapacity: actual, networkSpeed: net.speedGb });
         break;
       }
     }
@@ -375,5 +406,16 @@ export function planGPFSHybrid(req: GPFSHybridPlanRequest): GPFSHybridPlanResult
     return a.actualCapacity <= b.actualCapacity ? a : b;
   });
 
-  return buildGPFSHybridResult(best.nodeCount, hddPerNode, best.hddSize, capacityInfo.isBinary);
+  return buildGPFSHybridResult(
+    best.nodeCount,
+    hddPerNode,
+    best.hddSize,
+    capacityInfo.isBinary,
+    'decimal-byte',
+    undefined,
+    undefined,
+    undefined,
+    CONSTANTS.DEFAULT_NETWORK_TYPE,
+    best.networkSpeed
+  );
 }
