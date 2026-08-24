@@ -6,7 +6,7 @@ import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calcula
 import type { VastDataPlanResult } from '#/lib/vastdata'
 import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, getAllowedECSchemes, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
-import { planGPFSHybrid, buildGPFSHybridResult, getECScheme as getGpfsHybridEcScheme, getAllowedECSchemes as getGpfsHybridAllowedSchemes, calculateCacheConfig as gpfsHybridCacheConfig, calculateCapacityTiB as gpfsHybridCapacity, PER_HDD_PERF as GPFS_HYBRID_PER_HDD, PER_CACHE_PERF as GPFS_HYBRID_PER_CACHE, REPORT_BASELINE as GPFS_HYBRID_BASELINE, CONSTANTS as GPFS_HYBRID_CONSTANTS } from '#/lib/gpfs-hybrid'
+import { planGPFSHybrid, buildGPFSHybridResult, getECScheme as getGpfsHybridEcScheme, getAllowedECSchemes as getGpfsHybridAllowedSchemes, calculateCacheConfig as gpfsHybridCacheConfig, calculateCapacityTiB as gpfsHybridCapacity, REPORT_BASELINE as GPFS_HYBRID_BASELINE, CONSTANTS as GPFS_HYBRID_CONSTANTS } from '#/lib/gpfs-hybrid'
 import type { GPFSHybridPlanResult } from '#/lib/gpfs-hybrid'
 import { planCeph, buildCephResult, getMemoryConfig as getCephMemory, getStorageNetworkConfig as getCephStorageNetwork, getMdsMemoryConfig as getCephMdsMemory, getMdsStorageNetworkConfig as getCephMdsStorageNetwork, getPerDiskPerformance as getCephPerDisk, getAllowedRedundancySchemes as getCephAllowedSchemes, RGW_PER_DISK as CEPH_RGW_PER_DISK, calculateCapacityTiB as cephCapacity, CONSTANTS as CEPH_CONSTANTS } from '#/lib/ceph'
 import type { CephPlanResult } from '#/lib/ceph'
@@ -2030,18 +2030,6 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
             accent={t.chip}
             networkLimited={data.networkLimited.hddOnly}
           />
-        </div>
-        <div className="text-xs text-mute space-y-0.5">
-          <div>容量计算：节点数 × 单节点 HDD 数 × 单盘容量 × 冗余得盘率 × 0.95（系统开销）</div>
-          <div>SSD 层（开启分层）：集群 NVMe 总数 × 每盘性能（读 {GPFS_HYBRID_PER_CACHE.readMiBps.toFixed(0)} MiB/s、写 {GPFS_HYBRID_PER_CACHE.writeMiBps.toFixed(0)} MiB/s、读 IOPS {Math.round(GPFS_HYBRID_PER_CACHE.readIOPS).toLocaleString()}、写 IOPS {Math.round(GPFS_HYBRID_PER_CACHE.writeIOPS).toLocaleString()}）</div>
-          <div>HDD 层（关闭分层）：集群 HDD 总数 × 每盘性能（读 {GPFS_HYBRID_PER_HDD.readMiBps.toFixed(1)} MiB/s、写 {GPFS_HYBRID_PER_HDD.writeMiBps.toFixed(1)} MiB/s、读 IOPS {GPFS_HYBRID_PER_HDD.readIOPS.toFixed(0)}、写 IOPS {GPFS_HYBRID_PER_HDD.writeIOPS.toFixed(0)}）</div>
-          <div>网络封顶：单节点带宽不超过双口绑定速率 × 协议效率（IB/RoCE 90%、Eth 80%）÷ 纠删码网络放大 (D+P)/D；第二张网卡按冗余计，不叠加吞吐。仅带宽受此约束，4KiB IOPS 的网络占用可忽略。</div>
-          <div>自动规划时带宽需求按 HDD 层（关闭分层）、{GPFS_HYBRID_CONSTANTS.DEFAULT_NETWORK_SPEED}Gb 网络校验，保证冷数据全部落盘时仍满足需求；实际表现取决于 NVMe 层命中率，介于两组数值之间。</div>
-          <div>
-            性能基准：{GPFS_HYBRID_BASELINE.source}。基准配置为 {GPFS_HYBRID_BASELINE.nodeCount} 节点 ×（{GPFS_HYBRID_BASELINE.hddPerNode} × {GPFS_HYBRID_BASELINE.hddSizeTB}TB HDD + {GPFS_HYBRID_BASELINE.cacheDisksPerNode} × {GPFS_HYBRID_BASELINE.cacheSizeTB}TB NVMe），
-            开启分层实测读 {GPFS_HYBRID_BASELINE.tiered.readBandwidthGBps} GB/s、写 {GPFS_HYBRID_BASELINE.tiered.writeBandwidthGBps} GB/s、读 IOPS {GPFS_HYBRID_BASELINE.tiered.readIOPS.toLocaleString()}、写 IOPS {GPFS_HYBRID_BASELINE.tiered.writeIOPS.toLocaleString()}；
-            关闭分层实测读 {GPFS_HYBRID_BASELINE.hddOnly.readBandwidthGBps} GB/s、写 {GPFS_HYBRID_BASELINE.hddOnly.writeBandwidthGBps} GB/s、读 IOPS {GPFS_HYBRID_BASELINE.hddOnly.readIOPS.toLocaleString()}、写 IOPS {GPFS_HYBRID_BASELINE.hddOnly.writeIOPS.toLocaleString()}
-          </div>
         </div>
     </div>
   )
