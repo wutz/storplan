@@ -165,13 +165,15 @@ export interface NetworkConfig {
   type: string;
   speedGb: number;
   label: string;
-  /** 单节点客户端可见带宽上限（MiB/s） */
-  perNodeCeiling: number;
-  /** 纠删码网络放大系数 (D+P)/D */
+  /** 单节点读带宽上限（MiB/s）：读只取 D 份数据块，不含校验块，无网络放大 */
+  perNodeReadCeiling: number;
+  /** 单节点写带宽上限（MiB/s）：写需同时下发 D+P 份，按网络放大折算 */
+  perNodeWriteCeiling: number;
+  /** 纠删码网络放大系数 (D+P)/D，仅作用于写 */
   amplification: number;
 }
 
-/** 纠删码网络放大系数：一次全条带读写需要跨节点搬运 (D+P)/D 倍数据 */
+/** 纠删码网络放大系数：一次全条带写需要跨节点搬运 (D+P)/D 倍数据（读只取 D 份，不放大） */
 export function getECAmplification(ecScheme: string): number {
   const m = ecScheme.match(/EC(\d+)\+(\d+)/);
   if (!m) return 1;
@@ -185,13 +187,15 @@ export function getNetworkConfig(type: string, speedGb: number, ecScheme: string
   const allowed = getAllowedNetworkTypes(speedGb);
   const t = allowed.find(n => n.value === type) ?? allowed[0] ?? CONSTANTS.NETWORK_TYPES[0];
   const amplification = getECAmplification(ecScheme);
-  // 端口总速率 → MiB/s，扣协议效率后再除以纠删码网络放大
+  // 端口总速率 → MiB/s，扣协议效率；写再按纠删码网络放大折算，读不折算
   const wireMiBps = (CONSTANTS.STORAGE_PORTS_PER_NODE * speedGb / 8) * 1000 / MIB_TO_MB;
+  const usable = wireMiBps * t.efficiency;
   return {
     type: t.value,
     speedGb,
     label: `${CONSTANTS.STORAGE_PORTS_PER_NODE} × 双口 ${speedGb}Gb ${t.label} 网卡`,
-    perNodeCeiling: (wireMiBps * t.efficiency) / amplification,
+    perNodeReadCeiling: usable,
+    perNodeWriteCeiling: usable / amplification,
     amplification,
   };
 }
@@ -216,43 +220,15 @@ export function getCacheRequirement(hddPerNode: number, hddSizeTB: number) {
 }
 
 /**
- * NVMe 层配置：遍历 (盘数 × 容量) 组合，优先选达到推荐 10% 且浪费最小的；
- * 同等接近时取盘数更多的（分层带宽更高）。
- * 盘数上限 4、单盘上限 15.36TB 的组合上限是 61.44TB，大 HDD 配置（如
- * 36×24TB 需 86.4TB）够不到 10%，此时退而取可达的最大容量，只要不低于 5% 下限。
+ * NVMe 层配置：固定配满 4 块（分层性能随 NVMe 数量线性增长，配满即取最大性能），
+ * 在此基础上取能达到推荐 10% 的最小规格；4 块最大规格仍够不到推荐值时用最大规格，
+ * 保证不低于 5% 下限。
  */
 export function calculateCacheConfig(hddPerNode: number, hddSizeTB: number): HybridCacheConfig {
   const { recommendedTB } = getCacheRequirement(hddPerNode, hddSizeTB);
-
-  let bestCount = 0;
-  let bestSize = 0;
-  let bestWaste = Infinity;
-  // 够不到推荐值时的兜底：可达的最大总容量
-  let maxCount = CONSTANTS.MIN_CACHE_DISKS;
-  let maxSize: number = CONSTANTS.AUTO_CACHE_DISK_SIZES[0];
-  let maxTotal = 0;
-
-  for (let count = CONSTANTS.MIN_CACHE_DISKS; count <= CONSTANTS.MAX_CACHE_DISKS; count++) {
-    for (const sizePerDisk of CONSTANTS.AUTO_CACHE_DISK_SIZES) {
-      const totalSize = count * sizePerDisk;
-      if (totalSize > maxTotal || (totalSize === maxTotal && count > maxCount)) {
-        maxTotal = totalSize;
-        maxCount = count;
-        maxSize = sizePerDisk;
-      }
-      if (totalSize >= recommendedTB) {
-        const waste = totalSize - recommendedTB;
-        if (waste < bestWaste || (waste === bestWaste && count > bestCount)) {
-          bestWaste = waste;
-          bestCount = count;
-          bestSize = sizePerDisk;
-        }
-      }
-    }
-  }
-
-  const count = bestWaste === Infinity ? maxCount : bestCount;
-  const sizePerDisk = bestWaste === Infinity ? maxSize : bestSize;
+  const count = CONSTANTS.MAX_CACHE_DISKS;
+  const sizes = [...CONSTANTS.AUTO_CACHE_DISK_SIZES].sort((a, b) => a - b);
+  const sizePerDisk = sizes.find(s => count * s >= recommendedTB) ?? sizes[sizes.length - 1];
   return { count, sizePerDisk, totalSize: Math.round(count * sizePerDisk * 100) / 100 };
 }
 
@@ -269,15 +245,16 @@ export function calculatePerformance(
   const totalHDD = nodeCount * hddPerNode;
   const totalCache = nodeCount * cacheCount;
   // 4KiB 小 IO 的网络占用极低（几十万 IOPS 也只有 GB/s 量级），仅对带宽做网络封顶
-  const ceiling = network ? network.perNodeCeiling * nodeCount : Infinity;
+  const readCeiling = network ? network.perNodeReadCeiling * nodeCount : Infinity;
+  const writeCeiling = network ? network.perNodeWriteCeiling * nodeCount : Infinity;
 
   const hddOnlyDisk = {
     readBandwidth: totalHDD * PER_HDD_PERF.readMiBps,
     writeBandwidth: totalHDD * PER_HDD_PERF.writeMiBps,
   };
   const hddOnly: TierPerformance = {
-    readBandwidth: Math.min(hddOnlyDisk.readBandwidth, ceiling),
-    writeBandwidth: Math.min(hddOnlyDisk.writeBandwidth, ceiling),
+    readBandwidth: Math.min(hddOnlyDisk.readBandwidth, readCeiling),
+    writeBandwidth: Math.min(hddOnlyDisk.writeBandwidth, writeCeiling),
     readIOPS: Math.round(totalHDD * PER_HDD_PERF.readIOPS),
     writeIOPS: Math.round(totalHDD * PER_HDD_PERF.writeIOPS),
   };
@@ -289,8 +266,8 @@ export function calculatePerformance(
     writeBandwidth: Math.max(totalCache * PER_CACHE_PERF.writeMiBps, hddOnlyDisk.writeBandwidth),
   };
   const tiered: TierPerformance = {
-    readBandwidth: Math.min(tieredDisk.readBandwidth, ceiling),
-    writeBandwidth: Math.min(tieredDisk.writeBandwidth, ceiling),
+    readBandwidth: Math.min(tieredDisk.readBandwidth, readCeiling),
+    writeBandwidth: Math.min(tieredDisk.writeBandwidth, writeCeiling),
     readIOPS: Math.max(Math.round(totalCache * PER_CACHE_PERF.readIOPS), hddOnly.readIOPS),
     writeIOPS: Math.max(Math.round(totalCache * PER_CACHE_PERF.writeIOPS), hddOnly.writeIOPS),
   };
@@ -300,8 +277,8 @@ export function calculatePerformance(
     hddOnly,
     // 是否有指标被存储网络限制（用于界面提示）
     networkLimited: {
-      tiered: tieredDisk.readBandwidth > ceiling || tieredDisk.writeBandwidth > ceiling,
-      hddOnly: hddOnlyDisk.readBandwidth > ceiling || hddOnlyDisk.writeBandwidth > ceiling,
+      tiered: tieredDisk.readBandwidth > readCeiling || tieredDisk.writeBandwidth > writeCeiling,
+      hddOnly: hddOnlyDisk.readBandwidth > readCeiling || hddOnlyDisk.writeBandwidth > writeCeiling,
     },
   };
 }

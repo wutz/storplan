@@ -1879,7 +1879,6 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
   const t = THEME['gpfs-hybrid']
   const totalHDD = data.nodeCount * data.hddPerNode
   const cacheReq = gpfsHybridCacheRequirement(data.hddPerNode, data.hddSize)
-  const cacheRatio = data.cacheConfig.totalSize / cacheReq.rawHddTB
   const isCacheSufficient = data.cacheConfig.totalSize >= cacheReq.minTB
   const isCacheRecommended = data.cacheConfig.totalSize >= cacheReq.recommendedTB
   const cacheCountOptions = Array.from(
@@ -2002,14 +2001,6 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
                 )}
               </dd>
             </div>
-            <div className="text-xs text-mute">
-              <dt>NVMe 容量占比</dt>
-              <dd>
-                {data.cacheConfig.totalSize.toFixed(2)}TB / 单节点 HDD {cacheReq.rawHddTB.toFixed(0)}TB = {(cacheRatio * 100).toFixed(1)}%
-                （下限 {(GPFS_HYBRID_CONSTANTS.CACHE_MIN_RATIO * 100).toFixed(0)}% ≈ {cacheReq.minTB.toFixed(2)}TB，
-                推荐 {(GPFS_HYBRID_CONSTANTS.CACHE_RECOMMENDED_RATIO * 100).toFixed(0)}% ≈ {cacheReq.recommendedTB.toFixed(2)}TB）
-              </dd>
-            </div>
             <div>
               <dt className="text-body">存储网络</dt>
               <dd className="flex items-center gap-1">
@@ -2025,7 +2016,10 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
             </div>
             <div className="text-xs text-mute">
               <dt>单节点网络带宽上限</dt>
-              <dd>{formatBandwidth(data.network.perNodeCeiling, 'decimal-byte')}（双口绑定 × 协议效率 ÷ {data.ecScheme} 网络放大 {data.network.amplification.toFixed(2)}）</dd>
+              <dd>
+                读 {formatBandwidth(data.network.perNodeReadCeiling, 'decimal-byte')} / 写 {formatBandwidth(data.network.perNodeWriteCeiling, 'decimal-byte')}
+                （读只取数据块不放大；写需下发 D+P 份，按 {data.ecScheme} 网络放大 {data.network.amplification.toFixed(2)} 折算）
+              </dd>
             </div>
             <div>
               <dt className="text-body">管理网络</dt>
