@@ -2014,17 +2014,6 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
                 <span>网卡</span>
               </dd>
             </div>
-            <div className="text-xs text-mute">
-              <dt>单节点网络带宽上限</dt>
-              <dd>
-                读 {formatBandwidth(data.network.perNodeReadCeiling, 'decimal-byte')} / 写 {formatBandwidth(data.network.perNodeWriteCeiling, 'decimal-byte')}
-                （读只取数据块不放大；写需下发 D+P 份，按 {data.ecScheme} 网络放大 {data.network.amplification.toFixed(2)} 折算）
-              </dd>
-            </div>
-            <div>
-              <dt className="text-body">管理网络</dt>
-              <dd>1 × 双口 10Gb 以太网卡</dd>
-            </div>
           </dl>
         </div>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
