@@ -6,6 +6,8 @@ import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calcula
 import type { VastDataPlanResult } from '#/lib/vastdata'
 import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, getAllowedECSchemes, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
+import { planGPFSHybrid, buildGPFSHybridResult, getECScheme as getGpfsHybridEcScheme, getAllowedECSchemes as getGpfsHybridAllowedSchemes, calculateCacheConfig as gpfsHybridCacheConfig, calculateCapacityTiB as gpfsHybridCapacity, PER_HDD_BANDWIDTH as GPFS_HYBRID_PER_HDD, PER_CACHE_IOPS as GPFS_HYBRID_PER_CACHE, REPORT_BASELINE as GPFS_HYBRID_BASELINE, CONSTANTS as GPFS_HYBRID_CONSTANTS } from '#/lib/gpfs-hybrid'
+import type { GPFSHybridPlanResult } from '#/lib/gpfs-hybrid'
 import { planCeph, buildCephResult, getMemoryConfig as getCephMemory, getStorageNetworkConfig as getCephStorageNetwork, getMdsMemoryConfig as getCephMdsMemory, getMdsStorageNetworkConfig as getCephMdsStorageNetwork, getPerDiskPerformance as getCephPerDisk, getAllowedRedundancySchemes as getCephAllowedSchemes, RGW_PER_DISK as CEPH_RGW_PER_DISK, calculateCapacityTiB as cephCapacity, CONSTANTS as CEPH_CONSTANTS } from '#/lib/ceph'
 import type { CephPlanResult } from '#/lib/ceph'
 import { planCephHybrid, buildCephHybridResult, calculateCacheConfig as cephHybridCacheConfig, calculateCapacityTiB as cephHybridCapacity, getAllowedRedundancySchemes as getCephHybridAllowedSchemes, RGW_HYBRID_PER_DISK, CONSTANTS as CEPH_HYBRID_CONSTANTS } from '#/lib/ceph-hybrid'
@@ -20,6 +22,7 @@ type PlanResults = {
   xeos?: XEOSPlanResult
   vastdata?: VastDataPlanResult
   'gpfs-ece'?: GPFSECEPlanResult
+  'gpfs-hybrid'?: GPFSHybridPlanResult
   ceph?: CephPlanResult
   'ceph-hybrid'?: CephHybridPlanResult
   weka?: WekaPlanResult
@@ -71,6 +74,20 @@ const THEME: Record<string, Theme> = {
     selectedCard: 'border-[#0F62FE] bg-[#0F62FE]/10',
     dot: 'bg-[#0F62FE]',
     accentBar: 'bg-[#0F62FE]',
+  },
+  'gpfs-hybrid': {
+    // IBM 官网品牌色（混闪用更深的 IBM Blue 80 区分全闪）
+    label: 'GPFS/Scale 混闪（文件系统）',
+    title: 'GPFS/Scale（混闪）',
+    category: '混闪并行文件系统',
+    accentText: 'text-[#002D9C]',
+    accentBgSoft: 'bg-[#002D9C]/10',
+    accentBorder: 'border-[#002D9C]',
+    chip: 'bg-[#002D9C]/15 text-[#002D9C]',
+    bigValue: 'text-[#002D9C]',
+    selectedCard: 'border-[#002D9C] bg-[#002D9C]/10',
+    dot: 'bg-[#002D9C]',
+    accentBar: 'bg-[#002D9C]',
   },
   xeos: {
     // XSKY 官网品牌色：星辰紫 #7855FA
@@ -130,7 +147,7 @@ const THEME: Record<string, Theme> = {
   },
 }
 
-const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'weka', 'xeos', 'ceph', 'ceph-hybrid'] as const
+const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'gpfs-hybrid', 'weka', 'xeos', 'ceph', 'ceph-hybrid'] as const
 
 // 勾选指示图标（用于方案选择卡片）
 function CheckIcon({ className }: { className?: string }) {
@@ -281,6 +298,7 @@ function StorplanApp() {
     xeos?: { serverCount: number; disksPerServer: number; diskSize: number; ecEfficiency: number; cacheCount: number; cacheSizePerDisk: number };
     vastdata?: { eboxCount: number; diskSize: number };
     'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number };
+    'gpfs-hybrid'?: { nodeCount: number; hddPerNode: number; hddSize: number; ecScheme?: string; cacheCount: number; cacheSizePerDisk: number };
     ceph?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; mdsNodeCount?: number };
     'ceph-hybrid'?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; cacheCount: number; cacheSizePerDisk: number };
     weka?: { dataNodeCount: number; ssdSize: number; protectionLevel: number; networkType: string; hotSpareCount?: number; nvmePerNode?: number };
@@ -366,6 +384,24 @@ function StorplanApp() {
           }
         } catch (err) {
           newErrors['gpfs-ece'] = err instanceof Error ? err.message : 'Unknown error'
+        }
+      }
+
+      if (selectedStorages.has('gpfs-hybrid')) {
+        try {
+          if (manualConfig['gpfs-hybrid']) {
+            const mc = manualConfig['gpfs-hybrid']
+            newResults['gpfs-hybrid'] = buildGPFSHybridResult(mc.nodeCount, mc.hddPerNode, mc.hddSize, isBinary, bandwidthUnitType, mc.ecScheme, mc.cacheCount, mc.cacheSizePerDisk)
+          } else {
+            const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
+            const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
+            const result = planGPFSHybrid({ capacity, readBandwidth: readBW || undefined, writeBandwidth: writeBW || undefined })
+            result.formatted.readBandwidth = formatBandwidth(result.performance.readBandwidth, bandwidthUnitType)
+            result.formatted.writeBandwidth = formatBandwidth(result.performance.writeBandwidth, bandwidthUnitType)
+            newResults['gpfs-hybrid'] = result
+          }
+        } catch (err) {
+          newErrors['gpfs-hybrid'] = err instanceof Error ? err.message : 'Unknown error'
         }
       }
 
@@ -568,6 +604,62 @@ function StorplanApp() {
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
+  // GPFS 混闪：节点数变化时保留当前纠删码方案（若该节点数仍允许），否则回退默认方案
+  const handleGpfsHybridNodeCountChange = (newCount: number) => {
+    if (!results['gpfs-hybrid'] || newCount < GPFS_HYBRID_CONSTANTS.MIN_NODES || newCount > GPFS_HYBRID_CONSTANTS.MAX_NODES) return
+    const { hddPerNode, hddSize, ecScheme, cacheConfig } = results['gpfs-hybrid']
+    const allowed = getGpfsHybridAllowedSchemes(newCount)
+    const scheme = allowed.find(s => s.scheme === ecScheme) ?? getGpfsHybridEcScheme(newCount)
+    const newCapacityTiB = gpfsHybridCapacity(newCount, hddPerNode, hddSize, scheme.efficiency)
+    setManualConfig(prev => ({ ...prev, 'gpfs-hybrid': { nodeCount: newCount, hddPerNode, hddSize, ecScheme: scheme.scheme, cacheCount: cacheConfig.count, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleGpfsHybridHddPerNodeChange = (newHddPerNode: number) => {
+    if (!results['gpfs-hybrid']) return
+    const { nodeCount, hddSize, ecScheme, efficiency } = results['gpfs-hybrid']
+    const newCapacityTiB = gpfsHybridCapacity(nodeCount, newHddPerNode, hddSize, efficiency)
+    // HDD 数量变化后 NVMe 层容量下限随之变化，重新自动选型
+    const cache = gpfsHybridCacheConfig(newHddPerNode, hddSize)
+    setManualConfig(prev => ({ ...prev, 'gpfs-hybrid': { nodeCount, hddPerNode: newHddPerNode, hddSize, ecScheme, cacheCount: cache.count, cacheSizePerDisk: cache.sizePerDisk } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleGpfsHybridHddSizeChange = (newHddSize: number) => {
+    if (!results['gpfs-hybrid']) return
+    const { nodeCount, hddPerNode, ecScheme, efficiency } = results['gpfs-hybrid']
+    const newCapacityTiB = gpfsHybridCapacity(nodeCount, hddPerNode, newHddSize, efficiency)
+    const cache = gpfsHybridCacheConfig(hddPerNode, newHddSize)
+    setManualConfig(prev => ({ ...prev, 'gpfs-hybrid': { nodeCount, hddPerNode, hddSize: newHddSize, ecScheme, cacheCount: cache.count, cacheSizePerDisk: cache.sizePerDisk } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleGpfsHybridEcChange = (scheme: string) => {
+    if (!results['gpfs-hybrid']) return
+    const { nodeCount, hddPerNode, hddSize, cacheConfig } = results['gpfs-hybrid']
+    const s = getGpfsHybridAllowedSchemes(nodeCount).find(x => x.scheme === scheme)
+    if (!s) return
+    const newCapacityTiB = gpfsHybridCapacity(nodeCount, hddPerNode, hddSize, s.efficiency)
+    setManualConfig(prev => ({ ...prev, 'gpfs-hybrid': { nodeCount, hddPerNode, hddSize, ecScheme: scheme, cacheCount: cacheConfig.count, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
+    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  const handleGpfsHybridCacheCountChange = (newCount: number) => {
+    if (!results['gpfs-hybrid']) return
+    const { nodeCount, hddPerNode, hddSize, ecScheme, cacheConfig } = results['gpfs-hybrid']
+    const requiredCacheTB = (hddPerNode * hddSize) / GPFS_HYBRID_CONSTANTS.CACHE_RATIO
+    if (newCount * cacheConfig.sizePerDisk < requiredCacheTB) return
+    setManualConfig(prev => ({ ...prev, 'gpfs-hybrid': { nodeCount, hddPerNode, hddSize, ecScheme, cacheCount: newCount, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
+  }
+
+  const handleGpfsHybridCacheSizeChange = (newSize: number) => {
+    if (!results['gpfs-hybrid']) return
+    const { nodeCount, hddPerNode, hddSize, ecScheme, cacheConfig } = results['gpfs-hybrid']
+    const requiredCacheTB = (hddPerNode * hddSize) / GPFS_HYBRID_CONSTANTS.CACHE_RATIO
+    if (cacheConfig.count * newSize < requiredCacheTB) return
+    setManualConfig(prev => ({ ...prev, 'gpfs-hybrid': { nodeCount, hddPerNode, hddSize, ecScheme, cacheCount: cacheConfig.count, cacheSizePerDisk: newSize } }))
+  }
+
   const handleCephNodeCountChange = (newCount: number) => {
     if (!results.ceph || newCount < CEPH_CONSTANTS.MIN_NODES || newCount > CEPH_CONSTANTS.MAX_NODES) return
     const { disksPerNode, diskSize, redundancy, nodeCount, mdsNodeCount } = results.ceph
@@ -739,6 +831,10 @@ function StorplanApp() {
       case 'gpfs-ece':
         return results['gpfs-ece'] && (
           <GPFSECEResult data={results['gpfs-ece']} onServerCountChange={handleGpfsServerCountChange} onDiskChange={handleGpfsDiskChange} onEcChange={handleGpfsEcChange} onSsdCountChange={handleGpfsSsdCountChange} />
+        )
+      case 'gpfs-hybrid':
+        return results['gpfs-hybrid'] && (
+          <GPFSHybridResult data={results['gpfs-hybrid']} onNodeCountChange={handleGpfsHybridNodeCountChange} onHddPerNodeChange={handleGpfsHybridHddPerNodeChange} onHddSizeChange={handleGpfsHybridHddSizeChange} onEcChange={handleGpfsHybridEcChange} onCacheCountChange={handleGpfsHybridCacheCountChange} onCacheSizeChange={handleGpfsHybridCacheSizeChange} />
         )
       case 'weka':
         return results.weka && (
@@ -986,6 +1082,13 @@ const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[] }[] =
         scenarios: '单租户高性能场景，预算有限',
       },
       {
+        key: 'gpfs-hybrid',
+        name: 'GPFS 混闪',
+        pros: '每 TB 成本远低于全闪，大块带宽随 HDD 数线性增长，与全闪 GPFS 同一套运维体系',
+        cons: '小文件随机性能依赖 NVMe 层命中率，HDD 重建慢，多租户支持弱',
+        scenarios: '大容量冷温数据、以大文件顺序读写为主的场景',
+      },
+      {
         key: 'weka',
         name: 'Weka',
         pros: '性能高于 GPFS ECE，支持多租户',
@@ -1149,6 +1252,25 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
     pros: ['性能高', '采购成本低'],
     cons: ['多租户支持弱', '运维成本高', '原厂支持弱'],
     limits: ['启用多租户时，容量起步与扩容步长均为 50 TiB', '启用多租户时，K8s 仅支持 hostPath，不支持基于 CSI 的 PVC'],
+  },
+  'gpfs-hybrid': {
+    description: 'GPFS/Scale 混闪基于大量大容量 HDD 加少量 NVMe SSD 构建：元数据与热数据放在 NVMe 层，冷数据落在 HDD 数据层，用远低于全闪的成本换取大容量并行文件系统。',
+    pros: [
+      '每 TB 成本远低于全闪方案',
+      '大块顺序读写带宽随 HDD 主轴数线性增长',
+      '小 IO 由 NVMe 层承载，元数据操作接近全闪表现',
+      '与全闪 GPFS 同一套软件与运维体系，可混合组池分层',
+    ],
+    cons: [
+      '小文件随机性能取决于 NVMe 层命中率，命中率低时性能回落到 HDD 水平',
+      'HDD 重建时间长，重建期间性能下降明显',
+      '多租户支持弱，运维成本高，原厂支持弱',
+    ],
+    limits: [
+      '性能基准来自浪潮 AS13000 混闪三节点实测，按 HDD 与 NVMe 数量线性外推，大规模集群需实测复核',
+      '不建议用于以小文件随机读写为主的 AI 训练场景，此类场景应选全闪方案',
+      '可用容量仅统计 HDD 数据层，NVMe 层按元数据与热数据缓存计',
+    ],
   },
   ceph: {
     description: 'Ceph 是开源分布式统一存储系统，本方案为全闪配置，单一集群同时提供块、对象和文件存储服务。',
@@ -1697,6 +1819,185 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
               <dd className="font-medium">{data.formatted.writeIOPS}</dd>
             </div>
           </dl>
+        </div>
+    </div>
+  )
+}
+
+function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSizeChange, onEcChange, onCacheCountChange, onCacheSizeChange }: {
+  data: GPFSHybridPlanResult;
+  onNodeCountChange: (n: number) => void;
+  onHddPerNodeChange: (n: number) => void;
+  onHddSizeChange: (n: number) => void;
+  onEcChange: (s: string) => void;
+  onCacheCountChange: (n: number) => void;
+  onCacheSizeChange: (n: number) => void;
+}) {
+  const t = THEME['gpfs-hybrid']
+  const totalHDD = data.nodeCount * data.hddPerNode
+  const requiredCacheTB = (data.hddPerNode * data.hddSize) / GPFS_HYBRID_CONSTANTS.CACHE_RATIO
+  const isCacheSufficient = data.cacheConfig.totalSize >= requiredCacheTB
+  const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
+  const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
+  // 仅当规模与单机配置都与报告基准一致时才是实测值，否则均为线性外推
+  const isBaselineScale = data.nodeCount === GPFS_HYBRID_BASELINE.nodeCount
+    && data.hddPerNode === GPFS_HYBRID_BASELINE.hddPerNode
+    && data.hddSize === GPFS_HYBRID_BASELINE.hddSizeTB
+    && data.cacheConfig.count === GPFS_HYBRID_BASELINE.cacheDisksPerNode
+    && data.cacheConfig.sizePerDisk === GPFS_HYBRID_BASELINE.cacheSizeTB
+
+  return (
+    <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h3 className="eyebrow mb-3">集群配置</h3>
+            <dl className="spec-list text-sm">
+              <div>
+                <dt className="text-body">服务器台数</dt>
+                <Stepper label="服务器台数" value={data.nodeCount} unit="台" onChange={onNodeCountChange} min={GPFS_HYBRID_CONSTANTS.MIN_NODES} max={GPFS_HYBRID_CONSTANTS.MAX_NODES} />
+              </div>
+              <div>
+                <dt className="text-body">纠删码方案</dt>
+                <dd>
+                  <select value={data.ecScheme} onChange={(e) => onEcChange(e.target.value)} aria-label="纠删码方案" className="field">
+                    {getGpfsHybridAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}</option>)}
+                  </select>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-body">冗余得盘率</dt>
+                <dd>{(data.efficiency * 100).toFixed(1)}%</dd>
+              </div>
+              <div>
+                <dt className="text-body">容错能力</dt>
+                <dd>容忍 {data.tolerance} 台节点离线</dd>
+              </div>
+              <div>
+                <dt className="text-body">集群 HDD 总数</dt>
+                <dd>{totalHDD.toLocaleString()} 块</dd>
+              </div>
+              <div>
+                <dt className="text-body">集群 NVMe 总容量</dt>
+                <dd>{data.cacheTotalTB.toLocaleString()} TB</dd>
+              </div>
+            </dl>
+          </div>
+          <div>
+            <h3 className="eyebrow mb-3">容量（HDD 数据层）</h3>
+            <dl className="spec-list text-sm">
+              <div>
+                <dt className="text-body">可用容量</dt>
+                <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
+              </div>
+              <div>
+                <dt className="text-body">裸容量</dt>
+                <dd>{data.formatted.rawCapacity}</dd>
+              </div>
+              <div className="text-xs text-mute">
+                <dt>说明</dt>
+                <dd>含 5% 系统开销保留；元数据在 NVMe 层，不占 HDD 容量</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+        <div>
+          <h3 className="eyebrow mb-3">每台服务器配置（混闪）</h3>
+          <dl className="spec-list text-sm">
+            <div>
+              <dt className="text-body">处理器</dt>
+              <dd>2 × Intel Xeon Gold 5520+</dd>
+            </div>
+            <div>
+              <dt className="text-body">内存</dt>
+              <dd>16 × 32GB DDR5（共 512GB）</dd>
+            </div>
+            <div>
+              <dt className="text-body">系统盘</dt>
+              <dd>2 × 960GB SATA SSD（RAID1）</dd>
+            </div>
+            <div>
+              <dt className="text-body">数据盘</dt>
+              <dd className="flex items-center gap-1">
+                <select value={data.hddPerNode} onChange={(e) => onHddPerNodeChange(Number(e.target.value))} aria-label="每台数据盘数量" className="field">
+                  {GPFS_HYBRID_CONSTANTS.HDD_PER_NODE_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+                <span>×</span>
+                <select value={data.hddSize} onChange={(e) => onHddSizeChange(Number(e.target.value))} aria-label="单盘容量" className="field">
+                  {GPFS_HYBRID_CONSTANTS.HDD_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
+                </select>
+                <span>SATA HDD</span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-body">元数据 / 热数据盘</dt>
+              <dd className="flex items-center gap-1">
+                <select value={data.cacheConfig.count} onChange={(e) => onCacheCountChange(Number(e.target.value))} aria-label="NVMe 盘数量" className="field">
+                  {[2, 3, 4, 5, 6, 7, 8].map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <span>×</span>
+                <select value={data.cacheConfig.sizePerDisk} onChange={(e) => onCacheSizeChange(Number(e.target.value))} aria-label="单块 NVMe 容量" className="field">
+                  {GPFS_HYBRID_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
+                </select>
+                <span className="text-xs">NVMe SSD（DWPD ≥ 3）</span>
+                {!isCacheSufficient && (
+                  <span className="inline-flex items-center gap-1 text-xs text-error-deep">
+                    <WarnIcon className="h-3 w-3" />
+                    不足
+                  </span>
+                )}
+              </dd>
+            </div>
+            <div className="text-xs text-mute">
+              <dt>NVMe 容量要求</dt>
+              <dd>≥ {requiredCacheTB.toFixed(2)}TB（实际 {data.cacheConfig.totalSize.toFixed(2)}TB）</dd>
+            </div>
+            <div>
+              <dt className="text-body">存储网络</dt>
+              <dd>2 × 单口 100Gb RoCE/IB NIC</dd>
+            </div>
+            <div>
+              <dt className="text-body">管理网络</dt>
+              <dd>1 × 万兆以太网卡</dd>
+            </div>
+          </dl>
+        </div>
+        <div>
+          <h3 className="eyebrow mb-3">性能（{isBaselineScale ? '三节点实测数据' : '基于三节点实测线性外推'}）</h3>
+          <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div>
+              <dt className="text-body">读 BW (4MiB)</dt>
+              <dd className="font-medium">{data.formatted.readBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-body">写 BW (4MiB)</dt>
+              <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
+            </div>
+            <div>
+              <dt className="text-body">每 TiB 读 BW (4MiB)</dt>
+              <dd className="font-medium">{perTiBReadBWFormatted}</dd>
+            </div>
+            <div>
+              <dt className="text-body">读 IOPS (4KiB)</dt>
+              <dd className="font-medium">{data.formatted.readIOPS}</dd>
+            </div>
+            <div>
+              <dt className="text-body">写 IOPS (4KiB)</dt>
+              <dd className="font-medium">{data.formatted.writeIOPS}</dd>
+            </div>
+            <div>
+              <dt className="text-body">时延（读 / 写）</dt>
+              <dd className="font-medium">{GPFS_HYBRID_BASELINE.readLatencyMs} / {GPFS_HYBRID_BASELINE.writeLatencyMs} ms</dd>
+            </div>
+          </dl>
+        </div>
+        <div className="text-xs text-mute space-y-0.5">
+          <div>容量计算：节点数 × 单节点 HDD 数 × 单盘容量 × 冗余得盘率 × 0.95（系统开销）</div>
+          <div>带宽计算：集群 HDD 总数 × 每 HDD 平均带宽（读 {GPFS_HYBRID_PER_HDD.readMiBps.toFixed(1)} MiB/s、写 {GPFS_HYBRID_PER_HDD.writeMiBps.toFixed(1)} MiB/s）</div>
+          <div>IOPS 计算：集群 NVMe 总数 × 每盘平均 IOPS（读 {Math.round(GPFS_HYBRID_PER_CACHE.readIOPS).toLocaleString()}、写 {Math.round(GPFS_HYBRID_PER_CACHE.writeIOPS).toLocaleString()}），4KiB 小 IO 假定命中 NVMe 层</div>
+          <div>
+            性能基准：{GPFS_HYBRID_BASELINE.source}。基准配置为 {GPFS_HYBRID_BASELINE.nodeCount} 节点 ×（{GPFS_HYBRID_BASELINE.hddPerNode} × {GPFS_HYBRID_BASELINE.hddSizeTB}TB HDD + {GPFS_HYBRID_BASELINE.cacheDisksPerNode} × {GPFS_HYBRID_BASELINE.cacheSizeTB}TB NVMe），
+            实测读 {GPFS_HYBRID_BASELINE.readBandwidthGBps} GB/s、写 {GPFS_HYBRID_BASELINE.writeBandwidthGBps} GB/s、读 IOPS {GPFS_HYBRID_BASELINE.readIOPS.toLocaleString()}、写 IOPS {GPFS_HYBRID_BASELINE.writeIOPS.toLocaleString()}
+          </div>
         </div>
     </div>
   )
