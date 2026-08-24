@@ -298,7 +298,7 @@ function StorplanApp() {
     xeos?: { serverCount: number; disksPerServer: number; diskSize: number; ecEfficiency: number; cacheCount: number; cacheSizePerDisk: number };
     vastdata?: { eboxCount: number; diskSize: number };
     'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number };
-    'gpfs-hybrid'?: { nodeCount: number; hddPerNode: number; hddSize: number; ecScheme?: string; cacheCount: number; cacheSizePerDisk: number };
+    'gpfs-hybrid'?: { nodeCount: number; hddPerNode: number; hddSize: number; ecScheme?: string; cacheCount: number; cacheSizePerDisk: number; networkType: string; networkSpeed: number };
     ceph?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; mdsNodeCount?: number };
     'ceph-hybrid'?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; cacheCount: number; cacheSizePerDisk: number };
     weka?: { dataNodeCount: number; ssdSize: number; protectionLevel: number; networkType: string; hotSpareCount?: number; nvmePerNode?: number };
@@ -391,7 +391,7 @@ function StorplanApp() {
         try {
           if (manualConfig['gpfs-hybrid']) {
             const mc = manualConfig['gpfs-hybrid']
-            newResults['gpfs-hybrid'] = buildGPFSHybridResult(mc.nodeCount, mc.hddPerNode, mc.hddSize, isBinary, bandwidthUnitType, mc.ecScheme, mc.cacheCount, mc.cacheSizePerDisk)
+            newResults['gpfs-hybrid'] = buildGPFSHybridResult(mc.nodeCount, mc.hddPerNode, mc.hddSize, isBinary, bandwidthUnitType, mc.ecScheme, mc.cacheCount, mc.cacheSizePerDisk, mc.networkType, mc.networkSpeed)
           } else {
             const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
             const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
@@ -606,60 +606,90 @@ function StorplanApp() {
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
-  // GPFS 混闪：节点数变化时保留当前纠删码方案（若该节点数仍允许），否则回退默认方案
+  /**
+   * GPFS 混闪：把当前结果连同本次改动写回手动配置。
+   * 所有可调项（含存储网络）都从结果里带出，避免逐个 handler 重复列举字段。
+   */
+  const patchGpfsHybrid = (
+    patch: Partial<{ nodeCount: number; hddPerNode: number; hddSize: number; ecScheme: string; cacheCount: number; cacheSizePerDisk: number; networkType: string; networkSpeed: number }>,
+    newCapacityTiB?: number
+  ) => {
+    const r = results['gpfs-hybrid']
+    if (!r) return
+    setManualConfig(prev => ({
+      ...prev,
+      'gpfs-hybrid': {
+        nodeCount: r.nodeCount,
+        hddPerNode: r.hddPerNode,
+        hddSize: r.hddSize,
+        ecScheme: r.ecScheme,
+        cacheCount: r.cacheConfig.count,
+        cacheSizePerDisk: r.cacheConfig.sizePerDisk,
+        networkType: r.network.type,
+        networkSpeed: r.network.speedGb,
+        ...patch,
+      },
+    }))
+    if (newCapacityTiB !== undefined) setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  // 节点数变化时保留当前纠删码方案（若该节点数仍允许），否则回退默认方案
   const handleGpfsHybridNodeCountChange = (newCount: number) => {
     if (!results['gpfs-hybrid'] || newCount < GPFS_HYBRID_CONSTANTS.MIN_NODES || newCount > GPFS_HYBRID_CONSTANTS.MAX_NODES) return
-    const { hddPerNode, hddSize, ecScheme, cacheConfig } = results['gpfs-hybrid']
+    const { hddPerNode, hddSize, ecScheme } = results['gpfs-hybrid']
     const allowed = getGpfsHybridAllowedSchemes(newCount)
     const scheme = allowed.find(s => s.scheme === ecScheme) ?? getGpfsHybridEcScheme(newCount)
-    const newCapacityTiB = gpfsHybridCapacity(newCount, hddPerNode, hddSize, scheme.efficiency)
-    setManualConfig(prev => ({ ...prev, 'gpfs-hybrid': { nodeCount: newCount, hddPerNode, hddSize, ecScheme: scheme.scheme, cacheCount: cacheConfig.count, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
-    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+    patchGpfsHybrid(
+      { nodeCount: newCount, ecScheme: scheme.scheme },
+      gpfsHybridCapacity(newCount, hddPerNode, hddSize, scheme.efficiency)
+    )
   }
 
   const handleGpfsHybridHddPerNodeChange = (newHddPerNode: number) => {
     if (!results['gpfs-hybrid']) return
-    const { nodeCount, hddSize, ecScheme, efficiency } = results['gpfs-hybrid']
-    const newCapacityTiB = gpfsHybridCapacity(nodeCount, newHddPerNode, hddSize, efficiency)
+    const { nodeCount, hddSize, efficiency } = results['gpfs-hybrid']
     // HDD 数量变化后 NVMe 层容量下限随之变化，重新自动选型
     const cache = gpfsHybridCacheConfig(newHddPerNode, hddSize)
-    setManualConfig(prev => ({ ...prev, 'gpfs-hybrid': { nodeCount, hddPerNode: newHddPerNode, hddSize, ecScheme, cacheCount: cache.count, cacheSizePerDisk: cache.sizePerDisk } }))
-    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+    patchGpfsHybrid(
+      { hddPerNode: newHddPerNode, cacheCount: cache.count, cacheSizePerDisk: cache.sizePerDisk },
+      gpfsHybridCapacity(nodeCount, newHddPerNode, hddSize, efficiency)
+    )
   }
 
   const handleGpfsHybridHddSizeChange = (newHddSize: number) => {
     if (!results['gpfs-hybrid']) return
-    const { nodeCount, hddPerNode, ecScheme, efficiency } = results['gpfs-hybrid']
-    const newCapacityTiB = gpfsHybridCapacity(nodeCount, hddPerNode, newHddSize, efficiency)
+    const { nodeCount, hddPerNode, efficiency } = results['gpfs-hybrid']
     const cache = gpfsHybridCacheConfig(hddPerNode, newHddSize)
-    setManualConfig(prev => ({ ...prev, 'gpfs-hybrid': { nodeCount, hddPerNode, hddSize: newHddSize, ecScheme, cacheCount: cache.count, cacheSizePerDisk: cache.sizePerDisk } }))
-    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+    patchGpfsHybrid(
+      { hddSize: newHddSize, cacheCount: cache.count, cacheSizePerDisk: cache.sizePerDisk },
+      gpfsHybridCapacity(nodeCount, hddPerNode, newHddSize, efficiency)
+    )
   }
 
   const handleGpfsHybridEcChange = (scheme: string) => {
     if (!results['gpfs-hybrid']) return
-    const { nodeCount, hddPerNode, hddSize, cacheConfig } = results['gpfs-hybrid']
+    const { nodeCount, hddPerNode, hddSize } = results['gpfs-hybrid']
     const s = getGpfsHybridAllowedSchemes(nodeCount).find(x => x.scheme === scheme)
     if (!s) return
-    const newCapacityTiB = gpfsHybridCapacity(nodeCount, hddPerNode, hddSize, s.efficiency)
-    setManualConfig(prev => ({ ...prev, 'gpfs-hybrid': { nodeCount, hddPerNode, hddSize, ecScheme: scheme, cacheCount: cacheConfig.count, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
-    setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+    patchGpfsHybrid({ ecScheme: scheme }, gpfsHybridCapacity(nodeCount, hddPerNode, hddSize, s.efficiency))
   }
 
   const handleGpfsHybridCacheCountChange = (newCount: number) => {
     if (!results['gpfs-hybrid']) return
-    const { nodeCount, hddPerNode, hddSize, ecScheme, cacheConfig } = results['gpfs-hybrid']
-    const requiredCacheTB = (hddPerNode * hddSize) / GPFS_HYBRID_CONSTANTS.CACHE_RATIO
-    if (newCount * cacheConfig.sizePerDisk < requiredCacheTB) return
-    setManualConfig(prev => ({ ...prev, 'gpfs-hybrid': { nodeCount, hddPerNode, hddSize, ecScheme, cacheCount: newCount, cacheSizePerDisk: cacheConfig.sizePerDisk } }))
+    patchGpfsHybrid({ cacheCount: newCount })
   }
 
   const handleGpfsHybridCacheSizeChange = (newSize: number) => {
     if (!results['gpfs-hybrid']) return
-    const { nodeCount, hddPerNode, hddSize, ecScheme, cacheConfig } = results['gpfs-hybrid']
-    const requiredCacheTB = (hddPerNode * hddSize) / GPFS_HYBRID_CONSTANTS.CACHE_RATIO
-    if (cacheConfig.count * newSize < requiredCacheTB) return
-    setManualConfig(prev => ({ ...prev, 'gpfs-hybrid': { nodeCount, hddPerNode, hddSize, ecScheme, cacheCount: cacheConfig.count, cacheSizePerDisk: newSize } }))
+    patchGpfsHybrid({ cacheSizePerDisk: newSize })
+  }
+
+  const handleGpfsHybridNetworkTypeChange = (newType: string) => {
+    patchGpfsHybrid({ networkType: newType })
+  }
+
+  const handleGpfsHybridNetworkSpeedChange = (newSpeed: number) => {
+    patchGpfsHybrid({ networkSpeed: newSpeed })
   }
 
   const handleCephNodeCountChange = (newCount: number) => {
@@ -836,7 +866,7 @@ function StorplanApp() {
         )
       case 'gpfs-hybrid':
         return results['gpfs-hybrid'] && (
-          <GPFSHybridResult data={results['gpfs-hybrid']} onNodeCountChange={handleGpfsHybridNodeCountChange} onHddPerNodeChange={handleGpfsHybridHddPerNodeChange} onHddSizeChange={handleGpfsHybridHddSizeChange} onEcChange={handleGpfsHybridEcChange} onCacheCountChange={handleGpfsHybridCacheCountChange} onCacheSizeChange={handleGpfsHybridCacheSizeChange} />
+          <GPFSHybridResult data={results['gpfs-hybrid']} onNodeCountChange={handleGpfsHybridNodeCountChange} onHddPerNodeChange={handleGpfsHybridHddPerNodeChange} onHddSizeChange={handleGpfsHybridHddSizeChange} onEcChange={handleGpfsHybridEcChange} onCacheCountChange={handleGpfsHybridCacheCountChange} onCacheSizeChange={handleGpfsHybridCacheSizeChange} onNetworkTypeChange={handleGpfsHybridNetworkTypeChange} onNetworkSpeedChange={handleGpfsHybridNetworkSpeedChange} />
         )
       case 'weka':
         return results.weka && (
@@ -1826,7 +1856,7 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
   )
 }
 
-function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSizeChange, onEcChange, onCacheCountChange, onCacheSizeChange }: {
+function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSizeChange, onEcChange, onCacheCountChange, onCacheSizeChange, onNetworkTypeChange, onNetworkSpeedChange }: {
   data: GPFSHybridPlanResult;
   onNodeCountChange: (n: number) => void;
   onHddPerNodeChange: (n: number) => void;
@@ -1834,11 +1864,17 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
   onEcChange: (s: string) => void;
   onCacheCountChange: (n: number) => void;
   onCacheSizeChange: (n: number) => void;
+  onNetworkTypeChange: (s: string) => void;
+  onNetworkSpeedChange: (n: number) => void;
 }) {
   const t = THEME['gpfs-hybrid']
   const totalHDD = data.nodeCount * data.hddPerNode
   const requiredCacheTB = (data.hddPerNode * data.hddSize) / GPFS_HYBRID_CONSTANTS.CACHE_RATIO
   const isCacheSufficient = data.cacheConfig.totalSize >= requiredCacheTB
+  const cacheCountOptions = Array.from(
+    { length: GPFS_HYBRID_CONSTANTS.MAX_CACHE_DISKS - GPFS_HYBRID_CONSTANTS.MIN_CACHE_DISKS + 1 },
+    (_, i) => GPFS_HYBRID_CONSTANTS.MIN_CACHE_DISKS + i
+  )
   const perTiB = (mibps: number) => (mibps / data.actualCapacity * MIB_TO_MB).toFixed(2) + ' MB/s'
   // 仅当规模与单机配置都与报告基准一致时才是实测值，否则均为线性外推
   const isBaselineScale = data.nodeCount === GPFS_HYBRID_BASELINE.nodeCount
@@ -1846,6 +1882,8 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
     && data.hddSize === GPFS_HYBRID_BASELINE.hddSizeTB
     && data.cacheConfig.count === GPFS_HYBRID_BASELINE.cacheDisksPerNode
     && data.cacheConfig.sizePerDisk === GPFS_HYBRID_BASELINE.cacheSizeTB
+    && data.network.type === GPFS_HYBRID_CONSTANTS.DEFAULT_NETWORK_TYPE
+    && data.network.speedGb === GPFS_HYBRID_CONSTANTS.DEFAULT_NETWORK_SPEED
 
   return (
     <div className="space-y-6">
@@ -1933,13 +1971,13 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
               <dt className="text-body">元数据 / 热数据盘</dt>
               <dd className="flex items-center gap-1">
                 <select value={data.cacheConfig.count} onChange={(e) => onCacheCountChange(Number(e.target.value))} aria-label="NVMe 盘数量" className="field">
-                  {[2, 3, 4, 5, 6, 7, 8].map(c => <option key={c} value={c}>{c}</option>)}
+                  {cacheCountOptions.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <span>×</span>
                 <select value={data.cacheConfig.sizePerDisk} onChange={(e) => onCacheSizeChange(Number(e.target.value))} aria-label="单块 NVMe 容量" className="field">
                   {GPFS_HYBRID_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
                 </select>
-                <span className="text-xs">NVMe SSD（DWPD ≥ 3）</span>
+                <span className="text-xs">NVMe SSD</span>
                 {!isCacheSufficient && (
                   <span className="inline-flex items-center gap-1 text-xs text-error-deep">
                     <WarnIcon className="h-3 w-3" />
@@ -1954,7 +1992,20 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
             </div>
             <div>
               <dt className="text-body">存储网络</dt>
-              <dd>2 × 双口 HDR100 100Gb IB HCA</dd>
+              <dd className="flex items-center gap-1">
+                <span>2 × 双口</span>
+                <select value={data.network.speedGb} onChange={(e) => onNetworkSpeedChange(Number(e.target.value))} aria-label="存储网络速率" className="field">
+                  {GPFS_HYBRID_CONSTANTS.NETWORK_SPEEDS.map(s => <option key={s} value={s}>{s}Gb</option>)}
+                </select>
+                <select value={data.network.type} onChange={(e) => onNetworkTypeChange(e.target.value)} aria-label="存储网络类型" className="field">
+                  {GPFS_HYBRID_CONSTANTS.NETWORK_TYPES.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
+                </select>
+                <span>网卡</span>
+              </dd>
+            </div>
+            <div className="text-xs text-mute">
+              <dt>单节点网络带宽上限</dt>
+              <dd>{formatBandwidth(data.network.perNodeCeiling, 'decimal-byte')}（双口绑定 × 协议效率 ÷ {data.ecScheme} 网络放大 {data.network.amplification.toFixed(2)}）</dd>
             </div>
             <div>
               <dt className="text-body">管理网络</dt>
@@ -1969,6 +2020,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
             perf={data.formatted.tiered}
             perTiBRead={perTiB(data.performance.tiered.readBandwidth)}
             accent={t.chip}
+            networkLimited={data.networkLimited.tiered}
           />
           <PerfTier
             title={`HDD 层（关闭分层）${isBaselineScale ? '' : '预测'}`}
@@ -1976,13 +2028,15 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
             perf={data.formatted.hddOnly}
             perTiBRead={perTiB(data.performance.hddOnly.readBandwidth)}
             accent={t.chip}
+            networkLimited={data.networkLimited.hddOnly}
           />
         </div>
         <div className="text-xs text-mute space-y-0.5">
           <div>容量计算：节点数 × 单节点 HDD 数 × 单盘容量 × 冗余得盘率 × 0.95（系统开销）</div>
           <div>SSD 层（开启分层）：集群 NVMe 总数 × 每盘性能（读 {GPFS_HYBRID_PER_CACHE.readMiBps.toFixed(0)} MiB/s、写 {GPFS_HYBRID_PER_CACHE.writeMiBps.toFixed(0)} MiB/s、读 IOPS {Math.round(GPFS_HYBRID_PER_CACHE.readIOPS).toLocaleString()}、写 IOPS {Math.round(GPFS_HYBRID_PER_CACHE.writeIOPS).toLocaleString()}）</div>
           <div>HDD 层（关闭分层）：集群 HDD 总数 × 每盘性能（读 {GPFS_HYBRID_PER_HDD.readMiBps.toFixed(1)} MiB/s、写 {GPFS_HYBRID_PER_HDD.writeMiBps.toFixed(1)} MiB/s、读 IOPS {GPFS_HYBRID_PER_HDD.readIOPS.toFixed(0)}、写 IOPS {GPFS_HYBRID_PER_HDD.writeIOPS.toFixed(0)}）</div>
-          <div>自动规划时带宽需求按 HDD 层（关闭分层）校验，保证冷数据全部落盘时仍满足需求；实际表现取决于 NVMe 层命中率，介于两组数值之间。</div>
+          <div>网络封顶：单节点带宽不超过双口绑定速率 × 协议效率（IB/RoCE 90%、Eth 80%）÷ 纠删码网络放大 (D+P)/D；第二张网卡按冗余计，不叠加吞吐。仅带宽受此约束，4KiB IOPS 的网络占用可忽略。</div>
+          <div>自动规划时带宽需求按 HDD 层（关闭分层）、{GPFS_HYBRID_CONSTANTS.DEFAULT_NETWORK_SPEED}Gb 网络校验，保证冷数据全部落盘时仍满足需求；实际表现取决于 NVMe 层命中率，介于两组数值之间。</div>
           <div>
             性能基准：{GPFS_HYBRID_BASELINE.source}。基准配置为 {GPFS_HYBRID_BASELINE.nodeCount} 节点 ×（{GPFS_HYBRID_BASELINE.hddPerNode} × {GPFS_HYBRID_BASELINE.hddSizeTB}TB HDD + {GPFS_HYBRID_BASELINE.cacheDisksPerNode} × {GPFS_HYBRID_BASELINE.cacheSizeTB}TB NVMe），
             开启分层实测读 {GPFS_HYBRID_BASELINE.tiered.readBandwidthGBps} GB/s、写 {GPFS_HYBRID_BASELINE.tiered.writeBandwidthGBps} GB/s、读 IOPS {GPFS_HYBRID_BASELINE.tiered.readIOPS.toLocaleString()}、写 IOPS {GPFS_HYBRID_BASELINE.tiered.writeIOPS.toLocaleString()}；
@@ -1994,18 +2048,25 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
 }
 
 // 分层开启 / 关闭两组性能指标共用的小节
-function PerfTier({ title, hint, perf, perTiBRead, accent }: {
+function PerfTier({ title, hint, perf, perTiBRead, accent, networkLimited }: {
   title: string;
   hint: string;
   perf: { readBandwidth: string; writeBandwidth: string; readIOPS: string; writeIOPS: string };
   perTiBRead: string;
   accent: string;
+  networkLimited?: boolean;
 }) {
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h3 className="eyebrow">性能</h3>
         <span className={`rounded-full px-2 py-0.5 text-xs ${accent}`}>{title}</span>
+        {networkLimited && (
+          <span className="inline-flex items-center gap-1 text-xs text-warning-deep">
+            <WarnIcon className="h-3 w-3" />
+            受存储网络限制
+          </span>
+        )}
       </div>
       <dl className="stat-grid grid grid-cols-2 gap-2">
         <div>

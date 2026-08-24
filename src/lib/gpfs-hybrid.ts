@@ -42,6 +42,8 @@ export interface GPFSHybridPlanResult {
   rawCapacity: number; // TiB（仅 HDD 数据层）
   cacheConfig: HybridCacheConfig; // 每节点 NVMe 元数据/热数据层
   cacheTotalTB: number; // 全集群 NVMe 总容量（TB）
+  network: NetworkConfig;
+  networkLimited: { tiered: boolean; hddOnly: boolean };
   performance: {
     /** 分层开启：热数据命中 NVMe 层 */
     tiered: TierPerformance;
@@ -117,15 +119,60 @@ export const CONSTANTS = {
   TB_TO_TIB: 0.909,
   // 元数据落在 NVMe 层，HDD 数据层仅保留系统开销
   SYSTEM_RESERVED: 0.95,
-  // NVMe 层（元数据 + 热数据）全部可选规格（UI 手动选择）
-  CACHE_DISK_SIZES: [3.84, 7.68, 15.36, 30.72] as const,
-  // 自动选型使用的规格
-  AUTO_CACHE_DISK_SIZES: [3.84, 7.68, 15.36] as const,
-  MIN_CACHE_DISKS: 2,
-  MAX_CACHE_DISKS: 8,
+  // NVMe 层（元数据 + 热数据）规格与盘数区间与 Ceph 混闪索引盘对齐
+  CACHE_DISK_SIZES: [1.6, 1.92, 3.2, 3.84, 6.4, 7.68, 12.8, 15.36] as const,
+  // GPFS 混闪的 NVMe 配比要求（1/15）远高于 Ceph 索引盘（1/80），
+  // 在 ≤4 盘的区间内必须用到大规格，故自动选型使用全部规格
+  AUTO_CACHE_DISK_SIZES: [1.6, 1.92, 3.2, 3.84, 6.4, 7.68, 12.8, 15.36] as const,
+  MIN_CACHE_DISKS: 1,
+  MAX_CACHE_DISKS: 4,
   // NVMe 总容量 ≥ HDD 总容量 / 15（基准配置 36×24TB HDD 配 4×15.36TB NVMe，约 1/14，高于此下限）
   CACHE_RATIO: 15,
+  // 存储网络：类型只影响协议效率，速率决定单节点带宽上限
+  NETWORK_TYPES: [
+    { value: 'ib', label: 'IB', efficiency: 0.9 },
+    { value: 'roce', label: 'RoCE', efficiency: 0.9 },
+    { value: 'eth', label: 'Eth', efficiency: 0.8 },
+  ] as const,
+  NETWORK_SPEEDS: [100, 25] as const, // Gb/s 单端口
+  DEFAULT_NETWORK_TYPE: 'ib',
+  DEFAULT_NETWORK_SPEED: 100,
+  // 双口绑定用于存储网络，第二张卡按冗余计不叠加吞吐
+  STORAGE_PORTS_PER_NODE: 2,
 };
+
+export interface NetworkConfig {
+  type: string;
+  speedGb: number;
+  label: string;
+  /** 单节点客户端可见带宽上限（MiB/s） */
+  perNodeCeiling: number;
+  /** 纠删码网络放大系数 (D+P)/D */
+  amplification: number;
+}
+
+/** 纠删码网络放大系数：一次全条带读写需要跨节点搬运 (D+P)/D 倍数据 */
+export function getECAmplification(ecScheme: string): number {
+  const m = ecScheme.match(/EC(\d+)\+(\d+)/);
+  if (!m) return 1;
+  const d = Number(m[1]);
+  const p = Number(m[2]);
+  return (d + p) / d;
+}
+
+export function getNetworkConfig(type: string, speedGb: number, ecScheme: string): NetworkConfig {
+  const t = CONSTANTS.NETWORK_TYPES.find(n => n.value === type) ?? CONSTANTS.NETWORK_TYPES[0];
+  const amplification = getECAmplification(ecScheme);
+  // 端口总速率 → MiB/s，扣协议效率后再除以纠删码网络放大
+  const wireMiBps = (CONSTANTS.STORAGE_PORTS_PER_NODE * speedGb / 8) * 1000 / MIB_TO_MB;
+  return {
+    type: t.value,
+    speedGb,
+    label: `${CONSTANTS.STORAGE_PORTS_PER_NODE} × 双口 ${speedGb}Gb ${t.label} 网卡`,
+    perNodeCeiling: (wireMiBps * t.efficiency) / amplification,
+    amplification,
+  };
+}
 
 export function calculateCapacityTiB(
   nodeCount: number,
@@ -165,27 +212,50 @@ export function calculateCacheConfig(hddPerNode: number, hddSizeTB: number): Hyb
  * 分层开启按集群 NVMe 总数外推，分层关闭按集群 HDD 总数外推，
  * 两者都以十节点实测为基准。
  */
-export function calculatePerformance(nodeCount: number, hddPerNode: number, cacheCount: number) {
+export function calculatePerformance(
+  nodeCount: number,
+  hddPerNode: number,
+  cacheCount: number,
+  network?: NetworkConfig
+) {
   const totalHDD = nodeCount * hddPerNode;
   const totalCache = nodeCount * cacheCount;
+  // 4KiB 小 IO 的网络占用极低（几十万 IOPS 也只有 GB/s 量级），仅对带宽做网络封顶
+  const ceiling = network ? network.perNodeCeiling * nodeCount : Infinity;
 
-  const hddOnly: TierPerformance = {
+  const hddOnlyDisk = {
     readBandwidth: totalHDD * PER_HDD_PERF.readMiBps,
     writeBandwidth: totalHDD * PER_HDD_PERF.writeMiBps,
+  };
+  const hddOnly: TierPerformance = {
+    readBandwidth: Math.min(hddOnlyDisk.readBandwidth, ceiling),
+    writeBandwidth: Math.min(hddOnlyDisk.writeBandwidth, ceiling),
     readIOPS: Math.round(totalHDD * PER_HDD_PERF.readIOPS),
     writeIOPS: Math.round(totalHDD * PER_HDD_PERF.writeIOPS),
   };
 
   // NVMe 层配置过小时其聚合能力可能低于 HDD 层；开启分层后 HDD 池仍然承载冷数据，
   // 因此 HDD 层结果构成下限，取两者较大值避免出现「开分层反而更慢」的失真。
+  const tieredDisk = {
+    readBandwidth: Math.max(totalCache * PER_CACHE_PERF.readMiBps, hddOnlyDisk.readBandwidth),
+    writeBandwidth: Math.max(totalCache * PER_CACHE_PERF.writeMiBps, hddOnlyDisk.writeBandwidth),
+  };
   const tiered: TierPerformance = {
-    readBandwidth: Math.max(totalCache * PER_CACHE_PERF.readMiBps, hddOnly.readBandwidth),
-    writeBandwidth: Math.max(totalCache * PER_CACHE_PERF.writeMiBps, hddOnly.writeBandwidth),
+    readBandwidth: Math.min(tieredDisk.readBandwidth, ceiling),
+    writeBandwidth: Math.min(tieredDisk.writeBandwidth, ceiling),
     readIOPS: Math.max(Math.round(totalCache * PER_CACHE_PERF.readIOPS), hddOnly.readIOPS),
     writeIOPS: Math.max(Math.round(totalCache * PER_CACHE_PERF.writeIOPS), hddOnly.writeIOPS),
   };
 
-  return { tiered, hddOnly };
+  return {
+    tiered,
+    hddOnly,
+    // 是否有指标被存储网络限制（用于界面提示）
+    networkLimited: {
+      tiered: tieredDisk.readBandwidth > ceiling || tieredDisk.writeBandwidth > ceiling,
+      hddOnly: hddOnlyDisk.readBandwidth > ceiling || hddOnlyDisk.writeBandwidth > ceiling,
+    },
+  };
 }
 
 function formatTier(perf: TierPerformance, bandwidthUnitType: string): FormattedTierPerformance {
@@ -205,7 +275,9 @@ export function buildGPFSHybridResult(
   bandwidthUnitType: string = 'decimal-byte',
   ecScheme?: string,
   cacheCount?: number,
-  cacheSizePerDisk?: number
+  cacheSizePerDisk?: number,
+  networkType: string = CONSTANTS.DEFAULT_NETWORK_TYPE,
+  networkSpeed: number = CONSTANTS.DEFAULT_NETWORK_SPEED
 ): GPFSHybridPlanResult {
   const allowed = getAllowedECSchemes(nodeCount);
   const scheme = (ecScheme && allowed.find(s => s.scheme === ecScheme)) || getECScheme(nodeCount);
@@ -215,7 +287,9 @@ export function buildGPFSHybridResult(
   const cacheConfig = cacheCount && cacheSizePerDisk
     ? { count: cacheCount, sizePerDisk: cacheSizePerDisk, totalSize: Math.round(cacheCount * cacheSizePerDisk * 100) / 100 }
     : calculateCacheConfig(hddPerNode, hddSize);
-  const performance = calculatePerformance(nodeCount, hddPerNode, cacheConfig.count);
+  const network = getNetworkConfig(networkType, networkSpeed, scheme.scheme);
+  const { tiered, hddOnly, networkLimited } = calculatePerformance(nodeCount, hddPerNode, cacheConfig.count, network);
+  const performance = { tiered, hddOnly };
 
   return {
     nodeCount,
@@ -228,6 +302,8 @@ export function buildGPFSHybridResult(
     rawCapacity,
     cacheConfig,
     cacheTotalTB: Math.round(nodeCount * cacheConfig.totalSize * 100) / 100,
+    network,
+    networkLimited,
     performance,
     formatted: {
       capacity: formatCapacity(actualCapacity, isBinary),
@@ -258,8 +334,9 @@ export function planGPFSHybrid(req: GPFSHybridPlanRequest): GPFSHybridPlanResult
     for (let nodes = CONSTANTS.MIN_NODES; nodes <= CONSTANTS.MAX_NODES; nodes++) {
       const ec = getECScheme(nodes);
       const actual = calculateCapacityTiB(nodes, hddPerNode, hddSize, ec.efficiency);
+      const net = getNetworkConfig(CONSTANTS.DEFAULT_NETWORK_TYPE, CONSTANTS.DEFAULT_NETWORK_SPEED, ec.scheme);
       // 带宽需求按分层关闭（HDD 层）口径校验：冷数据全部落盘时仍能满足
-      const perf = calculatePerformance(nodes, hddPerNode, cache.count).hddOnly;
+      const perf = calculatePerformance(nodes, hddPerNode, cache.count, net).hddOnly;
       if (actual >= capacityTiB && perf.readBandwidth >= readBWReq && perf.writeBandwidth >= writeBWReq) {
         configs.push({ nodeCount: nodes, hddSize, actualCapacity: actual });
         break;
