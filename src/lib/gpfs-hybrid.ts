@@ -139,8 +139,9 @@ export const CONSTANTS = {
   AUTO_CACHE_DISK_SIZES: [1.92, 3.84, 7.68, 15.36] as const,
   MIN_CACHE_DISKS: 1,
   MAX_CACHE_DISKS: 4,
-  // NVMe 总容量 ≥ HDD 总容量 / 15（基准配置 36×24TB HDD 配 4×15.36TB NVMe，约 1/14，高于此下限）
-  CACHE_RATIO: 15,
+  // 单节点 NVMe 裸容量占单节点 HDD 裸容量的比例：不得低于 5%，推荐 10%
+  CACHE_MIN_RATIO: 0.05,
+  CACHE_RECOMMENDED_RATIO: 0.1,
   // 存储网络：类型只影响协议效率，速率决定单节点带宽上限。
   // IB 无 25Gb 规格（IB 速率档为 EDR/HDR 100G 起），故 25Gb 只提供 RoCE 与 Eth
   NETWORK_TYPES: [
@@ -204,19 +205,43 @@ export function calculateCapacityTiB(
   return nodeCount * hddPerNode * hddSizeTB * CONSTANTS.TB_TO_TIB * ecEfficiency * CONSTANTS.SYSTEM_RESERVED;
 }
 
-// NVMe 层配置：遍历 (盘数 × 容量) 组合，选总容量满足下限且浪费最小的；同等接近时优先更多盘数（分层性能更高）
-export function calculateCacheConfig(hddPerNode: number, hddSizeTB: number): HybridCacheConfig {
-  const requiredCacheTB = (hddPerNode * hddSizeTB) / CONSTANTS.CACHE_RATIO;
+/** 单节点 NVMe 容量的下限与推荐值（按单节点 HDD 裸容量的 5% / 10%） */
+export function getCacheRequirement(hddPerNode: number, hddSizeTB: number) {
+  const rawHddTB = hddPerNode * hddSizeTB;
+  return {
+    rawHddTB,
+    minTB: rawHddTB * CONSTANTS.CACHE_MIN_RATIO,
+    recommendedTB: rawHddTB * CONSTANTS.CACHE_RECOMMENDED_RATIO,
+  };
+}
 
-  let bestCount = CONSTANTS.MAX_CACHE_DISKS;
-  let bestSize = CONSTANTS.AUTO_CACHE_DISK_SIZES[CONSTANTS.AUTO_CACHE_DISK_SIZES.length - 1];
+/**
+ * NVMe 层配置：遍历 (盘数 × 容量) 组合，优先选达到推荐 10% 且浪费最小的；
+ * 同等接近时取盘数更多的（分层带宽更高）。
+ * 盘数上限 4、单盘上限 15.36TB 的组合上限是 61.44TB，大 HDD 配置（如
+ * 36×24TB 需 86.4TB）够不到 10%，此时退而取可达的最大容量，只要不低于 5% 下限。
+ */
+export function calculateCacheConfig(hddPerNode: number, hddSizeTB: number): HybridCacheConfig {
+  const { recommendedTB } = getCacheRequirement(hddPerNode, hddSizeTB);
+
+  let bestCount = 0;
+  let bestSize = 0;
   let bestWaste = Infinity;
+  // 够不到推荐值时的兜底：可达的最大总容量
+  let maxCount = CONSTANTS.MIN_CACHE_DISKS;
+  let maxSize: number = CONSTANTS.AUTO_CACHE_DISK_SIZES[0];
+  let maxTotal = 0;
 
   for (let count = CONSTANTS.MIN_CACHE_DISKS; count <= CONSTANTS.MAX_CACHE_DISKS; count++) {
     for (const sizePerDisk of CONSTANTS.AUTO_CACHE_DISK_SIZES) {
       const totalSize = count * sizePerDisk;
-      if (totalSize >= requiredCacheTB) {
-        const waste = totalSize - requiredCacheTB;
+      if (totalSize > maxTotal || (totalSize === maxTotal && count > maxCount)) {
+        maxTotal = totalSize;
+        maxCount = count;
+        maxSize = sizePerDisk;
+      }
+      if (totalSize >= recommendedTB) {
+        const waste = totalSize - recommendedTB;
         if (waste < bestWaste || (waste === bestWaste && count > bestCount)) {
           bestWaste = waste;
           bestCount = count;
@@ -226,7 +251,9 @@ export function calculateCacheConfig(hddPerNode: number, hddSizeTB: number): Hyb
     }
   }
 
-  return { count: bestCount, sizePerDisk: bestSize, totalSize: Math.round(bestCount * bestSize * 100) / 100 };
+  const count = bestWaste === Infinity ? maxCount : bestCount;
+  const sizePerDisk = bestWaste === Infinity ? maxSize : bestSize;
+  return { count, sizePerDisk, totalSize: Math.round(count * sizePerDisk * 100) / 100 };
 }
 
 /**

@@ -6,7 +6,7 @@ import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calcula
 import type { VastDataPlanResult } from '#/lib/vastdata'
 import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, getAllowedECSchemes, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
-import { planGPFSHybrid, buildGPFSHybridResult, getBestECScheme as getGpfsHybridBestEc, getAllowedECSchemes as getGpfsHybridAllowedSchemes, calculateCacheConfig as gpfsHybridCacheConfig, calculateCapacityTiB as gpfsHybridCapacity, getAllowedNetworkTypes as getGpfsHybridAllowedNetworkTypes, REPORT_BASELINE as GPFS_HYBRID_BASELINE, CONSTANTS as GPFS_HYBRID_CONSTANTS } from '#/lib/gpfs-hybrid'
+import { planGPFSHybrid, buildGPFSHybridResult, getBestECScheme as getGpfsHybridBestEc, getAllowedECSchemes as getGpfsHybridAllowedSchemes, calculateCacheConfig as gpfsHybridCacheConfig, getCacheRequirement as gpfsHybridCacheRequirement, calculateCapacityTiB as gpfsHybridCapacity, getAllowedNetworkTypes as getGpfsHybridAllowedNetworkTypes, REPORT_BASELINE as GPFS_HYBRID_BASELINE, CONSTANTS as GPFS_HYBRID_CONSTANTS } from '#/lib/gpfs-hybrid'
 import type { GPFSHybridPlanResult } from '#/lib/gpfs-hybrid'
 import { planCeph, buildCephResult, getMemoryConfig as getCephMemory, getStorageNetworkConfig as getCephStorageNetwork, getMdsMemoryConfig as getCephMdsMemory, getMdsStorageNetworkConfig as getCephMdsStorageNetwork, getPerDiskPerformance as getCephPerDisk, getAllowedRedundancySchemes as getCephAllowedSchemes, RGW_PER_DISK as CEPH_RGW_PER_DISK, calculateCapacityTiB as cephCapacity, CONSTANTS as CEPH_CONSTANTS } from '#/lib/ceph'
 import type { CephPlanResult } from '#/lib/ceph'
@@ -1310,6 +1310,7 @@ const STORAGE_INFO: Record<string, { description: string; pros: string[]; cons: 
       '性能基准来自浪潮 AS13000 + GPFS 5.2.3.2 十节点实测（存储池 4+2P、100G IB），按 HDD 与 NVMe 数量线性外推，大规模集群需实测复核',
       '不建议用于以小文件随机读写为主的 AI 训练场景，此类场景应选全闪方案',
       '可用容量仅统计 HDD 数据层，NVMe 层按元数据与热数据缓存计',
+      '单节点 NVMe 裸容量不低于单节点 HDD 裸容量的 5%，推荐 10%；受 4 盘 × 15.36TB 的选型上限所限，大容量 HDD 配置（如 36 × 24TB）最高只能配到约 7%',
     ],
   },
   ceph: {
@@ -1877,8 +1878,10 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
 }) {
   const t = THEME['gpfs-hybrid']
   const totalHDD = data.nodeCount * data.hddPerNode
-  const requiredCacheTB = (data.hddPerNode * data.hddSize) / GPFS_HYBRID_CONSTANTS.CACHE_RATIO
-  const isCacheSufficient = data.cacheConfig.totalSize >= requiredCacheTB
+  const cacheReq = gpfsHybridCacheRequirement(data.hddPerNode, data.hddSize)
+  const cacheRatio = data.cacheConfig.totalSize / cacheReq.rawHddTB
+  const isCacheSufficient = data.cacheConfig.totalSize >= cacheReq.minTB
+  const isCacheRecommended = data.cacheConfig.totalSize >= cacheReq.recommendedTB
   const cacheCountOptions = Array.from(
     { length: GPFS_HYBRID_CONSTANTS.MAX_CACHE_DISKS - GPFS_HYBRID_CONSTANTS.MIN_CACHE_DISKS + 1 },
     (_, i) => GPFS_HYBRID_CONSTANTS.MIN_CACHE_DISKS + i
@@ -1986,17 +1989,26 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
                   {GPFS_HYBRID_CONSTANTS.CACHE_DISK_SIZES.map(s => <option key={s} value={s}>{s}TB</option>)}
                 </select>
                 <span className="text-xs">NVMe SSD</span>
-                {!isCacheSufficient && (
+                {!isCacheSufficient ? (
                   <span className="inline-flex items-center gap-1 text-xs text-error-deep">
                     <WarnIcon className="h-3 w-3" />
-                    不足
+                    低于 {(GPFS_HYBRID_CONSTANTS.CACHE_MIN_RATIO * 100).toFixed(0)}% 下限
+                  </span>
+                ) : !isCacheRecommended && (
+                  <span className="inline-flex items-center gap-1 text-xs text-warning-deep">
+                    <WarnIcon className="h-3 w-3" />
+                    低于推荐
                   </span>
                 )}
               </dd>
             </div>
             <div className="text-xs text-mute">
-              <dt>NVMe 容量要求</dt>
-              <dd>≥ {requiredCacheTB.toFixed(2)}TB（实际 {data.cacheConfig.totalSize.toFixed(2)}TB）</dd>
+              <dt>NVMe 容量占比</dt>
+              <dd>
+                {data.cacheConfig.totalSize.toFixed(2)}TB / 单节点 HDD {cacheReq.rawHddTB.toFixed(0)}TB = {(cacheRatio * 100).toFixed(1)}%
+                （下限 {(GPFS_HYBRID_CONSTANTS.CACHE_MIN_RATIO * 100).toFixed(0)}% ≈ {cacheReq.minTB.toFixed(2)}TB，
+                推荐 {(GPFS_HYBRID_CONSTANTS.CACHE_RECOMMENDED_RATIO * 100).toFixed(0)}% ≈ {cacheReq.recommendedTB.toFixed(2)}TB）
+              </dd>
             </div>
             <div>
               <dt className="text-body">存储网络</dt>
