@@ -6,7 +6,7 @@ import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calcula
 import type { VastDataPlanResult } from '#/lib/vastdata'
 import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, getAllowedECSchemes, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
-import { planGPFSHybrid, buildGPFSHybridResult, getECScheme as getGpfsHybridEcScheme, getAllowedECSchemes as getGpfsHybridAllowedSchemes, calculateCacheConfig as gpfsHybridCacheConfig, calculateCapacityTiB as gpfsHybridCapacity, getAllowedNetworkTypes as getGpfsHybridAllowedNetworkTypes, REPORT_BASELINE as GPFS_HYBRID_BASELINE, CONSTANTS as GPFS_HYBRID_CONSTANTS } from '#/lib/gpfs-hybrid'
+import { planGPFSHybrid, buildGPFSHybridResult, getBestECScheme as getGpfsHybridBestEc, getAllowedECSchemes as getGpfsHybridAllowedSchemes, calculateCacheConfig as gpfsHybridCacheConfig, calculateCapacityTiB as gpfsHybridCapacity, getAllowedNetworkTypes as getGpfsHybridAllowedNetworkTypes, REPORT_BASELINE as GPFS_HYBRID_BASELINE, CONSTANTS as GPFS_HYBRID_CONSTANTS } from '#/lib/gpfs-hybrid'
 import type { GPFSHybridPlanResult } from '#/lib/gpfs-hybrid'
 import { planCeph, buildCephResult, getMemoryConfig as getCephMemory, getStorageNetworkConfig as getCephStorageNetwork, getMdsMemoryConfig as getCephMdsMemory, getMdsStorageNetworkConfig as getCephMdsStorageNetwork, getPerDiskPerformance as getCephPerDisk, getAllowedRedundancySchemes as getCephAllowedSchemes, RGW_PER_DISK as CEPH_RGW_PER_DISK, calculateCapacityTiB as cephCapacity, CONSTANTS as CEPH_CONSTANTS } from '#/lib/ceph'
 import type { CephPlanResult } from '#/lib/ceph'
@@ -633,12 +633,15 @@ function StorplanApp() {
     if (newCapacityTiB !== undefined) setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
-  // 节点数变化时保留当前纠删码方案（若该节点数仍允许），否则回退默认方案
+  // 增加节点数时改用得盘率最高的允许方案（更高得盘率的方案可能刚解锁）；
+  // 减少节点数时保留当前方案，仅在其不再允许时回退到得盘率最高的方案
   const handleGpfsHybridNodeCountChange = (newCount: number) => {
     if (!results['gpfs-hybrid'] || newCount < GPFS_HYBRID_CONSTANTS.MIN_NODES || newCount > GPFS_HYBRID_CONSTANTS.MAX_NODES) return
-    const { hddPerNode, hddSize, ecScheme } = results['gpfs-hybrid']
+    const { hddPerNode, hddSize, ecScheme, nodeCount } = results['gpfs-hybrid']
     const allowed = getGpfsHybridAllowedSchemes(newCount)
-    const scheme = allowed.find(s => s.scheme === ecScheme) ?? getGpfsHybridEcScheme(newCount)
+    const scheme = newCount > nodeCount
+      ? getGpfsHybridBestEc(newCount)
+      : (allowed.find(s => s.scheme === ecScheme) ?? getGpfsHybridBestEc(newCount))
     patchGpfsHybrid(
       { nodeCount: newCount, ecScheme: scheme.scheme },
       gpfsHybridCapacity(newCount, hddPerNode, hddSize, scheme.efficiency)

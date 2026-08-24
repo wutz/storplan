@@ -4,6 +4,17 @@ import { EC_SCHEMES, getAllowedECSchemes, getGPFSTolerance, getECScheme } from '
 // GPFS 混闪与全闪使用同一套 ECE 纠删码与容错规则，直接复用
 export { EC_SCHEMES, getAllowedECSchemes, getGPFSTolerance, getECScheme };
 
+/**
+ * 该节点数下得盘率最高的纠删码方案。
+ * 混闪以低成本大容量为目标，未显式选择时一律取得盘率最高的允许方案
+ * （同得盘率时取容错更强的，即 minServers 更小的在前）。
+ * 注意得盘率与容错是此消彼长：6–9 节点下 EC8+2P（80%）容忍 1 台离线，
+ * 而 EC4+2P（66.7%）可容忍 2 台，需要更强容错时在界面上手动改选。
+ */
+export function getBestECScheme(nodeCount: number) {
+  return getAllowedECSchemes(nodeCount).reduce((a, b) => (b.efficiency > a.efficiency ? b : a));
+}
+
 export interface GPFSHybridPlanRequest {
   capacity: string;
   readBandwidth?: string;
@@ -290,7 +301,7 @@ export function buildGPFSHybridResult(
   networkSpeed: number = CONSTANTS.DEFAULT_NETWORK_SPEED
 ): GPFSHybridPlanResult {
   const allowed = getAllowedECSchemes(nodeCount);
-  const scheme = (ecScheme && allowed.find(s => s.scheme === ecScheme)) || getECScheme(nodeCount);
+  const scheme = (ecScheme && allowed.find(s => s.scheme === ecScheme)) || getBestECScheme(nodeCount);
   const tolerance = getGPFSTolerance(nodeCount, scheme.scheme);
   const actualCapacity = calculateCapacityTiB(nodeCount, hddPerNode, hddSize, scheme.efficiency);
   const rawCapacity = nodeCount * hddPerNode * hddSize * CONSTANTS.TB_TO_TIB;
@@ -342,7 +353,7 @@ export function planGPFSHybrid(req: GPFSHybridPlanRequest): GPFSHybridPlanResult
   for (const hddSize of CONSTANTS.HDD_SIZES) {
     const cache = calculateCacheConfig(hddPerNode, hddSize);
     for (let nodes = CONSTANTS.MIN_NODES; nodes <= CONSTANTS.MAX_NODES; nodes++) {
-      const ec = getECScheme(nodes);
+      const ec = getBestECScheme(nodes);
       const actual = calculateCapacityTiB(nodes, hddPerNode, hddSize, ec.efficiency);
       const net = getNetworkConfig(CONSTANTS.DEFAULT_NETWORK_TYPE, CONSTANTS.DEFAULT_NETWORK_SPEED, ec.scheme);
       // 带宽需求按分层关闭（HDD 层）口径校验：冷数据全部落盘时仍能满足
