@@ -6,7 +6,7 @@ import { planVastData, buildVastDataResult, CONSTANTS as VAST_CONSTANTS, calcula
 import type { VastDataPlanResult } from '#/lib/vastdata'
 import { planGPFSECE, buildGPFSECEResult, getECScheme as getGpfsEcScheme, getGPFSTolerance, getAllowedECSchemes, CONSTANTS as GPFS_CONSTANTS, EC_SCHEMES as GPFS_EC_SCHEMES, calculateCapacityTiB as gpfsCapacity } from '#/lib/gpfs-ece'
 import type { GPFSECEPlanResult } from '#/lib/gpfs-ece'
-import { planGPFSHybrid, buildGPFSHybridResult, getECScheme as getGpfsHybridEcScheme, getAllowedECSchemes as getGpfsHybridAllowedSchemes, calculateCacheConfig as gpfsHybridCacheConfig, calculateCapacityTiB as gpfsHybridCapacity, REPORT_BASELINE as GPFS_HYBRID_BASELINE, CONSTANTS as GPFS_HYBRID_CONSTANTS } from '#/lib/gpfs-hybrid'
+import { planGPFSHybrid, buildGPFSHybridResult, getECScheme as getGpfsHybridEcScheme, getAllowedECSchemes as getGpfsHybridAllowedSchemes, calculateCacheConfig as gpfsHybridCacheConfig, calculateCapacityTiB as gpfsHybridCapacity, getAllowedNetworkTypes as getGpfsHybridAllowedNetworkTypes, REPORT_BASELINE as GPFS_HYBRID_BASELINE, CONSTANTS as GPFS_HYBRID_CONSTANTS } from '#/lib/gpfs-hybrid'
 import type { GPFSHybridPlanResult } from '#/lib/gpfs-hybrid'
 import { planCeph, buildCephResult, getMemoryConfig as getCephMemory, getStorageNetworkConfig as getCephStorageNetwork, getMdsMemoryConfig as getCephMdsMemory, getMdsStorageNetworkConfig as getCephMdsStorageNetwork, getPerDiskPerformance as getCephPerDisk, getAllowedRedundancySchemes as getCephAllowedSchemes, RGW_PER_DISK as CEPH_RGW_PER_DISK, calculateCapacityTiB as cephCapacity, CONSTANTS as CEPH_CONSTANTS } from '#/lib/ceph'
 import type { CephPlanResult } from '#/lib/ceph'
@@ -688,8 +688,13 @@ function StorplanApp() {
     patchGpfsHybrid({ networkType: newType })
   }
 
+  // 切到 25Gb 时 IB 无对应规格，自动回退到该速率的首个可选类型（RoCE）
   const handleGpfsHybridNetworkSpeedChange = (newSpeed: number) => {
-    patchGpfsHybrid({ networkSpeed: newSpeed })
+    const r = results['gpfs-hybrid']
+    if (!r) return
+    const allowed = getGpfsHybridAllowedNetworkTypes(newSpeed)
+    const type = allowed.find(n => n.value === r.network.type)?.value ?? allowed[0].value
+    patchGpfsHybrid({ networkSpeed: newSpeed, networkType: type })
   }
 
   const handleCephNodeCountChange = (newCount: number) => {
@@ -1882,8 +1887,8 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
     && data.hddSize === GPFS_HYBRID_BASELINE.hddSizeTB
     && data.cacheConfig.count === GPFS_HYBRID_BASELINE.cacheDisksPerNode
     && data.cacheConfig.sizePerDisk === GPFS_HYBRID_BASELINE.cacheSizeTB
-    && data.network.type === GPFS_HYBRID_CONSTANTS.DEFAULT_NETWORK_TYPE
-    && data.network.speedGb === GPFS_HYBRID_CONSTANTS.DEFAULT_NETWORK_SPEED
+    && data.network.type === GPFS_HYBRID_BASELINE.networkType
+    && data.network.speedGb === GPFS_HYBRID_BASELINE.networkSpeed
 
   return (
     <div className="space-y-6">
@@ -1998,7 +2003,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
                   {GPFS_HYBRID_CONSTANTS.NETWORK_SPEEDS.map(s => <option key={s} value={s}>{s}Gb</option>)}
                 </select>
                 <select value={data.network.type} onChange={(e) => onNetworkTypeChange(e.target.value)} aria-label="存储网络类型" className="field">
-                  {GPFS_HYBRID_CONSTANTS.NETWORK_TYPES.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
+                  {getGpfsHybridAllowedNetworkTypes(data.network.speedGb).map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
                 </select>
                 <span>网卡</span>
               </dd>

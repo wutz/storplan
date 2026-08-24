@@ -73,6 +73,9 @@ export const REPORT_BASELINE = {
   cacheDisksPerNode: 4,
   cacheSizeTB: 15.36,
   ecScheme: 'EC4+2P',
+  // 报告实测网络为 100G IB；默认选择的 RoCE 同速率下模型结果相同，但仍属预测
+  networkType: 'ib',
+  networkSpeed: 100,
   // 分层开启：读写由 NVMe 层承载
   tiered: {
     readBandwidthGBps: 48.69,
@@ -121,25 +124,30 @@ export const CONSTANTS = {
   SYSTEM_RESERVED: 0.95,
   // NVMe 层（元数据 + 热数据）规格与盘数区间与 Ceph 混闪索引盘对齐
   CACHE_DISK_SIZES: [1.6, 1.92, 3.2, 3.84, 6.4, 7.68, 12.8, 15.36] as const,
-  // GPFS 混闪的 NVMe 配比要求（1/15）远高于 Ceph 索引盘（1/80），
-  // 在 ≤4 盘的区间内必须用到大规格，故自动选型使用全部规格
-  AUTO_CACHE_DISK_SIZES: [1.6, 1.92, 3.2, 3.84, 6.4, 7.68, 12.8, 15.36] as const,
+  // 自动选型优先使用 1.92 系列规格；1.6 系列仅供手动选择
+  AUTO_CACHE_DISK_SIZES: [1.92, 3.84, 7.68, 15.36] as const,
   MIN_CACHE_DISKS: 1,
   MAX_CACHE_DISKS: 4,
   // NVMe 总容量 ≥ HDD 总容量 / 15（基准配置 36×24TB HDD 配 4×15.36TB NVMe，约 1/14，高于此下限）
   CACHE_RATIO: 15,
-  // 存储网络：类型只影响协议效率，速率决定单节点带宽上限
+  // 存储网络：类型只影响协议效率，速率决定单节点带宽上限。
+  // IB 无 25Gb 规格（IB 速率档为 EDR/HDR 100G 起），故 25Gb 只提供 RoCE 与 Eth
   NETWORK_TYPES: [
-    { value: 'ib', label: 'IB', efficiency: 0.9 },
-    { value: 'roce', label: 'RoCE', efficiency: 0.9 },
-    { value: 'eth', label: 'Eth', efficiency: 0.8 },
+    { value: 'roce', label: 'RoCE', efficiency: 0.9, speeds: [100, 25] },
+    { value: 'ib', label: 'IB', efficiency: 0.9, speeds: [100] },
+    { value: 'eth', label: 'Eth', efficiency: 0.8, speeds: [100, 25] },
   ] as const,
   NETWORK_SPEEDS: [100, 25] as const, // Gb/s 单端口
-  DEFAULT_NETWORK_TYPE: 'ib',
+  DEFAULT_NETWORK_TYPE: 'roce',
   DEFAULT_NETWORK_SPEED: 100,
   // 双口绑定用于存储网络，第二张卡按冗余计不叠加吞吐
   STORAGE_PORTS_PER_NODE: 2,
 };
+
+/** 该速率下可选的网络类型（IB 仅 100Gb 有对应规格） */
+export function getAllowedNetworkTypes(speedGb: number) {
+  return CONSTANTS.NETWORK_TYPES.filter(t => (t.speeds as readonly number[]).includes(speedGb));
+}
 
 export interface NetworkConfig {
   type: string;
@@ -161,7 +169,9 @@ export function getECAmplification(ecScheme: string): number {
 }
 
 export function getNetworkConfig(type: string, speedGb: number, ecScheme: string): NetworkConfig {
-  const t = CONSTANTS.NETWORK_TYPES.find(n => n.value === type) ?? CONSTANTS.NETWORK_TYPES[0];
+  // 所选类型在该速率下无对应规格时（如 25Gb IB）回退到该速率的首个可选类型
+  const allowed = getAllowedNetworkTypes(speedGb);
+  const t = allowed.find(n => n.value === type) ?? allowed[0] ?? CONSTANTS.NETWORK_TYPES[0];
   const amplification = getECAmplification(ecScheme);
   // 端口总速率 → MiB/s，扣协议效率后再除以纠删码网络放大
   const wireMiBps = (CONSTANTS.STORAGE_PORTS_PER_NODE * speedGb / 8) * 1000 / MIB_TO_MB;
