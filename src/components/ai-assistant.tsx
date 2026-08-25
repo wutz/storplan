@@ -182,8 +182,11 @@ export function AiAssistant({ onApplyPlan, onFocusResults }: {
       })
 
       if (!res.ok || !res.body) {
+        // 边缘 WAF 限流返回的是 Cloudflare 自己的 HTML 拦截页，解析不出我们的 JSON，
+        // 所以按状态码兜一条明确的提示
         const detail = await res.json().catch(() => null)
-        throw new Error((detail as { error?: string } | null)?.error ?? '请求失败，请稍后重试。')
+        const fallback = res.status === 429 ? '请求过于频繁，请稍后再试。' : '请求失败，请稍后重试。'
+        throw new Error((detail as { error?: string } | null)?.error ?? fallback)
       }
 
       const reader = res.body.getReader()
