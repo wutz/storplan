@@ -17,6 +17,36 @@
 - **GPFS 混闪** — 大容量并行文件系统（NVMe 元数据层 + HDD 数据层，分别给出开启 / 关闭分层的性能）
 - **Ceph** — 开源统一存储（块、对象、文件系统）
 
+## AI 规划助手
+
+右下角的「AI 规划助手」支持多轮对话：用自然语言描述业务需求（数据量、协议、GPU 规模、预算约束），
+模型问清关键条件后选出方案、定出容量与带宽，参数自动填进页面顶部的规划表单，由本站既有的计算逻辑出结果 ——
+模型只负责选型与定参，集群规模和性能数字仍由本地算法计算。
+
+- 话题限定在存储、Kubernetes、网络、GPU、AI 基础设施，其它问题会被拒答。
+- 需要厂商参数等站外信息时模型会联网检索。
+- 模型输出的参数会在对话里以「已填入规划参数」卡片摊开展示，可直接在表单里改。
+
+### 配置（密钥只留在服务端）
+
+浏览器只访问同源的 `/api/chat`，上游地址、API Key、模型名都留在服务端，不进客户端产物、不进仓库。
+
+本地开发 —— 复制模板后填入自己的密钥（`.dev.vars` 已被 `.gitignore` 忽略）：
+
+```bash
+cp .dev.vars.example .dev.vars
+```
+
+生产环境（Cloudflare Workers）—— 用 Secret 下发，不要写进 `wrangler.toml`：
+
+```bash
+npx wrangler secret put LLM_API_KEY
+npx wrangler secret put LLM_API_URL   # 可选，默认 https://api.blsc.dev
+npx wrangler secret put LLM_MODEL     # 可选，默认 claude-opus-5
+```
+
+未配置 `LLM_API_KEY` 时助手会直接返回「未配置」提示，页面其余功能不受影响。
+
 ## 快速开始
 
 ```bash
@@ -40,14 +70,20 @@ npm run preview
 ```
 storplan/
 ├── src/
-│   ├── lib/             # 核心计算逻辑
-│   │   ├── utils.ts     # 容量/带宽解析工具
-│   │   └── xeos.ts      # XEOS 规划器
-│   ├── routes/          # 路由页面
-│   │   ├── __root.tsx   # 根布局
-│   │   └── index.tsx    # 首页（规划表单）
-│   ├── router.tsx       # 路由配置
-│   └── styles.css       # 全局样式
+│   ├── components/
+│   │   └── ai-assistant.tsx      # AI 规划助手对话面板
+│   ├── lib/                      # 核心计算逻辑
+│   │   ├── utils.ts              # 容量/带宽解析工具
+│   │   ├── xeos.ts               # XEOS 规划器
+│   │   ├── storage-catalog.ts    # 方案知识库（页面与 AI 提示词共用）
+│   │   ├── ai-chat.ts            # 对话契约与规划指令解析
+│   │   └── ai-system-prompt.ts   # AI 系统提示词（仅服务端）
+│   ├── routes/                   # 路由页面
+│   │   ├── __root.tsx            # 根布局
+│   │   ├── index.tsx             # 首页（规划表单）
+│   │   └── api.chat.ts           # POST /api/chat（LLM 流式代理）
+│   ├── router.tsx                # 路由配置
+│   └── styles.css                # 全局样式
 ├── dist/                # 构建输出
 ├── package.json
 ├── tsconfig.json

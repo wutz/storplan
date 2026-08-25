@@ -1,0 +1,192 @@
+/**
+ * POST /api/chat —— AI 规划助手的服务端出口。
+ *
+ * 浏览器只跟这个同源接口说话：上游地址、API Key、模型名全部留在服务端（Cloudflare Secret / .dev.vars），
+ * 前端拿不到、构建产物里也不含。上游的 Anthropic SSE 在这里被转成一套最小事件协议再转发，
+ * 顺带把 thinking / 工具调用等内部细节挡掉。
+ */
+
+import { createFileRoute } from '@tanstack/react-router'
+import { CHAT_LIMITS } from '#/lib/ai-chat'
+import type { ChatMessage } from '#/lib/ai-chat'
+import { buildSystemPrompt } from '#/lib/ai-system-prompt'
+
+const DEFAULT_API_URL = 'https://api.blsc.dev'
+const DEFAULT_MODEL = 'claude-opus-5'
+const MAX_TOKENS = 1200
+const MAX_WEB_SEARCHES = 3
+
+/** 转发给浏览器的事件（每行一条 SSE data） */
+type StreamEvent =
+  | { type: 'delta'; text: string }
+  | { type: 'search' }
+  | { type: 'error'; message: string }
+  | { type: 'done' }
+
+function json(body: unknown, status: number): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json; charset=utf-8' },
+  })
+}
+
+function parseMessages(input: unknown): ChatMessage[] | string {
+  if (!input || typeof input !== 'object') return '请求体格式不正确。'
+  const raw = (input as { messages?: unknown }).messages
+  if (!Array.isArray(raw) || raw.length === 0) return '请求缺少对话内容。'
+  if (raw.length > CHAT_LIMITS.maxMessages) return '对话轮次过多，请开始新的对话。'
+
+  const messages: ChatMessage[] = []
+  let total = 0
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') return '对话内容格式不正确。'
+    const { role, content } = item as { role?: unknown; content?: unknown }
+    if (role !== 'user' && role !== 'assistant') return '对话内容格式不正确。'
+    if (typeof content !== 'string' || content.trim() === '') return '对话内容不能为空。'
+    if (content.length > CHAT_LIMITS.maxCharsPerMessage) return '单条消息过长，请精简后重试。'
+    total += content.length
+    if (total > CHAT_LIMITS.maxTotalChars) return '对话内容过长，请开始新的对话。'
+    messages.push({ role, content })
+  }
+  if (messages[messages.length - 1]?.role !== 'user') return '对话内容格式不正确。'
+  return messages
+}
+
+/**
+ * 把上游 SSE 拆成一条条 data 负载。Anthropic 的事件按 `event:` / `data:` 行成组发送，
+ * 这里只关心 data 行的 JSON。
+ */
+function extractDataPayloads(chunk: string, buffer: { rest: string }): string[] {
+  const text = buffer.rest + chunk
+  const parts = text.split('\n')
+  buffer.rest = parts.pop() ?? ''
+  const payloads: string[] = []
+  for (const line of parts) {
+    const trimmed = line.trimEnd()
+    if (trimmed.startsWith('data:')) payloads.push(trimmed.slice(5).trim())
+  }
+  return payloads
+}
+
+async function handleChat({ request }: { request: Request }): Promise<Response> {
+  // 环境变量必须在请求内读取：Workers 在请求时才注入，模块作用域读到的是 undefined
+  const apiKey = process.env.LLM_API_KEY
+  const apiUrl = (process.env.LLM_API_URL || DEFAULT_API_URL).replace(/\/+$/, '')
+  const model = process.env.LLM_MODEL || DEFAULT_MODEL
+
+  if (!apiKey) {
+    return json({ error: 'AI 助手未配置：服务端缺少 LLM_API_KEY。' }, 503)
+  }
+
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return json({ error: '请求体不是合法 JSON。' }, 400)
+  }
+
+  const parsed = parseMessages(body)
+  if (typeof parsed === 'string') return json({ error: parsed }, 400)
+
+  let upstream: Response
+  try {
+    upstream = await fetch(`${apiUrl}/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      signal: request.signal,
+      body: JSON.stringify({
+        model,
+        max_tokens: MAX_TOKENS,
+        stream: true,
+        thinking: { type: 'disabled' },
+        system: buildSystemPrompt(),
+        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: MAX_WEB_SEARCHES }],
+        messages: parsed,
+      }),
+    })
+  } catch {
+    return json({ error: '无法连接 AI 服务，请稍后重试。' }, 502)
+  }
+
+  if (!upstream.ok || !upstream.body) {
+    // 上游错误正文可能带账号 / 路由信息，不透传给浏览器，只留状态码便于排查
+    return json({ error: `AI 服务返回错误（HTTP ${upstream.status}），请稍后重试。` }, 502)
+  }
+
+  const encoder = new TextEncoder()
+  const decoder = new TextDecoder()
+  const reader = upstream.body.getReader()
+
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (event: StreamEvent) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`))
+      const buffer = { rest: '' }
+      // 只转发正文文本块：thinking 与工具调用参数留在服务端
+      let textBlock = false
+
+      try {
+        for (;;) {
+          const { done, value } = await reader.read()
+          if (done) break
+          for (const payload of extractDataPayloads(decoder.decode(value, { stream: true }), buffer)) {
+            if (!payload || payload === '[DONE]') continue
+            let event: any
+            try {
+              event = JSON.parse(payload)
+            } catch {
+              continue
+            }
+            switch (event.type) {
+              case 'content_block_start':
+                textBlock = event.content_block?.type === 'text'
+                if (event.content_block?.type === 'server_tool_use' && event.content_block?.name === 'web_search') {
+                  send({ type: 'search' })
+                }
+                break
+              case 'content_block_delta':
+                if (textBlock && event.delta?.type === 'text_delta' && event.delta.text) {
+                  send({ type: 'delta', text: event.delta.text })
+                }
+                break
+              case 'content_block_stop':
+                textBlock = false
+                break
+              case 'error':
+                send({ type: 'error', message: 'AI 服务在生成过程中出错，请重试。' })
+                break
+            }
+          }
+        }
+        send({ type: 'done' })
+      } catch {
+        send({ type: 'error', message: '连接中断，请重试。' })
+      } finally {
+        controller.close()
+        reader.releaseLock()
+      }
+    },
+    cancel(reason) {
+      void reader.cancel(reason)
+    },
+  })
+
+  return new Response(stream, {
+    headers: {
+      'content-type': 'text/event-stream; charset=utf-8',
+      'cache-control': 'no-cache, no-transform',
+      connection: 'keep-alive',
+    },
+  })
+}
+
+export const Route = createFileRoute('/api/chat')({
+  server: {
+    handlers: {
+      POST: handleChat,
+    },
+  },
+})
