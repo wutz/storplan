@@ -40,10 +40,16 @@ cp .dev.vars.example .dev.vars
 生产环境（Cloudflare Workers）—— 用 Secret 下发，不要写进 `wrangler.toml`：
 
 ```bash
-npx wrangler secret put LLM_API_KEY
-npx wrangler secret put LLM_API_URL   # 可选，默认 https://api.blsc.dev
-npx wrangler secret put LLM_MODEL     # 可选，默认 claude-opus-5
+npx wrangler versions secret put LLM_API_KEY
+npx wrangler versions secret put LLM_API_URL   # 可选，默认 https://api.blsc.dev
+npx wrangler versions secret put LLM_MODEL     # 可选，默认 claude-opus-5
 ```
+
+本项目走版本化上传（`wrangler versions upload`），有两点要注意：
+
+1. 用 `wrangler versions secret put`，不是 `wrangler secret put` —— 后者在有未部署版本时会被拒绝。
+2. **每个版本在上传那一刻就固定了自己的绑定**。先上传的预览版本不会自动获得之后添加的 Secret，
+   加完 Secret 要重新 `npx wrangler versions upload` 才能生效，否则预览会一直报「服务端缺少 LLM_API_KEY」。
 
 未配置 `LLM_API_KEY` 时助手会直接返回「未配置」提示，页面其余功能不受影响。
 
