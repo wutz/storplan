@@ -145,6 +145,24 @@
   .error-box {
     @apply rounded-md border border-error-soft bg-error-bg px-4 py-3 text-sm text-error-deep;
   }
+
+  /*
+     AI 助手的显隐过渡。面板不卸载、只切 visibility，所以要把 visibility 的变化
+     延后到淡出结束（延迟由内联样式给），否则退出动画会被立刻截断。
+  */
+  .ai-panel,
+  .ai-fade {
+    transition-property: opacity, transform, visibility;
+    transition-duration: 160ms, 160ms, 0s;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-panel,
+  .ai-fade {
+    transition-duration: 0s;
+  }
 }
 
 /* ────────────────────────────────────────────────────────────

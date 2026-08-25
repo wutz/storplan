@@ -120,6 +120,22 @@ export function normalizePlan(raw: unknown): PlanDirective | undefined {
   }
 }
 
+/** 规划参数的指纹：用于判断页面表单当前是否还是某条规划指令应用后的状态 */
+export function planSignature(plan: {
+  storages: readonly string[]
+  capacity: { value: number; unit: string }
+  readBandwidth?: number
+  writeBandwidth?: number
+  bandwidthUnit?: string
+}): string {
+  const storages = [...plan.storages].sort().join(',')
+  const read = plan.readBandwidth ?? ''
+  const write = plan.writeBandwidth ?? ''
+  // 读写都没有时带宽单位不影响结果，不参与比较
+  const unit = read === '' && write === '' ? '' : (plan.bandwidthUnit ?? '')
+  return [storages, plan.capacity.value, plan.capacity.unit, read, write, unit].join('|')
+}
+
 /** 去空、去重、限长限量的字符串列表（候选答案与假设共用） */
 function normalizeStringList(raw: unknown, maxItems: number, maxChars: number): string[] {
   if (!Array.isArray(raw)) return []

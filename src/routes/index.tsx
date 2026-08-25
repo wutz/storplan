@@ -18,6 +18,7 @@ import { formatBandwidth, formatCapacity, MIB_TO_MB } from '#/lib/utils'
 import { SELECTION_GUIDE, STORAGE_INFO, STORAGE_ORDER } from '#/lib/storage-catalog'
 import type { GuideRow, StorageKey } from '#/lib/storage-catalog'
 import { AiAssistant } from '#/components/ai-assistant'
+import { planSignature } from '#/lib/ai-chat'
 import type { PlanDirective } from '#/lib/ai-chat'
 
 export const Route = createFileRoute('/')({ component: StorplanApp })
@@ -884,6 +885,22 @@ function StorplanApp() {
     requestAnimationFrame(focusResults)
   }
 
+  // 表单当前状态的指纹，用来判断某张方案卡里的参数是否还是眼下这一组
+  const currentSignature = planSignature({
+    storages: [...selectedStorages],
+    capacity: { value: Number(capacityValue), unit: capacityUnit },
+    readBandwidth: downloadBWValue ? Number(downloadBWValue) : undefined,
+    writeBandwidth: uploadBWValue ? Number(uploadBWValue) : undefined,
+    bandwidthUnit: bwUnit,
+  })
+  const isPlanApplied = (plan: PlanDirective) => planSignature(plan) === currentSignature
+
+  /** 方案卡上的按钮：参数已被改动就先还原成这张卡记下的那一组，再滚到结果 */
+  const restorePlan = (plan: PlanDirective) => {
+    if (isPlanApplied(plan)) focusResults()
+    else applyPlan(plan)
+  }
+
   // 结果区内容：每个方案的规划结果，由 SchemePanel 提供卡壳与卡头
   const renderResult = (key: (typeof STORAGE_ORDER)[number]) => {
     switch (key) {
@@ -1114,7 +1131,7 @@ function StorplanApp() {
         </footer>
       </div>
 
-      <AiAssistant onApplyPlan={applyPlan} onFocusResults={focusResults} />
+      <AiAssistant onApplyPlan={applyPlan} onRestorePlan={restorePlan} isPlanApplied={isPlanApplied} />
     </div>
   )
 }
