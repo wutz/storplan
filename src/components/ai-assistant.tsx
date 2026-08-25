@@ -5,7 +5,7 @@
  * 由本站既有的容量 / 性能计算逻辑出结果。样式沿用 DESIGN.md（发丝线 + 堆叠阴影 + 墨黑主 CTA）。
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { parseAssistantReply } from '#/lib/ai-chat'
 import type { ChatMessage, PlanDirective } from '#/lib/ai-chat'
 import { STORAGE_NAMES } from '#/lib/storage-catalog'
@@ -198,6 +198,8 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [geometry, setGeometry] = useState<Geometry | null>(null)
+  // 收放动画的锚点：启动按钮中心在面板内的坐标
+  const [transformOrigin, setTransformOrigin] = useState('100% 100%')
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -246,7 +248,9 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
     }
     // 点面板外自动收起（点启动按钮除外，否则会“关了又开”）
     const onPointerDown = (e: PointerEvent) => {
-      const target = e.target as Node
+      // contains() 只接受 Node，事件目标万一不是（合成事件可能给 window），先挡一道
+      const target = e.target
+      if (!(target instanceof Node)) return
       if (panelRef.current?.contains(target) || launcherRef.current?.contains(target)) return
       setOpen(false)
     }
@@ -257,6 +261,23 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
       window.removeEventListener('pointerdown', onPointerDown)
     }
   }, [open])
+
+  /**
+   * macOS「缩放特效」式的开合：窗口从 Dock 图标里长出来、收起时缩回图标。
+   * 做法是把 transform-origin 定到启动按钮中心（换算成面板内坐标），收起时 scale 到极小 ——
+   * 面板无论被拖到哪儿，都朝那颗按钮飞。
+   *
+   * 几何一确定就先算好（而不是等到开合那一刻）：transform-origin 不参与过渡、改了立即生效，
+   * 若与展开同一次提交才写入，第一帧仍用旧原点，首次展开就会从面板角上而不是按钮上长出来。
+   * 面板可见时 scale 为 1，此时改原点不影响成像，所以拖动 / 缩放中跟着重算是安全的。
+   */
+  useLayoutEffect(() => {
+    const launcher = launcherRef.current?.getBoundingClientRect()
+    if (!launcher || !geometry) return
+    setTransformOrigin(
+      `${launcher.left + launcher.width / 2 - geometry.left}px ${launcher.top + launcher.height / 2 - geometry.top}px`,
+    )
+  }, [open, geometry])
 
   /**
    * 拖动（抓卡头）与缩放（抓左上角手柄）。缩放固定右下角不动，
@@ -400,9 +421,12 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         style={{
           boxShadow: '0 1px 1px rgba(0,0,0,0.05), 0 8px 16px -4px rgba(0,0,0,0.12)',
           opacity: open ? 0 : 1,
-          transform: open ? 'scale(0.9)' : 'scale(1)',
+          transform: open ? 'scale(0.86)' : 'scale(1)',
           visibility: open ? 'hidden' : 'visible',
-          transitionDelay: open ? '0s, 0s, 160ms' : '0s',
+          /* 展开时按钮立刻让位（窗口正是从它长出来的）；收起时等面板缩回来了再浮现 */
+          transition: open
+            ? 'opacity 120ms ease-out, transform 120ms ease-out, visibility 0s linear 120ms'
+            : 'opacity 160ms ease-out 170ms, transform 200ms cubic-bezier(0.32, 0.72, 0, 1) 150ms, visibility 0s',
         }}
       >
         <SparkIcon className="h-4 w-4" />
@@ -427,10 +451,23 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           width: geometry?.width ?? DEFAULT_SIZE.width,
           height: geometry?.height ?? DEFAULT_SIZE.height,
           boxShadow: '0 1px 1px rgba(0,0,0,0.05), 0 8px 16px -4px rgba(0,0,0,0.06), 0 24px 32px -8px rgba(0,0,0,0.09)',
+          transformOrigin,
           opacity: open ? 1 : 0,
-          transform: open ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.98)',
+          /*
+            收起时缩到极小、落在启动按钮上。终态缩放比就是落点误差：面板被拖远后，
+            末帧中心会停在「按钮 → 面板中心」这条线的 scale 处（0.04 时约差 30px），
+            所以取 0.01 —— 既基本压到按钮上，又不用 scale(0)（非可逆矩阵，个别浏览器会另眼相看）。
+          */
+          transform: open ? 'scale(1)' : 'scale(0.01)',
           visibility: geometry && open ? 'visible' : 'hidden',
-          transitionDelay: open ? '0s' : '0s, 0s, 160ms',
+          /*
+            展开：形变走 macOS 那条“起步快、尾段长”的曲线，透明度更快补齐，避免看起来是块半透明玻璃在放大。
+            收起：略快一点、尾段加速（ease-in），透明度延后再退，让面板在缩小过程中一直看得见，
+            最后 visibility 在动画结束那刻才切，否则退出动画会被截断。
+          */
+          transition: open
+            ? 'transform 320ms cubic-bezier(0.32, 0.72, 0, 1), opacity 160ms ease-out, visibility 0s'
+            : 'transform 240ms cubic-bezier(0.4, 0, 0.7, 0.2), opacity 200ms ease-in 60ms, visibility 0s linear 240ms',
         }}
       >
         {/* 左上角缩放手柄：拖动时右下角固定不动 */}
