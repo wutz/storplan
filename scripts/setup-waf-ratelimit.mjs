@@ -56,9 +56,10 @@ function limitsForPlan(planId) {
   const isPro = planId === 'pro'
   if (isFree) {
     return {
-      // 一次问答要几十秒，正常用户不可能 10 秒内发 3 次
+      // 一轮问答要几十秒（生成期间发送按钮是禁用的），正常用户 10 秒内不会发第 2 次；
+      // 留 2 次是给刷新页面后重发这类正常操作的余量
       period: 10,
-      requestsPerPeriod: 3,
+      requestsPerPeriod: 2,
       mitigationTimeout: 10,
       expression: `(http.request.uri.path eq "${targetPath}")`,
       note: 'Free 套餐：窗口与封禁时长固定 10 秒，表达式仅支持 Path，因此该规则对本 zone 所有主机名的同名路径生效。',
