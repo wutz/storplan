@@ -6,3 +6,22 @@ main = "@tanstack/react-start/server-entry"
 
 [observability]
 enabled = true
+
+# /api/chat 的来源限流：每次提问都会消耗上游 LLM 额度，端点公开可访问，
+# 因此按调用方 IP 限速，另加一道全站闸门兜住分散来源的刷量。
+# period 只能取 10 或 60（秒）；计数由边缘维护，为最终一致的宽松计量。
+[[ratelimits]]
+name = "CHAT_IP_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 8
+  period = 60
+
+[[ratelimits]]
+name = "CHAT_GLOBAL_LIMITER"
+namespace_id = "1002"
+
+  [ratelimits.simple]
+  limit = 60
+  period = 60

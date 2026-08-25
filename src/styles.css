@@ -145,6 +145,18 @@
   .error-box {
     @apply rounded-md border border-error-soft bg-error-bg px-4 py-3 text-sm text-error-deep;
   }
+
+}
+
+/*
+   AI 助手的开合动画（macOS 缩放特效：从启动按钮长出 / 缩回按钮）由内联样式定义 ——
+   曲线与延迟随开合方向不同，写在组件里更好读。这里只做减少动效的兜底。
+*/
+@media (prefers-reduced-motion: reduce) {
+  .ai-panel,
+  .ai-fade {
+    transition: none !important;
+  }
 }
 
 /* ────────────────────────────────────────────────────────────
