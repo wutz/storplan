@@ -1,9 +1,12 @@
 /**
  * AI 规划助手的前后端共用契约：
- * 会话消息类型、规划指令（模型输出的结构化参数）、以及从回复正文里剥离规划块的解析器。
+ * 会话消息类型、模型输出的两种结构化块、以及从回复正文里剥离这些块的解析器。
  *
- * 模型在回复末尾附一段 <storplan-plan>{...}</storplan-plan>，前端解析后写入页面顶部的规划参数，
- * 由既有的容量 / 性能计算逻辑出结果 —— 模型只负责“听懂需求、选方案、定参数”，不负责算数。
+ * 模型的回复由三部分组成：
+ * - 给人看的正文；
+ * - <storplan-ask>{...}</storplan-ask>：澄清需求时的候选答案，前端渲染成可点的选项；
+ * - <storplan-plan>{...}</storplan-plan>：条件问清后的规划参数，前端写进页面顶部的表单，
+ *   由既有的容量 / 性能计算逻辑出结果 —— 模型只负责“问清需求、选方案、定参数”，不负责算数。
  */
 
 import { STORAGE_ORDER } from './storage-catalog'
@@ -11,6 +14,8 @@ import type { StorageKey } from './storage-catalog'
 
 export const PLAN_OPEN_TAG = '<storplan-plan>'
 export const PLAN_CLOSE_TAG = '</storplan-plan>'
+export const ASK_OPEN_TAG = '<storplan-ask>'
+export const ASK_CLOSE_TAG = '</storplan-ask>'
 
 export const CAPACITY_UNITS = ['TiB', 'PiB', 'TB', 'PB'] as const
 export const BANDWIDTH_UNITS = ['MB/s', 'GB/s', 'Mbps', 'Gbps'] as const
@@ -35,6 +40,15 @@ export interface PlanDirective {
   bandwidthUnit?: BandwidthUnit
   /** 一句话说明取值依据，展示在“已应用”卡片里 */
   note?: string
+  /** 本次规划用到的假设，逐条展示，方便用户挑出不成立的那条纠正 */
+  assumptions?: string[]
+}
+
+/** 解析后的助手回复：正文 + 可点的候选答案 + 规划参数 */
+export interface AssistantReply {
+  text: string
+  plan?: PlanDirective
+  quickReplies: string[]
 }
 
 /** 请求体上限：既防滥用，也避免上游 token 超限 */
@@ -93,6 +107,7 @@ export function normalizePlan(raw: unknown): PlanDirective | undefined {
   }
 
   const note = typeof obj.note === 'string' ? obj.note.slice(0, 200) : undefined
+  const assumptions = normalizeStringList(obj.assumptions, 6, 120)
 
   return {
     storages: [...new Set(storages)],
@@ -101,28 +116,84 @@ export function normalizePlan(raw: unknown): PlanDirective | undefined {
     writeBandwidth: clampBandwidth(obj.writeBandwidth),
     bandwidthUnit,
     note,
+    assumptions: assumptions.length > 0 ? assumptions : undefined,
   }
 }
 
-/**
- * 把回复正文拆成「给人看的文字」和「规划指令」。
- *
- * 流式渲染时会对同一段不断增长的文本反复调用：只出现了开标签、JSON 还没写完时，
- * 也要先把这段半成品从展示文本里藏掉，否则用户会看到裸的 JSON 一个字一个字冒出来。
- */
-export function splitPlanBlock(text: string): { text: string; plan?: PlanDirective } {
-  const openIndex = text.indexOf(PLAN_OPEN_TAG)
-  if (openIndex === -1) return { text }
+/** 去空、去重、限长限量的字符串列表（候选答案与假设共用） */
+function normalizeStringList(raw: unknown, maxItems: number, maxChars: number): string[] {
+  if (!Array.isArray(raw)) return []
+  const seen = new Set<string>()
+  for (const item of raw) {
+    if (typeof item !== 'string') continue
+    const value = item.trim().slice(0, maxChars)
+    if (value !== '') seen.add(value)
+    if (seen.size >= maxItems) break
+  }
+  return [...seen]
+}
 
-  const body = text.slice(openIndex + PLAN_OPEN_TAG.length)
-  const closeIndex = body.indexOf(PLAN_CLOSE_TAG)
-  const visible = (text.slice(0, openIndex) + (closeIndex === -1 ? '' : body.slice(closeIndex + PLAN_CLOSE_TAG.length))).trim()
-
-  if (closeIndex === -1) return { text: visible }
-
+/** 候选答案块：{"options":[...]}，也容忍模型直接给一个数组 */
+function parseQuickReplies(payload: string): string[] {
   try {
-    return { text: visible, plan: normalizePlan(JSON.parse(body.slice(0, closeIndex).trim())) }
+    const parsed: unknown = JSON.parse(payload.trim())
+    const raw = Array.isArray(parsed) ? parsed : (parsed as { options?: unknown } | null)?.options
+    return normalizeStringList(raw, 5, 40)
   } catch {
-    return { text: visible }
+    return []
+  }
+}
+
+const BLOCKS = [
+  { kind: 'plan' as const, open: PLAN_OPEN_TAG, close: PLAN_CLOSE_TAG },
+  { kind: 'ask' as const, open: ASK_OPEN_TAG, close: ASK_CLOSE_TAG },
+]
+
+/**
+ * 把回复拆成「给人看的正文」、候选答案与规划指令。
+ *
+ * 流式渲染时会对同一段不断增长的文本反复调用，所以要处理三种半成品：
+ * 已闭合的块（取出内容）、开标签已到但内容没写完（整段藏掉）、
+ * 连开标签本身都只到一半（如 "<storplan-"，也要藏掉，否则会闪出裸标签）。
+ */
+export function parseAssistantReply(raw: string): AssistantReply {
+  let text = raw
+  const payloads: Record<'plan' | 'ask', string[]> = { plan: [], ask: [] }
+
+  for (const block of BLOCKS) {
+    for (;;) {
+      const start = text.indexOf(block.open)
+      if (start === -1) break
+      const bodyStart = start + block.open.length
+      const end = text.indexOf(block.close, bodyStart)
+      if (end === -1) break // 未闭合，交给下面的裁剪
+      payloads[block.kind].push(text.slice(bodyStart, end))
+      text = text.slice(0, start) + text.slice(end + block.close.length)
+    }
+  }
+
+  // 裁掉未闭合的块，以及结尾那半个开标签
+  let cut = text.length
+  for (const block of BLOCKS) {
+    const start = text.indexOf(block.open)
+    if (start !== -1) cut = Math.min(cut, start)
+  }
+  const lastLt = text.lastIndexOf('<', cut - 1)
+  if (lastLt !== -1 && BLOCKS.some((b) => b.open.startsWith(text.slice(lastLt, cut)))) {
+    cut = lastLt
+  }
+
+  const plan = payloads.plan.reduce<PlanDirective | undefined>((acc, payload) => {
+    try {
+      return normalizePlan(JSON.parse(payload.trim())) ?? acc
+    } catch {
+      return acc
+    }
+  }, undefined)
+
+  return {
+    text: text.slice(0, cut).trim(),
+    plan,
+    quickReplies: payloads.ask.flatMap(parseQuickReplies).slice(0, 5),
   }
 }

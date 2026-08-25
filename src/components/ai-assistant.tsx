@@ -6,15 +6,17 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { splitPlanBlock } from '#/lib/ai-chat'
+import { parseAssistantReply } from '#/lib/ai-chat'
 import type { ChatMessage, PlanDirective } from '#/lib/ai-chat'
 import { STORAGE_NAMES } from '#/lib/storage-catalog'
 
 type Turn = {
   role: 'user' | 'assistant'
-  /** 已剥离规划指令的展示文本 */
+  /** 已剥离结构化块的展示文本 */
   text: string
   plan?: PlanDirective
+  /** 模型给的候选答案，点一下即作为下一条消息发出 */
+  quickReplies?: string[]
   searching?: boolean
 }
 
@@ -25,7 +27,7 @@ const SUGGESTIONS = [
 ]
 
 const WELCOME =
-  '描述你的业务需求就行 —— 数据量、协议、GPU 规模、预算约束都可以说。我会问清关键条件，选出方案并把容量与带宽参数填进上面的规划表单。\n\n只聊存储、K8s、网络、GPU 与 AI 基础设施相关的问题。'
+  '描述你的业务需求就行 —— 数据量、协议、GPU 规模、预算约束都可以说。我会先把关键条件问清（可以直接点选项回答），再选方案并把容量与带宽填进上面的规划表单。\n\n想跳过提问就说「按经验来」，我用行业常见值补齐，并把假设逐条列出来。\n\n只聊存储、K8s、网络、GPU 与 AI 基础设施相关的问题。'
 
 function SparkIcon({ className }: { className?: string }) {
   return (
@@ -95,6 +97,15 @@ function AppliedPlan({ plan, onFocusResults }: { plan: PlanDirective; onFocusRes
       </p>
       <p className="mt-1 font-mono text-xs text-body">{rows.join(' · ')}</p>
       {plan.note && <p className="mt-1.5 text-xs leading-relaxed text-mute">{plan.note}</p>}
+      {plan.assumptions && plan.assumptions.length > 0 && (
+        <div className="mt-2.5 border-t border-hairline pt-2">
+          {/* 假设单独列出：用户一眼能挑出不成立的那条，直接回一句就能重算 */}
+          <p className="eyebrow">假设（不成立就告诉我）</p>
+          <ul className="dot-list mt-1 text-xs">
+            {plan.assumptions.map((a) => <li key={a}>{a}</li>)}
+          </ul>
+        </div>
+      )}
       <button
         type="button"
         onClick={onFocusResults}
@@ -197,7 +208,7 @@ export function AiAssistant({ onApplyPlan, onFocusResults }: {
           }
           if (event.type === 'delta' && event.text) {
             answer += event.text
-            const { text } = splitPlanBlock(answer)
+            const { text } = parseAssistantReply(answer)
             patchLast((t) => ({ ...t, text, searching: false }))
           } else if (event.type === 'search') {
             patchLast((t) => ({ ...t, searching: true }))
@@ -207,8 +218,14 @@ export function AiAssistant({ onApplyPlan, onFocusResults }: {
         }
       }
 
-      const { text, plan } = splitPlanBlock(answer)
-      patchLast((t) => ({ ...t, text: text || '（没有收到回复内容，请重试。）', plan, searching: false }))
+      const { text, plan, quickReplies } = parseAssistantReply(answer)
+      patchLast((t) => ({
+        ...t,
+        text: text || '（没有收到回复内容，请重试。）',
+        plan,
+        quickReplies,
+        searching: false,
+      }))
       if (plan) onApplyPlan(plan)
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') return
@@ -314,7 +331,8 @@ export function AiAssistant({ onApplyPlan, onFocusResults }: {
               </div>
             </div>
           ) : (
-            <div key={i} className="rounded-2xl bg-canvas-soft px-3.5 py-3 text-[13px] leading-relaxed text-body">
+            <div key={i}>
+              <div className="rounded-2xl bg-canvas-soft px-3.5 py-3 text-[13px] leading-relaxed text-body">
               {turn.text ? <RichText text={turn.text} /> : (
                 <p className="flex items-center gap-2 text-mute">
                   <span className="inline-flex gap-1" aria-hidden>
@@ -326,6 +344,22 @@ export function AiAssistant({ onApplyPlan, onFocusResults }: {
                 </p>
               )}
               {turn.plan && <AppliedPlan plan={turn.plan} onFocusResults={onFocusResults} />}
+              </div>
+              {/* 候选答案只挂在最后一轮：点一下即作为下一条消息发出 */}
+              {i === turns.length - 1 && !busy && turn.quickReplies && turn.quickReplies.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {turn.quickReplies.map((reply) => (
+                    <button
+                      key={reply}
+                      type="button"
+                      onClick={() => void send(reply)}
+                      className="rounded-full border border-hairline bg-canvas px-3 py-1.5 text-xs text-body transition hover:border-hairline-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
+                    >
+                      {reply}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ),
         )}
