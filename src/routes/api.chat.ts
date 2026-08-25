@@ -7,6 +7,7 @@
  */
 
 import { createFileRoute } from '@tanstack/react-router'
+import { env } from 'cloudflare:workers'
 import { CHAT_LIMITS } from '#/lib/ai-chat'
 import type { ChatMessage } from '#/lib/ai-chat'
 import { buildSystemPrompt } from '#/lib/ai-system-prompt'
@@ -15,6 +16,45 @@ const DEFAULT_API_URL = 'https://api.blsc.dev'
 const DEFAULT_MODEL = 'claude-opus-5'
 const MAX_TOKENS = 1200
 const MAX_WEB_SEARCHES = 3
+
+/**
+ * 来源限流。两道闸门：按调用方 IP（wrangler.toml 的 CHAT_IP_LIMITER）与全站总量
+ * （CHAT_GLOBAL_LIMITER，兜住分散来源的刷量）。计数由 Cloudflare 边缘维护。
+ *
+ * 绑定缺失或调用异常时放行 —— 配置问题不该让功能整体不可用；绑定是部署期配置，
+ * 请求方无法把它“弄丢”。
+ */
+async function checkRateLimit(request: Request): Promise<Response | null> {
+  // 绑定在类型上是必填，但运行时可能因配置缺失而不存在
+  const { CHAT_IP_LIMITER, CHAT_GLOBAL_LIMITER } = env as Partial<Cloudflare.Env>
+  type RateLimiter = Cloudflare.Env['CHAT_IP_LIMITER']
+  // CF-Connecting-IP 由 Cloudflare 边缘写入，客户端无法伪造；本地 dev 没有该头，退回固定值
+  const ip = request.headers.get('cf-connecting-ip') ?? 'local'
+
+  const checks: Array<[RateLimiter | undefined, string, string]> = [
+    [CHAT_IP_LIMITER, `ip:${ip}`, '请求过于频繁，请稍后再试（每分钟最多 8 次提问）。'],
+    [CHAT_GLOBAL_LIMITER, 'global', '当前访问量较大，AI 助手暂时限流，请稍后再试。'],
+  ]
+
+  for (const [limiter, key, message] of checks) {
+    if (!limiter) continue
+    try {
+      const { success } = await limiter.limit({ key })
+      if (!success) {
+        return new Response(JSON.stringify({ error: message }), {
+          status: 429,
+          headers: {
+            'content-type': 'application/json; charset=utf-8',
+            'retry-after': '60',
+          },
+        })
+      }
+    } catch {
+      // 限流服务异常时放行，不影响正常提问
+    }
+  }
+  return null
+}
 
 /** 转发给浏览器的事件（每行一条 SSE data） */
 type StreamEvent =
@@ -77,6 +117,10 @@ async function handleChat({ request }: { request: Request }): Promise<Response> 
   if (!apiKey) {
     return json({ error: 'AI 助手未配置：服务端缺少 LLM_API_KEY。' }, 503)
   }
+
+  // 限流放在解析请求体之前：被限的请求不该再消耗解析与上游调用
+  const limited = await checkRateLimit(request)
+  if (limited) return limited
 
   let body: unknown
   try {

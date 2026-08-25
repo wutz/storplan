@@ -53,6 +53,25 @@ npx wrangler versions secret put LLM_MODEL     # 可选，默认 claude-opus-5
 
 未配置 `LLM_API_KEY` 时助手会直接返回「未配置」提示，页面其余功能不受影响。
 
+绑定类型（限流器）不走 `process.env`，需要生成 Workers 类型后再 `tsc`：
+
+```bash
+npm run cf-typegen   # 生成 worker-configuration.d.ts（已 gitignore）
+```
+
+### 限流
+
+`/api/chat` 是公开端点，每次提问都消耗上游额度，因此在 `wrangler.toml` 里配了两道
+Cloudflare 限流绑定，命中后返回 429（页面上显示为一条提示，不影响继续改参数）：
+
+| 绑定 | 计数键 | 限额 |
+|---|---|---|
+| `CHAT_IP_LIMITER` | 调用方 IP（`CF-Connecting-IP`） | 8 次 / 分钟 |
+| `CHAT_GLOBAL_LIMITER` | 全站共用 | 60 次 / 分钟 |
+
+限流在解析请求体之前执行；绑定缺失或限流服务异常时放行，不影响正常提问。
+边缘计数为最终一致的宽松计量，不做精确记账。
+
 ## 快速开始
 
 ```bash
