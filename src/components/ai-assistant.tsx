@@ -26,31 +26,58 @@ type Geometry = { left: number; top: number; width: number; height: number }
 const DEFAULT_SIZE = { width: 416, height: 576 }
 const MIN_SIZE = { width: 300, height: 320 }
 const GEOMETRY_STORAGE_KEY = 'storplan.ai-panel.geometry'
+/** 小于这个宽度按手机处理：默认最大化、不给拖动与缩放 */
+const COMPACT_WIDTH = 640
+
+/**
+ * 以「视觉视口」为准而不是 window.innerWidth/Height：
+ * 手机弹出软键盘时布局视口不变、视觉视口会变矮，只有跟着它算面板才不会被键盘盖住输入框。
+ * offsetLeft/Top 是视觉视口相对布局视口的位移（iOS 键盘弹起时页面会被顶上去），
+ * fixed 定位跟的是布局视口，所以要把这段位移补回去。
+ */
+function viewport() {
+  const vv = window.visualViewport
+  return {
+    vw: vv?.width ?? window.innerWidth,
+    vh: vv?.height ?? window.innerHeight,
+    offsetLeft: vv?.offsetLeft ?? 0,
+    offsetTop: vv?.offsetTop ?? 0,
+  }
+}
 
 function marginFor(viewportWidth: number): number {
-  return viewportWidth < 640 ? 8 : 20
+  return viewportWidth < COMPACT_WIDTH ? 8 : 20
+}
+
+function isCompact(): boolean {
+  return viewport().vw < COMPACT_WIDTH
+}
+
+/** 最大化：铺满视觉视口，只留一圈边距 */
+function maximizedGeometry(): Geometry {
+  const { vw, vh, offsetLeft, offsetTop } = viewport()
+  const margin = marginFor(vw)
+  return { left: offsetLeft + margin, top: offsetTop + margin, width: vw - margin * 2, height: vh - margin * 2 }
 }
 
 function defaultGeometry(): Geometry {
-  const vw = window.innerWidth
-  const vh = window.innerHeight
+  const { vw, vh, offsetLeft, offsetTop } = viewport()
   const margin = marginFor(vw)
   const width = Math.min(DEFAULT_SIZE.width, vw - margin * 2)
   const height = Math.min(DEFAULT_SIZE.height, vh - margin * 2)
-  return { width, height, left: vw - width - margin, top: vh - height - margin }
+  return { width, height, left: offsetLeft + vw - width - margin, top: offsetTop + vh - height - margin }
 }
 
 /** 保证面板始终留在视口内，且不小于最小尺寸（窗口缩小、恢复存档时都要过一遍） */
 function clampGeometry(g: Geometry): Geometry {
-  const vw = window.innerWidth
-  const vh = window.innerHeight
+  const { vw, vh, offsetLeft, offsetTop } = viewport()
   const width = Math.min(Math.max(g.width, MIN_SIZE.width), vw)
   const height = Math.min(Math.max(g.height, MIN_SIZE.height), vh)
   return {
     width,
     height,
-    left: Math.min(Math.max(g.left, 0), Math.max(vw - width, 0)),
-    top: Math.min(Math.max(g.top, 0), Math.max(vh - height, 0)),
+    left: Math.min(Math.max(g.left, offsetLeft), offsetLeft + Math.max(vw - width, 0)),
+    top: Math.min(Math.max(g.top, offsetTop), offsetTop + Math.max(vh - height, 0)),
   }
 }
 
@@ -101,6 +128,19 @@ function GripIcon({ className }: { className?: string }) {
       <circle cx="7.5" cy="6" r="0.9" />
       <circle cx="4.5" cy="9" r="0.9" />
       <circle cx="7.5" cy="9" r="0.9" />
+    </svg>
+  )
+}
+
+function MaximizeIcon({ className, maximized }: { className?: string; maximized: boolean }) {
+  return (
+    <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className={className}>
+      {maximized ? (
+        // 还原：一个小框缩在角上
+        <path d="M4 8h4V4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      ) : (
+        <rect x="2" y="2" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+      )}
     </svg>
   )
 }
@@ -198,6 +238,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [geometry, setGeometry] = useState<Geometry | null>(null)
+  const [maximized, setMaximized] = useState(false)
   // 收放动画的锚点：启动按钮中心在面板内的坐标
   const [transformOrigin, setTransformOrigin] = useState('100% 100%')
 
@@ -206,34 +247,63 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
   const abortRef = useRef<AbortController | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const launcherRef = useRef<HTMLButtonElement>(null)
+  /** 最大化前的位置尺寸，还原时用 */
+  const restoreRef = useRef<Geometry | null>(null)
   /** 面板隐藏期间不自动滚到底，这样再打开时停在离开前的位置 */
   const openRef = useRef(open)
   openRef.current = open
 
   // 首帧不读 localStorage，避免 SSR 与客户端渲染不一致
   useEffect(() => {
+    // 手机上默认最大化：屏幕本来就窄，浮窗式的小卡片只会让对话更难读
+    if (isCompact()) {
+      setMaximized(true)
+      setGeometry(maximizedGeometry())
+      return
+    }
     setGeometry(readStoredGeometry() ?? defaultGeometry())
   }, [])
 
   useEffect(() => {
-    if (!geometry) return
+    // 最大化是临时状态，别把它当成用户选的窗口尺寸存下来
+    if (!geometry || maximized) return
     try {
       localStorage.setItem(GEOMETRY_STORAGE_KEY, JSON.stringify(geometry))
     } catch {
       // 隐私模式下写不了，忽略即可
     }
-  }, [geometry])
+  }, [geometry, maximized])
 
-  // 窗口变小后把面板拉回视口
+  // 视口变化后把面板拉回视口内；最大化时直接跟着视口重算 ——
+  // 手机软键盘弹起走的是 visualViewport 的 resize/scroll，window resize 不一定触发
   useEffect(() => {
-    const onResize = () => setGeometry((g) => (g ? clampGeometry(g) : g))
+    const onResize = () => {
+      setGeometry((g) => (maximized ? maximizedGeometry() : g ? clampGeometry(g) : g))
+    }
     window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
+    window.visualViewport?.addEventListener('resize', onResize)
+    window.visualViewport?.addEventListener('scroll', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      window.visualViewport?.removeEventListener('resize', onResize)
+      window.visualViewport?.removeEventListener('scroll', onResize)
+    }
+  }, [maximized])
 
   useEffect(() => {
-    if (open) inputRef.current?.focus()
+    // 手机上不自动聚焦：一打开就顶起键盘，反而看不见欢迎语和示例
+    if (open && !isCompact()) inputRef.current?.focus()
   }, [open])
+
+  // 手机上铺满屏幕时锁住背后页面，避免滑动对话内容时把整页也带着滚
+  useEffect(() => {
+    if (!open || !maximized || !isCompact()) return
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [open, maximized])
 
   useEffect(() => {
     if (!openRef.current) return
@@ -284,7 +354,8 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
    * 因为面板默认贴在右下，这样手感和窗口一致。
    */
   const startInteraction = (mode: 'move' | 'resize') => (e: React.PointerEvent) => {
-    if (!geometry || e.button !== 0) return
+    // 最大化时窗口就该钉死，拖不动也拉不了
+    if (!geometry || maximized || e.button !== 0) return
     if (mode === 'move' && (e.target as HTMLElement).closest('button, textarea, a')) return
     e.preventDefault()
 
@@ -305,6 +376,17 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
     const onUp = () => window.removeEventListener('pointermove', onMove)
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp, { once: true })
+  }
+
+  const toggleMaximize = () => {
+    if (maximized) {
+      setMaximized(false)
+      setGeometry(clampGeometry(restoreRef.current ?? defaultGeometry()))
+      return
+    }
+    restoreRef.current = geometry
+    setMaximized(true)
+    setGeometry(maximizedGeometry())
   }
 
   // 关闭面板或卸载时掐断进行中的请求，避免流在后台继续跑
@@ -470,27 +552,31 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
             : 'transform 240ms cubic-bezier(0.4, 0, 0.7, 0.2), opacity 200ms ease-in 60ms, visibility 0s linear 240ms',
         }}
       >
-        {/* 左上角缩放手柄：拖动时右下角固定不动 */}
-        <button
-          type="button"
-          aria-label="拖动以调整对话框大小"
-          onPointerDown={startInteraction('resize')}
-          className="absolute left-1 top-1 z-10 inline-flex h-6 w-6 touch-none items-center justify-center rounded-md text-hairline-strong hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
-        >
-          {/* 圆角 + overflow-hidden 会把最角上那几像素裁掉，所以手柄向内缩一点，别贴死角 */}
-          <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className="h-3 w-3">
-            <path d="M10 2H2v8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        {/* 左上角缩放手柄：拖动时右下角固定不动；最大化时没有可拉的余地，收起来 */}
+        {!maximized && (
+          <button
+            type="button"
+            aria-label="拖动以调整对话框大小"
+            onPointerDown={startInteraction('resize')}
+            className="absolute left-1 top-1 z-10 hidden h-6 w-6 touch-none items-center justify-center rounded-md text-hairline-strong hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 sm:inline-flex"
+          >
+            {/* 圆角 + overflow-hidden 会把最角上那几像素裁掉，所以手柄向内缩一点，别贴死角 */}
+            <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className="h-3 w-3">
+              <path d="M10 2H2v8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        )}
 
         <header
           onPointerDown={startInteraction('move')}
-          onDoubleClick={() => setGeometry(defaultGeometry())}
-          title="拖动可移动位置，双击恢复默认位置"
-          className="flex shrink-0 cursor-grab touch-none select-none items-center justify-between gap-3 border-b border-hairline px-4 py-3 active:cursor-grabbing"
+          onDoubleClick={() => !maximized && setGeometry(defaultGeometry())}
+          title={maximized ? undefined : '拖动可移动位置，双击恢复默认位置'}
+          className={`flex shrink-0 touch-none select-none items-center justify-between gap-3 border-b border-hairline px-4 py-3 ${
+            maximized ? '' : 'cursor-grab active:cursor-grabbing'
+          }`}
         >
           <div className="flex min-w-0 items-center gap-1.5">
-            <GripIcon className="h-3 w-3 shrink-0 text-hairline-strong" aria-hidden />
+            {!maximized && <GripIcon className="h-3 w-3 shrink-0 text-hairline-strong" aria-hidden />}
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-sm font-medium text-ink">
                 <SparkIcon className="h-3.5 w-3.5 text-violet" />
@@ -509,6 +595,16 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
               新对话
             </button>
           )}
+          <button
+            type="button"
+            onClick={toggleMaximize}
+            aria-pressed={maximized}
+            aria-label={maximized ? '还原对话框大小' : '最大化对话框'}
+            title={maximized ? '还原大小' : '最大化'}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
+          >
+            <MaximizeIcon className="h-3 w-3" maximized={maximized} />
+          </button>
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -586,7 +682,8 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           {error && <p className="error-box text-[13px]">{error}</p>}
         </div>
 
-        <div className="shrink-0 border-t border-hairline p-3">
+        {/* 底部补一段安全区：手机全屏时输入区不会被 Home 指示条压住（无刘海设备上 env 为 0） */}
+        <div className="shrink-0 border-t border-hairline p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
           <div className="flex items-end gap-2">
             <textarea
               ref={inputRef}
@@ -602,7 +699,8 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
               maxLength={2000}
               placeholder="例如：256 张卡的训练集群，数据 1PB，要 NFS 和 S3"
               aria-label="描述你的存储需求"
-              className="max-h-32 min-h-[3.25rem] flex-1 resize-none rounded-md border border-hairline bg-canvas px-3 py-2 text-[13px] leading-relaxed text-ink transition placeholder:text-mute hover:border-hairline-strong focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-ink/10"
+              /* ai-composer-input：小屏下把字号顶到 16px，iOS 才不会一聚焦就把整页放大 */
+              className="ai-composer-input max-h-32 min-h-[3.25rem] flex-1 resize-none rounded-md border border-hairline bg-canvas px-3 py-2 text-[13px] leading-relaxed text-ink transition placeholder:text-mute hover:border-hairline-strong focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-ink/10"
             />
             <button
               type="button"
