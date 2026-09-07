@@ -1423,7 +1423,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
           <dl className="spec-list text-sm">
             <div>
               <dt className="text-body">处理器</dt>
-              <dd>2 × Intel Xeon 4134</dd>
+              <dd>2 × Intel Xeon 4314</dd>
             </div>
             <div>
               <dt className="text-body">内存</dt>
