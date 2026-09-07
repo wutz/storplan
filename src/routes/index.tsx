@@ -327,7 +327,7 @@ function StorplanApp() {
           if (manualConfig.xeos) {
             const mc = manualConfig.xeos
             if (mc.serverCount * mc.disksPerServer > XEOS_CONSTANTS.MAX_TOTAL_DISKS) {
-              // 手动服务器台数 × 每台 HDD 超过 2000 -> 超大规模两级架构（含一级元数据集群）
+              // 手动服务器数量 × 每台 HDD 超过 2000 -> 超大规模两级架构（含一级元数据集群）
               newResults.xeos = buildUltraLargeFromServers(mc.serverCount, mc.disksPerServer, mc.diskSize, mc.cacheCount, mc.cacheSizePerDisk, isBinary, bandwidthUnitType)
             } else {
               const allowedSchemes = getAllowedEcSchemes(mc.serverCount)
@@ -483,8 +483,8 @@ function StorplanApp() {
   }
 
   const bwLabels = selectedStorages.size === 1 && selectedStorages.has('xeos')
-    ? { read: '下载 BW', write: '上传 BW' }
-    : { read: '读 BW', write: '写 BW' }
+    ? { read: '下载带宽', write: '上传带宽' }
+    : { read: '读取带宽', write: '写入带宽' }
 
   const handleXeosServerCountChange = (newCount: number) => {
     if (!results.xeos || newCount < 3) return
@@ -492,7 +492,7 @@ function StorplanApp() {
     const allowedSchemes = getAllowedEcSchemes(newCount)
     const ec = allowedSchemes[0]
     const newCapacityTiB = xeosCapacity(newCount, disksPerServer, diskSize, ec.efficiency)
-    // 调整服务器台数时也自动调整索引缓存盘
+    // 调整服务器数量时也自动调整索引缓存盘
     const cache = xeosCacheConfig(disksPerServer, diskSize)
     setManualConfig(prev => ({ ...prev, xeos: { serverCount: newCount, disksPerServer, diskSize, ecEfficiency: ec.efficiency, cacheCount: cache.count, cacheSizePerDisk: cache.sizePerDisk } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
@@ -871,7 +871,7 @@ function StorplanApp() {
 
   /**
    * 把 AI 助手解析出的参数写进规划表单。手动微调过的配置一并清掉，
-   * 否则会用旧的服务器台数覆盖掉新需求算出的规模。
+   * 否则会用旧的服务器数量覆盖掉新需求算出的规模。
    */
   const applyPlan = (plan: PlanDirective) => {
     setManualConfig({})
@@ -943,7 +943,7 @@ function StorplanApp() {
             <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 shrink-0 rounded-lg" />
             <div className="min-w-0">
               <h1 className="text-[15px] font-semibold tracking-tight text-ink">Storplan</h1>
-              <p className="text-xs text-mute">存储容量和性能规划工具</p>
+              <p className="text-xs text-mute">存储容量与性能规划工具</p>
             </div>
           </div>
           <nav className="-mr-1 flex shrink-0 items-center gap-0.5">
@@ -974,10 +974,10 @@ function StorplanApp() {
           <div aria-hidden className="pointer-events-none absolute inset-0" style={HERO_MESH} />
           <div className={`relative px-6 sm:px-10 ${hasSelection ? 'py-7 sm:py-8' : 'py-10 sm:py-14'}`}>
             <p className="font-mono text-xs font-normal uppercase text-mute">Storage Capacity &amp; Performance Planner</p>
-            <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-ink sm:text-4xl">把容量与带宽需求，换算成可采购的集群配置.</h2>
+            <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-ink sm:text-4xl">从容量与带宽需求，规划合适的存储集群。</h2>
             {!hasSelection && (
               <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-body">
-                输入容量与带宽需求，对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 不同方案的集群规模、硬件配置与性能指标。
+                输入所需容量和读写带宽，对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 的集群规模、硬件配置和预估性能。
               </p>
             )}
           </div>
@@ -986,7 +986,7 @@ function StorplanApp() {
         <div className="card mt-8 mb-8 p-6 sm:p-8">
           <div className="mb-6">
             <p className="eyebrow">规划参数</p>
-            <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">选择方案并输入需求</h2>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">选择存储方案，填写规划需求</h2>
           </div>
           <div className="mb-3 flex items-center justify-between gap-3">
             <span className="text-sm font-medium text-ink">存储方案</span>
@@ -998,7 +998,7 @@ function StorplanApp() {
                   onClick={clearSelection}
                   className="rounded-md px-1.5 py-0.5 text-xs text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
                 >
-                  清空
+                  清空选择
                 </button>
               </span>
             )}
@@ -1031,7 +1031,7 @@ function StorplanApp() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label htmlFor="capacity" className="mb-1.5 block text-sm font-medium text-ink">容量</label>
+              <label htmlFor="capacity" className="mb-1.5 block text-sm font-medium text-ink">所需可用容量</label>
               <div className="flex gap-2">
                 <input
                   id="capacity"
@@ -1097,7 +1097,7 @@ function StorplanApp() {
               </select>
             </div>
           </div>
-          <p className="mt-3 text-xs text-mute">带宽留空时仅按容量规划；填写后按容量与带宽中要求更高的一项确定集群规模。</p>
+          <p className="mt-3 text-xs text-mute">读写带宽可留空，此时仅按容量规划；填写后，将以同时满足容量和所填带宽需求为准确定集群规模。</p>
         </div>
 
         {!hasSelection && <SelectionGuide onSelect={toggleStorage} />}
@@ -1117,7 +1117,7 @@ function StorplanApp() {
 
         <footer className="mt-12 space-y-1 pb-8 text-center text-xs text-mute">
           <div>
-            想弄懂这些数字怎么来的，看{' '}
+            想了解容量与性能的计算依据，请参阅{' '}
             <a href="https://storpath.wutz.dev/" target="_blank" rel="noreferrer" className="text-body underline underline-offset-4 transition hover:text-ink">
               Storpath 存储运维工程师成长路径
             </a>
@@ -1158,7 +1158,7 @@ function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
     <div className="card p-6 sm:p-8">
       <div className="mb-6 text-center">
         <h3 className="text-base font-semibold text-ink">存储选型参考</h3>
-        <p className="mt-1 text-pretty text-sm text-body">根据存储类型对比各方案优缺点，点击方案名称开始容量与性能规划。</p>
+        <p className="mt-1 text-pretty text-sm text-body">按存储类型了解各方案的优势、局限和适用场景，点击方案名称即可开始规划。</p>
       </div>
       <div className="space-y-8">
         {SELECTION_GUIDE.map((section) => (
@@ -1170,8 +1170,8 @@ function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
                 <thead>
                   <tr className="text-left text-xs text-mute border-b border-hairline">
                     <th className="py-2 pr-4 font-medium whitespace-nowrap">方案</th>
-                    <th className="py-2 pr-4 font-medium">优点</th>
-                    <th className="py-2 pr-4 font-medium">缺点</th>
+                    <th className="py-2 pr-4 font-medium">优势</th>
+                    <th className="py-2 pr-4 font-medium">局限</th>
                     <th className="py-2 font-medium">适用场景</th>
                   </tr>
                 </thead>
@@ -1196,11 +1196,11 @@ function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
                   <GuideName row={row} onSelect={onSelect} />
                   <dl className="mt-3 space-y-2 text-sm">
                     <div>
-                      <dt className="eyebrow">优点</dt>
+                      <dt className="eyebrow">优势</dt>
                       <dd className="mt-0.5 leading-relaxed text-body">{row.pros}</dd>
                     </div>
                     <div>
-                      <dt className="eyebrow">缺点</dt>
+                      <dt className="eyebrow">局限</dt>
                       <dd className="mt-0.5 leading-relaxed text-body">{row.cons}</dd>
                     </div>
                     <div>
@@ -1223,7 +1223,7 @@ function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
 
 
 /**
- * 单个方案的外壳：品牌色顶条 + 卡头（名称 / 类别 / 徽标）+ 可折叠的优劣与限制 + 规划结果。
+ * 单个方案的外壳：品牌色顶条 + 卡头（名称 / 类别 / 徽标）+ 可折叠的优势与使用限制 + 规划结果。
  * 一个方案一张卡，避免说明与结果各占一张卡、顶条重复。
  */
 function SchemePanel({ storage, badge, error, children }: {
@@ -1256,7 +1256,7 @@ function SchemePanel({ storage, badge, error, children }: {
             aria-expanded={notesOpen}
             className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-hairline bg-canvas px-2.5 text-[13px] text-body transition hover:border-hairline-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
           >
-            优劣与限制
+            优势与使用限制
             <ChevronIcon className={`h-3 w-3 transition-transform ${notesOpen ? 'rotate-180' : ''}`} />
           </button>
         )}
@@ -1291,14 +1291,14 @@ function SchemeNotes({ info }: { info: (typeof STORAGE_INFO)[StorageKey] }) {
           </ul>
         </div>
         <div>
-          <h3 className="mb-2 text-xs font-semibold text-warning-deep">劣势</h3>
+          <h3 className="mb-2 text-xs font-semibold text-warning-deep">局限</h3>
           <ul className="dot-list">
             {info.cons.map((c, i) => <li key={i}>{c}</li>)}
           </ul>
         </div>
         {info.limits && (
           <div className="md:col-span-2">
-            <h3 className="mb-2 text-xs font-semibold text-error-deep">限制</h3>
+            <h3 className="mb-2 text-xs font-semibold text-error-deep">使用限制</h3>
             <ul className="dot-list">
               {info.limits.map((l, i) => <li key={i}>{l}</li>)}
             </ul>
@@ -1338,8 +1338,8 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             <h3 className="eyebrow mb-3">集群配置</h3>
             <dl className="spec-list text-sm">
             <div>
-              <dt className="text-body">{ul ? '二级总服务器台数' : '服务器台数'}</dt>
-              <Stepper label={ul ? '二级总服务器台数' : '服务器台数'} value={data.serverCount} unit="台" onChange={onServerCountChange} min={3} />
+              <dt className="text-body">{ul ? '二级服务器总数' : '服务器数量'}</dt>
+              <Stepper label={ul ? '二级服务器总数' : '服务器数量'} value={data.serverCount} unit="台" onChange={onServerCountChange} min={3} />
             </div>
             <div>
               <dt className="text-body">{ul ? '二级集群 HDD 总数' : '集群 HDD 总数'}</dt>
@@ -1364,7 +1364,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             {ul ? (
               <div>
                 <dt className="text-body">纠删码方案</dt>
-                <dd>EC8+2（每集群 2 池）</dd>
+                <dd>EC8+2（每个集群 2 个存储池）</dd>
               </div>
             ) : (
               <div>
@@ -1386,7 +1386,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             </div>
             {data.poolConfig && (
               <div>
-                <dt className="text-body">池数</dt>
+                <dt className="text-body">存储池数量</dt>
                 <dd>{data.poolConfig.poolCount} 个池</dd>
               </div>
             )}
@@ -1436,7 +1436,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             <div>
               <dt className="text-body">数据盘</dt>
               <dd className="flex items-center gap-1">
-                <select value={data.disksPerServer} onChange={(e) => onDisksPerServerChange(Number(e.target.value))} aria-label="每台数据盘数量" className="field">
+                <select value={data.disksPerServer} onChange={(e) => onDisksPerServerChange(Number(e.target.value))} aria-label="每台服务器的数据盘数量" className="field">
                   {XEOS_CONSTANTS.DISKS_PER_SERVER_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
                 <span>×</span>
@@ -1460,7 +1460,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
                 {!isCacheSufficient && (
                   <span className="inline-flex items-center gap-1 text-xs text-error-deep">
                     <WarnIcon className="h-3 w-3" />
-                    不足
+                    容量不足
                   </span>
                 )}
               </dd>
@@ -1471,7 +1471,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             </div>
             <div>
               <dt className="text-body">网卡</dt>
-              <dd>2 × 双口 25Gb ETH NIC</dd>
+              <dd>2 × 双口 25Gb 以太网卡</dd>
             </div>
           </dl>
         </div>
@@ -1485,9 +1485,9 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
               <div><dt className="text-body">系统盘</dt><dd>2 × 960GB SATA SSD（RAID1）</dd></div>
               <div><dt className="text-body">数据盘</dt><dd>{mc.disksPerNode} × {mc.diskSize}TB NVMe SSD（DWPD ≥ 3）</dd></div>
               <div><dt className="text-body">NVMe 总容量</dt><dd>{mc.totalSize.toLocaleString()} TB</dd></div>
-              <div><dt className="text-body">网卡</dt><dd>2 × 双口 25Gb ETH NIC</dd></div>
+              <div><dt className="text-body">网卡</dt><dd>2 × 双口 25Gb 以太网卡</dd></div>
               <div><dt className="text-body">容错能力</dt><dd>容忍 {mc.tolerance} 台节点离线</dd></div>
-              <div className="text-xs text-mute"><dt>容量配比</dt><dd>二级SSD总 / 一级NVMe总 = {ul.ratio.toFixed(2)}（目标 5）</dd></div>
+              <div className="text-xs text-mute"><dt>容量配比</dt><dd>二级 SSD 总容量 / 一级 NVMe 总容量 = {ul.ratio.toFixed(2)}（目标 5）</dd></div>
             </dl>
           </div>
         )}
@@ -1495,23 +1495,23 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
           <h3 className="eyebrow mb-3">{ul ? '性能（厂商数据，基于二级 HDD）' : '性能（厂商数据）'}</h3>
           <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div>
-              <dt className="text-body">下载 BW (4MiB)</dt>
+              <dt className="text-body">下载带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.downloadBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">上传 BW (4MiB)</dt>
+              <dt className="text-body">上传带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.uploadBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">每 TiB 下载 BW (4MiB)</dt>
+              <dt className="text-body">每 TiB 下载带宽 （4 MiB）</dt>
               <dd className="font-medium">{perTiBReadBWFormatted}</dd>
             </div>
             <div>
-              <dt className="text-body">下载 OPS (4KiB)</dt>
+              <dt className="text-body">下载 OPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.downloadOps}</dd>
             </div>
             <div>
-              <dt className="text-body">上传 OPS (4KiB)</dt>
+              <dt className="text-body">上传 OPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.uploadOps}</dd>
             </div>
           </dl>
@@ -1580,7 +1580,7 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
             </div>
             <div>
               <dt className="text-body">网络</dt>
-              <dd>2 × 双口 200Gb RoCE/IB/ETH NIC</dd>
+              <dd>2 × 双口 200Gb RoCE/IB/以太网卡</dd>
             </div>
           </dl>
         </div>
@@ -1588,27 +1588,27 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
           <h3 className="eyebrow mb-3">性能（厂商数据）</h3>
           <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div>
-              <dt className="text-body">读 BW (4MiB)</dt>
+              <dt className="text-body">读取带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.readBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">持续写 BW (4MiB)</dt>
+              <dt className="text-body">持续写入带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">峰值写 BW (4MiB)</dt>
+              <dt className="text-body">峰值写入带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.burstWriteBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">每 TiB 读 BW (4MiB)</dt>
+              <dt className="text-body">每 TiB 读取带宽 （4 MiB）</dt>
               <dd className="font-medium">{perTiBReadBWFormatted}</dd>
             </div>
             <div>
-              <dt className="text-body">读 IOPS (4KiB)</dt>
+              <dt className="text-body">读取 IOPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.readIOPS}</dd>
             </div>
             <div>
-              <dt className="text-body">写 IOPS (4KiB)</dt>
+              <dt className="text-body">写入 IOPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.writeIOPS}</dd>
             </div>
           </dl>
@@ -1629,8 +1629,8 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
             <h3 className="eyebrow mb-3">集群配置</h3>
             <dl className="spec-list text-sm">
             <div>
-              <dt className="text-body">服务器台数</dt>
-              <Stepper label="服务器台数" value={data.serverCount} unit="台" onChange={onServerCountChange} min={3} max={GPFS_CONSTANTS.MAX_SERVERS} />
+              <dt className="text-body">服务器数量</dt>
+              <Stepper label="服务器数量" value={data.serverCount} unit="台" onChange={onServerCountChange} min={3} max={GPFS_CONSTANTS.MAX_SERVERS} />
             </div>
             <div>
               <dt className="text-body">纠删码方案</dt>
@@ -1677,7 +1677,7 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
             </div>
             <div>
               <dt className="text-body">存储网络</dt>
-              <dd>2 × 双口 200Gb RoCE/IB NIC</dd>
+              <dd>2 × 双口 200Gb RoCE/IB 网卡</dd>
             </div>
             <div>
               <dt className="text-body">管理网络</dt>
@@ -1686,7 +1686,7 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
             <div>
               <dt className="text-body">数据盘</dt>
               <dd>
-                <select value={data.ssdCount} onChange={(e) => onSsdCountChange(Number(e.target.value))} aria-label="每台数据盘数量" className="field">
+                <select value={data.ssdCount} onChange={(e) => onSsdCountChange(Number(e.target.value))} aria-label="每台服务器的数据盘数量" className="field">
                   {GPFS_CONSTANTS.SSD_COUNTS.map(c => <option key={c} value={c}>{c}</option>)}
                 </select> × <select value={data.ssdSize} onChange={(e) => onDiskChange(Number(e.target.value))} aria-label="单盘容量" className="field">
                   {GPFS_CONSTANTS.SSD_SIZES.map(d => <option key={d} value={d}>{d}TB</option>)}
@@ -1696,26 +1696,26 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
           </dl>
         </div>
         <div>
-          <h3 className="eyebrow mb-3">性能（预测数据）</h3>
+          <h3 className="eyebrow mb-3">性能预估</h3>
           <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div>
-              <dt className="text-body">读 BW (4MiB)</dt>
+              <dt className="text-body">读取带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.readBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">写 BW (4MiB)</dt>
+              <dt className="text-body">写入带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">每 TiB 读 BW (4MiB)</dt>
+              <dt className="text-body">每 TiB 读取带宽 （4 MiB）</dt>
               <dd className="font-medium">{perTiBReadBWFormatted}</dd>
             </div>
             <div>
-              <dt className="text-body">读 IOPS (4KiB)</dt>
+              <dt className="text-body">读取 IOPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.readIOPS}</dd>
             </div>
             <div>
-              <dt className="text-body">写 IOPS (4KiB)</dt>
+              <dt className="text-body">写入 IOPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.writeIOPS}</dd>
             </div>
           </dl>
@@ -1761,8 +1761,8 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
             <h3 className="eyebrow mb-3">集群配置</h3>
             <dl className="spec-list text-sm">
               <div>
-                <dt className="text-body">服务器台数</dt>
-                <Stepper label="服务器台数" value={data.nodeCount} unit="台" onChange={onNodeCountChange} min={GPFS_HYBRID_CONSTANTS.MIN_NODES} max={GPFS_HYBRID_CONSTANTS.MAX_NODES} />
+                <dt className="text-body">服务器数量</dt>
+                <Stepper label="服务器数量" value={data.nodeCount} unit="台" onChange={onNodeCountChange} min={GPFS_HYBRID_CONSTANTS.MIN_NODES} max={GPFS_HYBRID_CONSTANTS.MAX_NODES} />
               </div>
               <div>
                 <dt className="text-body">纠删码方案</dt>
@@ -1803,7 +1803,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
               </div>
               <div className="text-xs text-mute">
                 <dt>说明</dt>
-                <dd>含 5% 系统开销保留；元数据在 NVMe 层，不占 HDD 容量</dd>
+                <dd>已预留 5% 用于系统开销；元数据存放于 NVMe 层，不占用 HDD 容量</dd>
               </div>
             </dl>
           </div>
@@ -1826,7 +1826,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
             <div>
               <dt className="text-body">数据盘</dt>
               <dd className="flex items-center gap-1">
-                <select value={data.hddPerNode} onChange={(e) => onHddPerNodeChange(Number(e.target.value))} aria-label="每台数据盘数量" className="field">
+                <select value={data.hddPerNode} onChange={(e) => onHddPerNodeChange(Number(e.target.value))} aria-label="每台服务器的数据盘数量" className="field">
                   {GPFS_HYBRID_CONSTANTS.HDD_PER_NODE_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
                 <span>×</span>
@@ -1855,7 +1855,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
                 ) : !isCacheRecommended && (
                   <span className="inline-flex items-center gap-1 text-xs text-warning-deep">
                     <WarnIcon className="h-3 w-3" />
-                    低于推荐
+                    低于推荐值
                   </span>
                 )}
               </dd>
@@ -1878,7 +1878,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <PerfTier
             title={`SSD 层（开启分层）${isBaselineScale ? '' : '预测'}`}
-            hint="热数据命中 NVMe 层，随集群 NVMe 总数外推"
+            hint="假设热数据命中 NVMe 层，按集群 NVMe 盘总数外推性能"
             perf={data.formatted.tiered}
             perTiBRead={perTiB(data.performance.tiered.readBandwidth)}
             accent={t.chip}
@@ -1886,7 +1886,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
           />
           <PerfTier
             title={`HDD 层（关闭分层）${isBaselineScale ? '' : '预测'}`}
-            hint="IO 全部落在 HDD 层，随集群 HDD 总数外推"
+            hint="假设所有 I/O 均由 HDD 层处理，按集群 HDD 总数外推性能"
             perf={data.formatted.hddOnly}
             perTiBRead={perTiB(data.performance.hddOnly.readBandwidth)}
             accent={t.chip}
@@ -1920,23 +1920,23 @@ function PerfTier({ title, hint, perf, perTiBRead, accent, networkLimited }: {
       </div>
       <dl className="stat-grid grid grid-cols-2 gap-2">
         <div>
-          <dt className="text-body">读 BW (4MiB)</dt>
+          <dt className="text-body">读取带宽 （4 MiB）</dt>
           <dd className="font-medium">{perf.readBandwidth}</dd>
         </div>
         <div>
-          <dt className="text-body">写 BW (4MiB)</dt>
+          <dt className="text-body">写入带宽 （4 MiB）</dt>
           <dd className="font-medium">{perf.writeBandwidth}</dd>
         </div>
         <div>
-          <dt className="text-body">读 IOPS (4KiB)</dt>
+          <dt className="text-body">读取 IOPS （4 KiB）</dt>
           <dd className="font-medium">{perf.readIOPS}</dd>
         </div>
         <div>
-          <dt className="text-body">写 IOPS (4KiB)</dt>
+          <dt className="text-body">写入 IOPS （4 KiB）</dt>
           <dd className="font-medium">{perf.writeIOPS}</dd>
         </div>
         <div>
-          <dt className="text-body">每 TiB 读 BW</dt>
+          <dt className="text-body">每 TiB 读取带宽</dt>
           <dd className="font-medium">{perTiBRead}</dd>
         </div>
       </dl>
@@ -1982,7 +1982,7 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
                 <dt className="text-body">数据冗余策略</dt>
                 <dd className="flex items-center gap-1">
                   <select value={data.redundancy} onChange={(e) => onRedundancyChange(e.target.value)} aria-label="数据冗余策略" className="field">
-                    {getCephAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（生产环境不建议）' : ''}</option>)}
+                    {getCephAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（不建议用于生产环境）' : ''}</option>)}
                   </select>
                 </dd>
               </div>
@@ -2013,7 +2013,7 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
               </div>
               <div className="text-xs text-mute">
                 <dt>综合得盘率</dt>
-                <dd>{(effectiveRate * 100).toFixed(1)}%（含预留 1 节点 × 均衡损失 70%）</dd>
+                <dd>{(effectiveRate * 100).toFixed(1)}%（已预留 1 个节点，均衡系数按 70% 计算）</dd>
               </div>
             </dl>
           </div>
@@ -2044,7 +2044,7 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
             <div>
               <dt className="text-body">数据盘</dt>
               <dd className="flex items-center gap-1">
-                <select value={data.disksPerNode} onChange={(e) => onDisksPerNodeChange(Number(e.target.value))} aria-label="每台数据盘数量" className="field">
+                <select value={data.disksPerNode} onChange={(e) => onDisksPerNodeChange(Number(e.target.value))} aria-label="每台服务器的数据盘数量" className="field">
                   {CEPH_CONSTANTS.DISKS_PER_NODE_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
                 <span>×</span>
@@ -2086,55 +2086,55 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
           </dl>
         </div>
         <div>
-          <h3 className="eyebrow mb-3">性能（CephFS / RBD 预测数据）</h3>
+          <h3 className="eyebrow mb-3">性能预估（CephFS / RBD）</h3>
           <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div>
-              <dt className="text-body">读 BW (4MiB)</dt>
+              <dt className="text-body">读取带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.readBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">写 BW (4MiB)</dt>
+              <dt className="text-body">写入带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">每 TiB 读 BW (4MiB)</dt>
+              <dt className="text-body">每 TiB 读取带宽 （4 MiB）</dt>
               <dd className="font-medium">{perTiBReadBWFormatted}</dd>
             </div>
             <div>
-              <dt className="text-body">读 IOPS (4KiB)</dt>
+              <dt className="text-body">读取 IOPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.readIOPS}</dd>
             </div>
             <div>
-              <dt className="text-body">写 IOPS (4KiB)</dt>
+              <dt className="text-body">写入 IOPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.writeIOPS}</dd>
             </div>
           </dl>
         </div>
         <div>
-          <h3 className="eyebrow mb-3">性能（RGW 对象存储预测数据）</h3>
+          <h3 className="eyebrow mb-3">性能预估（RGW 对象存储）</h3>
           <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div>
-              <dt className="text-body">读 BW (4MiB)</dt>
+              <dt className="text-body">读取带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.rgwReadBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">写 BW (4MiB)</dt>
+              <dt className="text-body">写入带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.rgwWriteBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">读 OPS (4KiB)</dt>
+              <dt className="text-body">读取 OPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.rgwReadOPS}</dd>
             </div>
             <div>
-              <dt className="text-body">写 OPS (4KiB)</dt>
+              <dt className="text-body">写入 OPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.rgwWriteOPS}</dd>
             </div>
           </dl>
         </div>
         <div className="text-xs text-mute space-y-0.5">
-          <div>容量计算：(节点数 − 1) × 冗余得盘率 × 单节点盘数 × 单盘容量 × 0.7（数据均衡损失）</div>
-          <div>性能计算：集群盘总数 × 每盘平均性能（{data.redundancy}：读 {perDisk.readMiBps} MiB/s、写 {perDisk.writeMiBps} MiB/s、读 IOPS {(perDisk.readIOPS / 1000)}k、写 IOPS {(perDisk.writeIOPS / 1000)}k）</div>
-          <div>RGW 每盘平均性能：读 {CEPH_RGW_PER_DISK.readMiBps} MiB/s、写 {CEPH_RGW_PER_DISK.writeMiBps} MiB/s、读 OPS {CEPH_RGW_PER_DISK.readOPS}、写 OPS {CEPH_RGW_PER_DISK.writeOPS}</div>
+          <div>容量计算：(节点数 − 1) × 冗余得盘率 × 单节点盘数 × 单盘容量 × 0.7（数据均衡系数）</div>
+          <div>性能计算：集群盘总数 × 每盘平均性能（{data.redundancy}：读 {perDisk.readMiBps} MiB/s、写 {perDisk.writeMiBps} MiB/s、读取 IOPS {(perDisk.readIOPS / 1000)}k、写入 IOPS {(perDisk.writeIOPS / 1000)}k）</div>
+          <div>RGW 每盘平均性能：读 {CEPH_RGW_PER_DISK.readMiBps} MiB/s、写 {CEPH_RGW_PER_DISK.writeMiBps} MiB/s、读取 OPS {CEPH_RGW_PER_DISK.readOPS}、写入 OPS {CEPH_RGW_PER_DISK.writeOPS}</div>
         </div>
     </div>
   )
@@ -2171,7 +2171,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
                 <dt className="text-body">数据冗余策略</dt>
                 <dd className="flex items-center gap-1">
                   <select value={data.redundancy} onChange={(e) => onRedundancyChange(e.target.value)} aria-label="数据冗余策略" className="field">
-                    {getCephHybridAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（生产环境不建议）' : ''}</option>)}
+                    {getCephHybridAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（不建议用于生产环境）' : ''}</option>)}
                   </select>
                 </dd>
               </div>
@@ -2202,7 +2202,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
               </div>
               <div className="text-xs text-mute">
                 <dt>综合得盘率</dt>
-                <dd>{(effectiveRate * 100).toFixed(1)}%（含预留 1 节点 × 均衡损失 70%）</dd>
+                <dd>{(effectiveRate * 100).toFixed(1)}%（已预留 1 个节点，均衡系数按 70% 计算）</dd>
               </div>
             </dl>
           </div>
@@ -2225,7 +2225,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
             <div>
               <dt className="text-body">数据盘</dt>
               <dd className="flex items-center gap-1">
-                <select value={data.disksPerNode} onChange={(e) => onDisksPerNodeChange(Number(e.target.value))} aria-label="每台数据盘数量" className="field">
+                <select value={data.disksPerNode} onChange={(e) => onDisksPerNodeChange(Number(e.target.value))} aria-label="每台服务器的数据盘数量" className="field">
                   {CEPH_HYBRID_CONSTANTS.DISKS_PER_NODE_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
                 <span>×</span>
@@ -2249,7 +2249,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
                 {!isCacheSufficient && (
                   <span className="inline-flex items-center gap-1 text-xs text-error-deep">
                     <WarnIcon className="h-3 w-3" />
-                    不足
+                    容量不足
                   </span>
                 )}
               </dd>
@@ -2260,38 +2260,38 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
             </div>
             <div>
               <dt className="text-body">网卡</dt>
-              <dd>2 × 双口 25Gb ETH NIC</dd>
+              <dd>2 × 双口 25Gb 以太网卡</dd>
             </div>
           </dl>
         </div>
         <div>
-          <h3 className="eyebrow mb-3">性能（RGW 对象存储预测数据）</h3>
+          <h3 className="eyebrow mb-3">性能预估（RGW 对象存储）</h3>
           <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div>
-              <dt className="text-body">读 BW (4MiB)</dt>
+              <dt className="text-body">读取带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.rgwReadBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">写 BW (4MiB)</dt>
+              <dt className="text-body">写入带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.rgwWriteBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">每 TiB 读 BW (4MiB)</dt>
+              <dt className="text-body">每 TiB 读取带宽 （4 MiB）</dt>
               <dd className="font-medium">{perTiBReadBWFormatted}</dd>
             </div>
             <div>
-              <dt className="text-body">读 OPS (4KiB)</dt>
+              <dt className="text-body">读取 OPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.rgwReadOPS}</dd>
             </div>
             <div>
-              <dt className="text-body">写 OPS (4KiB)</dt>
+              <dt className="text-body">写入 OPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.rgwWriteOPS}</dd>
             </div>
           </dl>
         </div>
         <div className="text-xs text-mute space-y-0.5">
-          <div>容量计算：(节点数 − 1) × 冗余得盘率 × 单节点盘数 × 单盘容量 × 0.7（数据均衡损失）</div>
-          <div>RGW 每 HDD 平均性能：读 {RGW_HYBRID_PER_DISK.readMiBps} MiB/s、写 {RGW_HYBRID_PER_DISK.writeMiBps} MiB/s、读 OPS {RGW_HYBRID_PER_DISK.readOPS}、写 OPS {RGW_HYBRID_PER_DISK.writeOPS}</div>
+          <div>容量计算：(节点数 − 1) × 冗余得盘率 × 单节点盘数 × 单盘容量 × 0.7（数据均衡系数）</div>
+          <div>RGW 每 HDD 平均性能：读 {RGW_HYBRID_PER_DISK.readMiBps} MiB/s、写 {RGW_HYBRID_PER_DISK.writeMiBps} MiB/s、读取 OPS {RGW_HYBRID_PER_DISK.readOPS}、写入 OPS {RGW_HYBRID_PER_DISK.writeOPS}</div>
         </div>
     </div>
   )
@@ -2318,7 +2318,7 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
             <h3 className="eyebrow mb-3">集群配置</h3>
             <dl className="spec-list text-sm">
               <div>
-                <dt className="text-body">总台数</dt>
+                <dt className="text-body">节点总数</dt>
                 <dd>{data.nodeCount} 台</dd>
               </div>
               <div>
@@ -2364,7 +2364,7 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
               </div>
               <div className="text-xs text-mute">
                 <dt>说明</dt>
-                <dd>含 10% 元数据与系统保留，热备节点不计容量</dd>
+                <dd>已预留 10% 用于元数据和系统开销，热备节点不计入可用容量</dd>
               </div>
             </dl>
           </div>
@@ -2387,7 +2387,7 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
             <div>
               <dt className="text-body">数据盘</dt>
               <dd className="flex items-center gap-1">
-                <select value={data.nvmePerNode} onChange={(e) => onNvmeCountChange(Number(e.target.value))} aria-label="每台数据盘数量" className="field">
+                <select value={data.nvmePerNode} onChange={(e) => onNvmeCountChange(Number(e.target.value))} aria-label="每台服务器的数据盘数量" className="field">
                   {WEKA_CONSTANTS.NVME_COUNTS.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <span>×</span>
@@ -2401,8 +2401,8 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
               <dt className="text-body">存储网络</dt>
               <dd>
                 <select value={data.networkType} onChange={(e) => onNetworkChange(e.target.value)} aria-label="存储网络" className="field">
-                  <option value="100gb">2 × 双口 100Gb IB/RoCE/Eth NIC</option>
-                  <option value="200gb">2 × 双口 200Gb IB/RoCE/Eth NIC</option>
+                  <option value="100gb">2 × 双口 100Gb IB/RoCE/Eth 网卡</option>
+                  <option value="200gb">2 × 双口 200Gb IB/RoCE/Eth 网卡</option>
                 </select>
               </dd>
             </div>
@@ -2413,26 +2413,26 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
           </dl>
         </div>
         <div>
-          <h3 className="eyebrow mb-3">性能（预测数据，含热备节点）</h3>
+          <h3 className="eyebrow mb-3">性能预估（含热备节点）</h3>
           <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div>
-              <dt className="text-body">读 BW (4MiB)</dt>
+              <dt className="text-body">读取带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.readBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">写 BW (4MiB)</dt>
+              <dt className="text-body">写入带宽 （4 MiB）</dt>
               <dd className="font-medium">{data.formatted.writeBandwidth}</dd>
             </div>
             <div>
-              <dt className="text-body">每 TiB 读 BW (4MiB)</dt>
+              <dt className="text-body">每 TiB 读取带宽 （4 MiB）</dt>
               <dd className="font-medium">{perTiBReadBWFormatted}</dd>
             </div>
             <div>
-              <dt className="text-body">读 IOPS (4KiB)</dt>
+              <dt className="text-body">读取 IOPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.readIOPS}</dd>
             </div>
             <div>
-              <dt className="text-body">写 IOPS (4KiB)</dt>
+              <dt className="text-body">写入 IOPS （4 KiB）</dt>
               <dd className="font-medium">{data.formatted.writeIOPS}</dd>
             </div>
           </dl>

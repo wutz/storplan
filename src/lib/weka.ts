@@ -83,12 +83,12 @@ export function getProtectionScheme(dataNodeCount: number, protectionLevel = CON
   const D = Math.min(dataNodeCount - P, 20 - P);
 
   if (D <= P) {
-    throw new Error(`数据块 (D=${D}) 必须大于校验块 (P=${P})，节点数不足`);
+    throw new Error(`节点数量不足：数据块数（D=${D}）必须大于校验块数（P=${P}）。`);
   }
 
   const stripeWidth = D + P;
   if (stripeWidth < 5 || stripeWidth > 20) {
-    throw new Error(`条带宽度 (${stripeWidth}) 必须在 5-20 范围内`);
+    throw new Error(`条带宽度（${stripeWidth}）必须在 5–20 之间。`);
   }
 
   return { D, P, stripeWidth, efficiency: D / stripeWidth, scheme: `EC ${D}+${P}` };
@@ -193,5 +193,5 @@ export function planWeka(req: WekaPlanRequest): WekaPlanResult {
     }
   }
 
-  throw new Error('无法找到满足所有需求的配置方案');
+  throw new Error('未找到同时满足所有需求的配置，请调整容量或带宽后重试。');
 }

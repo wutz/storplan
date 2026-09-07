@@ -336,7 +336,7 @@ export function planTier2(capacityTiB: number): Tier2Config {
   }
 
   if (candidates.length === 0) {
-    throw new Error('所需容量超过 20000 块 HDD 上限（超大规模集群上限），请联系 XSKY 技术支持');
+    throw new Error('满足容量需求所需的 HDD 数量超过超大规模集群的 20000 块上限，请联系 XSKY 技术支持。');
   }
 
   return candidates.reduce((a, b) => {
@@ -406,7 +406,7 @@ function assembleUltraLarge(
   const tier2ServersTotal = (numClusters - 1) * nodesPerCluster + lastClusterNodes;
   const tier2TotalHDDs = tier2ServersTotal * disksPerServer;
   if (tier2TotalHDDs > CONSTANTS.MAX_TOTAL_DISKS_ULTRA) {
-    throw new Error('所需规模超过 20000 块 HDD 上限（超大规模集群上限），请联系 XSKY 技术支持');
+    throw new Error('所需配置超过超大规模集群的 20000 块 HDD 上限，请联系 XSKY 技术支持。');
   }
 
   const ecEff = CONSTANTS.EC8_2_EFFICIENCY;

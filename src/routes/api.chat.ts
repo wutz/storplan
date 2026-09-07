@@ -79,7 +79,7 @@ function json(body: unknown, status: number): Response {
 function parseMessages(input: unknown): ChatMessage[] | string {
   if (!input || typeof input !== 'object') return '请求体格式不正确。'
   const raw = (input as { messages?: unknown }).messages
-  if (!Array.isArray(raw) || raw.length === 0) return '请求缺少对话内容。'
+  if (!Array.isArray(raw) || raw.length === 0) return '请先输入对话内容。'
   if (raw.length > CHAT_LIMITS.maxMessages) return '对话轮次过多，请开始新的对话。'
 
   const messages: ChatMessage[] = []
@@ -121,7 +121,7 @@ async function handleChat({ request }: { request: Request }): Promise<Response> 
   const model = process.env.LLM_MODEL || DEFAULT_MODEL
 
   if (!apiKey) {
-    return json({ error: 'AI 助手未配置：服务端缺少 LLM_API_KEY。' }, 503)
+    return json({ error: 'AI 规划助手尚未配置，请联系管理员设置 LLM_API_KEY。' }, 503)
   }
 
   // 限流放在解析请求体之前：被限的请求不该再消耗解析与上游调用
@@ -132,7 +132,7 @@ async function handleChat({ request }: { request: Request }): Promise<Response> 
   try {
     body = await request.json()
   } catch {
-    return json({ error: '请求体不是合法 JSON。' }, 400)
+    return json({ error: '请求格式不正确，需要有效的 JSON 数据。' }, 400)
   }
 
   const parsed = parseMessages(body)
@@ -206,14 +206,14 @@ async function handleChat({ request }: { request: Request }): Promise<Response> 
                 textBlock = false
                 break
               case 'error':
-                send({ type: 'error', message: 'AI 服务在生成过程中出错，请重试。' })
+                send({ type: 'error', message: 'AI 回复生成失败，请重试。' })
                 break
             }
           }
         }
         send({ type: 'done' })
       } catch {
-        send({ type: 'error', message: '连接中断，请重试。' })
+        send({ type: 'error', message: '与 AI 服务的连接已中断，请重试。' })
       } finally {
         controller.close()
         reader.releaseLock()

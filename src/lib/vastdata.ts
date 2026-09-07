@@ -60,15 +60,15 @@ export const CONSTANTS = {
 
 export function calculateCapacityTiB(eboxCount: number, diskSize: number): number {
   const data = EBOX_CAPACITY_DATA[diskSize];
-  if (!data) throw new Error(`Unknown disk size: ${diskSize}`);
+  if (!data) throw new Error(`不支持的单盘容量：${diskSize} TB。`);
   const entry = data.find((e: EboxCapacityEntry) => e.ebox_count === eboxCount);
-  if (!entry) throw new Error(`No capacity data for ${eboxCount} EBox`);
+  if (!entry) throw new Error(`暂无 ${eboxCount} 台 EBox 的容量数据。`);
   return entry.usable_tib;
 }
 
 function getPerformance(eboxCount: number) {
   const perf = EBOX_PERFORMANCE_DATA.find((p: EboxPerformanceEntry) => p.ebox_count === eboxCount);
-  if (!perf) throw new Error(`No performance data for ${eboxCount} EBox`);
+  if (!perf) throw new Error(`暂无 ${eboxCount} 台 EBox 的性能数据。`);
   return {
     readBandwidth: perf.read_bw_gbs * 1000 / 1.024,
     writeBandwidth: perf.sustained_write_bw_gbs * 1000 / 1.024,
@@ -80,9 +80,9 @@ function getPerformance(eboxCount: number) {
 
 function calculateEboxConfig(eboxCount: number, diskConfig: typeof CONSTANTS.EBOX_CONFIGS[0]) {
   const capacityData = EBOX_CAPACITY_DATA[diskConfig.diskSize];
-  if (!capacityData) throw new Error(`Unknown disk size: ${diskConfig.diskSize}`);
+  if (!capacityData) throw new Error(`不支持的单盘容量：${diskConfig.diskSize} TB。`);
   const capEntry = capacityData.find((e: EboxCapacityEntry) => e.ebox_count === eboxCount);
-  if (!capEntry) throw new Error(`No capacity data for ${eboxCount} EBox`);
+  if (!capEntry) throw new Error(`暂无 ${eboxCount} 台 EBox 的容量数据。`);
 
   return {
     eboxCount,
@@ -102,9 +102,9 @@ export function buildVastDataResult(
   bandwidthUnitType: string
 ): VastDataPlanResult {
   const capacityData = EBOX_CAPACITY_DATA[diskSize];
-  if (!capacityData) throw new Error(`Unknown disk size: ${diskSize}`);
+  if (!capacityData) throw new Error(`不支持的单盘容量：${diskSize} TB。`);
   const capEntry = capacityData.find((e: EboxCapacityEntry) => e.ebox_count === eboxCount);
-  if (!capEntry) throw new Error(`No capacity data for ${eboxCount} EBox`);
+  if (!capEntry) throw new Error(`暂无 ${eboxCount} 台 EBox 的容量数据。`);
 
   const performance = getPerformance(eboxCount);
 
@@ -169,7 +169,7 @@ export function planVastData(req: VastDataPlanRequest): VastDataPlanResult {
   }
 
   if (!bestConfig) {
-    throw new Error('无法找到满足需求的配置（超出 250 EBox 限制）');
+    throw new Error('所需配置超过 250 台 EBox 的上限，请调整容量或带宽需求。');
   }
 
   const bandwidthUnitType = 'decimal-byte';
