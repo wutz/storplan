@@ -7,7 +7,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Storplan — 存储容量和性能规划' },
+      { title: 'Storplan — 存储容量与性能规划' },
     ],
     links: [
       { rel: 'stylesheet', href: appCss },

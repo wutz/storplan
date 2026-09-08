@@ -347,7 +347,7 @@ function StorplanApp() {
             newResults.xeos = result
           }
         } catch (err) {
-          newErrors.xeos = err instanceof Error ? err.message : 'Unknown error'
+          newErrors.xeos = err instanceof Error ? err.message : '计算失败，请调整参数后重试。'
         }
       }
 
@@ -367,7 +367,7 @@ function StorplanApp() {
             newResults.vastdata = result
           }
         } catch (err) {
-          newErrors.vastdata = err instanceof Error ? err.message : 'Unknown error'
+          newErrors.vastdata = err instanceof Error ? err.message : '计算失败，请调整参数后重试。'
         }
       }
 
@@ -386,7 +386,7 @@ function StorplanApp() {
             newResults['gpfs-ece'] = result
           }
         } catch (err) {
-          newErrors['gpfs-ece'] = err instanceof Error ? err.message : 'Unknown error'
+          newErrors['gpfs-ece'] = err instanceof Error ? err.message : '计算失败，请调整参数后重试。'
         }
       }
 
@@ -406,7 +406,7 @@ function StorplanApp() {
             newResults['gpfs-hybrid'] = result
           }
         } catch (err) {
-          newErrors['gpfs-hybrid'] = err instanceof Error ? err.message : 'Unknown error'
+          newErrors['gpfs-hybrid'] = err instanceof Error ? err.message : '计算失败，请调整参数后重试。'
         }
       }
 
@@ -426,7 +426,7 @@ function StorplanApp() {
             newResults.ceph = result
           }
         } catch (err) {
-          newErrors.ceph = err instanceof Error ? err.message : 'Unknown error'
+          newErrors.ceph = err instanceof Error ? err.message : '计算失败，请调整参数后重试。'
         }
       }
 
@@ -444,7 +444,7 @@ function StorplanApp() {
             newResults['ceph-hybrid'] = result
           }
         } catch (err) {
-          newErrors['ceph-hybrid'] = err instanceof Error ? err.message : 'Unknown error'
+          newErrors['ceph-hybrid'] = err instanceof Error ? err.message : '计算失败，请调整参数后重试。'
         }
       }
       if (selectedStorages.has('weka')) {
@@ -461,7 +461,7 @@ function StorplanApp() {
             newResults.weka = result
           }
         } catch (err) {
-          newErrors.weka = err instanceof Error ? err.message : 'Unknown error'
+          newErrors.weka = err instanceof Error ? err.message : '计算失败，请调整参数后重试。'
         }
       }
     } catch (err) {
@@ -943,7 +943,7 @@ function StorplanApp() {
             <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 shrink-0 rounded-lg" />
             <div className="min-w-0">
               <h1 className="text-[15px] font-semibold tracking-tight text-ink">Storplan</h1>
-              <p className="text-xs text-mute">存储容量和性能规划工具</p>
+              <p className="text-xs text-mute">存储容量与性能规划</p>
             </div>
           </div>
           <nav className="-mr-1 flex shrink-0 items-center gap-0.5">
@@ -953,7 +953,7 @@ function StorplanApp() {
               rel="noreferrer"
               className="shrink-0 rounded-md px-2.5 py-1.5 text-sm text-body transition hover:bg-canvas-soft-2 hover:text-ink"
             >
-              学习路径 ↗
+              成长路径 ↗
             </a>
             <a
               href="https://wutz.dev/"
@@ -974,10 +974,10 @@ function StorplanApp() {
           <div aria-hidden className="pointer-events-none absolute inset-0" style={HERO_MESH} />
           <div className={`relative px-6 sm:px-10 ${hasSelection ? 'py-7 sm:py-8' : 'py-10 sm:py-14'}`}>
             <p className="font-mono text-xs font-normal uppercase text-mute">Storage Capacity &amp; Performance Planner</p>
-            <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-ink sm:text-4xl">把容量与带宽需求，换算成可采购的集群配置.</h2>
+            <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-ink sm:text-4xl">把容量和带宽，换算成可采购的集群配置。</h2>
             {!hasSelection && (
               <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-body">
-                输入容量与带宽需求，对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 不同方案的集群规模、硬件配置与性能指标。
+                输入容量与带宽，对比 VastData、GPFS/Scale、Weka、XSKY XEOS 和 Ceph 的集群规模、硬件配置与性能指标。
               </p>
             )}
           </div>
@@ -986,7 +986,7 @@ function StorplanApp() {
         <div className="card mt-8 mb-8 p-6 sm:p-8">
           <div className="mb-6">
             <p className="eyebrow">规划参数</p>
-            <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">选择方案并输入需求</h2>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">选择方案，填入需求</h2>
           </div>
           <div className="mb-3 flex items-center justify-between gap-3">
             <span className="text-sm font-medium text-ink">存储方案</span>
@@ -1097,7 +1097,7 @@ function StorplanApp() {
               </select>
             </div>
           </div>
-          <p className="mt-3 text-xs text-mute">带宽留空时仅按容量规划；填写后按容量与带宽中要求更高的一项确定集群规模。</p>
+          <p className="mt-3 text-xs text-mute">带宽留空时只按容量规划；填了带宽，则按容量和带宽里要求更高的一项来定集群规模。</p>
         </div>
 
         {!hasSelection && <SelectionGuide onSelect={toggleStorage} />}
@@ -1117,7 +1117,7 @@ function StorplanApp() {
 
         <footer className="mt-12 space-y-1 pb-8 text-center text-xs text-mute">
           <div>
-            想弄懂这些数字怎么来的，看{' '}
+            想弄清这些数字是怎么来的，去看{' '}
             <a href="https://storpath.wutz.dev/" target="_blank" rel="noreferrer" className="text-body underline underline-offset-4 transition hover:text-ink">
               Storpath 存储运维工程师成长路径
             </a>
@@ -1158,7 +1158,7 @@ function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
     <div className="card p-6 sm:p-8">
       <div className="mb-6 text-center">
         <h3 className="text-base font-semibold text-ink">存储选型参考</h3>
-        <p className="mt-1 text-pretty text-sm text-body">根据存储类型对比各方案优缺点，点击方案名称开始容量与性能规划。</p>
+        <p className="mt-1 text-pretty text-sm text-body">按存储类型对比各方案的优缺点，点击方案名称即可开始规划。</p>
       </div>
       <div className="space-y-8">
         {SELECTION_GUIDE.map((section) => (
@@ -1285,13 +1285,13 @@ function SchemeNotes({ info }: { info: (typeof STORAGE_INFO)[StorageKey] }) {
     <div className="border-y border-hairline bg-canvas-soft px-6 py-5">
       <div className="grid grid-cols-1 gap-5 text-sm md:grid-cols-2">
         <div>
-          <h3 className="mb-2 text-xs font-semibold text-link-deep">优势</h3>
+          <h3 className="mb-2 text-xs font-semibold text-link-deep">优点</h3>
           <ul className="dot-list">
             {info.pros.map((p, i) => <li key={i}>{p}</li>)}
           </ul>
         </div>
         <div>
-          <h3 className="mb-2 text-xs font-semibold text-warning-deep">劣势</h3>
+          <h3 className="mb-2 text-xs font-semibold text-warning-deep">缺点</h3>
           <ul className="dot-list">
             {info.cons.map((c, i) => <li key={i}>{c}</li>)}
           </ul>
@@ -1338,8 +1338,8 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
             <h3 className="eyebrow mb-3">集群配置</h3>
             <dl className="spec-list text-sm">
             <div>
-              <dt className="text-body">{ul ? '二级总服务器台数' : '服务器台数'}</dt>
-              <Stepper label={ul ? '二级总服务器台数' : '服务器台数'} value={data.serverCount} unit="台" onChange={onServerCountChange} min={3} />
+              <dt className="text-body">{ul ? '二级服务器总台数' : '服务器台数'}</dt>
+              <Stepper label={ul ? '二级服务器总台数' : '服务器台数'} value={data.serverCount} unit="台" onChange={onServerCountChange} min={3} />
             </div>
             <div>
               <dt className="text-body">{ul ? '二级集群 HDD 总数' : '集群 HDD 总数'}</dt>
@@ -1460,14 +1460,14 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
                 {!isCacheSufficient && (
                   <span className="inline-flex items-center gap-1 text-xs text-error-deep">
                     <WarnIcon className="h-3 w-3" />
-                    不足
+                    容量不足
                   </span>
                 )}
               </dd>
             </div>
             <div className="text-xs text-mute">
-              <dt>缓存容量要求</dt>
-              <dd>≥ {requiredCacheTB.toFixed(2)}TB（实际 {data.cacheConfig.totalSize.toFixed(2)}TB）</dd>
+              <dt>缓存容量下限</dt>
+              <dd>≥ {requiredCacheTB.toFixed(2)}TB（当前 {data.cacheConfig.totalSize.toFixed(2)}TB）</dd>
             </div>
             <div>
               <dt className="text-body">网卡</dt>
@@ -1487,7 +1487,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
               <div><dt className="text-body">NVMe 总容量</dt><dd>{mc.totalSize.toLocaleString()} TB</dd></div>
               <div><dt className="text-body">网卡</dt><dd>2 × 双口 25Gb ETH NIC</dd></div>
               <div><dt className="text-body">容错能力</dt><dd>容忍 {mc.tolerance} 台节点离线</dd></div>
-              <div className="text-xs text-mute"><dt>容量配比</dt><dd>二级SSD总 / 一级NVMe总 = {ul.ratio.toFixed(2)}（目标 5）</dd></div>
+              <div className="text-xs text-mute"><dt>容量配比</dt><dd>二级 SSD 总量 / 一级 NVMe 总量 = {ul.ratio.toFixed(2)}（目标 5）</dd></div>
             </dl>
           </div>
         )}
@@ -1696,7 +1696,7 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
           </dl>
         </div>
         <div>
-          <h3 className="eyebrow mb-3">性能（预测数据）</h3>
+          <h3 className="eyebrow mb-3">性能（预测值）</h3>
           <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div>
               <dt className="text-body">读 BW (4MiB)</dt>
@@ -1803,7 +1803,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
               </div>
               <div className="text-xs text-mute">
                 <dt>说明</dt>
-                <dd>含 5% 系统开销保留；元数据在 NVMe 层，不占 HDD 容量</dd>
+                <dd>已预留 5% 系统开销；元数据在 NVMe 层，不占用 HDD 容量</dd>
               </div>
             </dl>
           </div>
@@ -1855,7 +1855,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
                 ) : !isCacheRecommended && (
                   <span className="inline-flex items-center gap-1 text-xs text-warning-deep">
                     <WarnIcon className="h-3 w-3" />
-                    低于推荐
+                    低于推荐配比
                   </span>
                 )}
               </dd>
@@ -1878,7 +1878,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <PerfTier
             title={`SSD 层（开启分层）${isBaselineScale ? '' : '预测'}`}
-            hint="热数据命中 NVMe 层，随集群 NVMe 总数外推"
+            hint="热数据命中 NVMe 层时的表现，按集群 NVMe 总数外推"
             perf={data.formatted.tiered}
             perTiBRead={perTiB(data.performance.tiered.readBandwidth)}
             accent={t.chip}
@@ -1886,7 +1886,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
           />
           <PerfTier
             title={`HDD 层（关闭分层）${isBaselineScale ? '' : '预测'}`}
-            hint="IO 全部落在 HDD 层，随集群 HDD 总数外推"
+            hint="IO 全部落到 HDD 层时的表现，按集群 HDD 总数外推"
             perf={data.formatted.hddOnly}
             perTiBRead={perTiB(data.performance.hddOnly.readBandwidth)}
             accent={t.chip}
@@ -1982,7 +1982,7 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
                 <dt className="text-body">数据冗余策略</dt>
                 <dd className="flex items-center gap-1">
                   <select value={data.redundancy} onChange={(e) => onRedundancyChange(e.target.value)} aria-label="数据冗余策略" className="field">
-                    {getCephAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（生产环境不建议）' : ''}</option>)}
+                    {getCephAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（不建议用于生产）' : ''}</option>)}
                   </select>
                 </dd>
               </div>
@@ -2013,7 +2013,7 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
               </div>
               <div className="text-xs text-mute">
                 <dt>综合得盘率</dt>
-                <dd>{(effectiveRate * 100).toFixed(1)}%（含预留 1 节点 × 均衡损失 70%）</dd>
+                <dd>{(effectiveRate * 100).toFixed(1)}%（已预留 1 台节点，容量再按 70% 计（均衡损失））</dd>
               </div>
             </dl>
           </div>
@@ -2086,7 +2086,7 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
           </dl>
         </div>
         <div>
-          <h3 className="eyebrow mb-3">性能（CephFS / RBD 预测数据）</h3>
+          <h3 className="eyebrow mb-3">性能（CephFS / RBD，预测值）</h3>
           <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div>
               <dt className="text-body">读 BW (4MiB)</dt>
@@ -2111,7 +2111,7 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
           </dl>
         </div>
         <div>
-          <h3 className="eyebrow mb-3">性能（RGW 对象存储预测数据）</h3>
+          <h3 className="eyebrow mb-3">性能（RGW 对象存储，预测值）</h3>
           <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div>
               <dt className="text-body">读 BW (4MiB)</dt>
@@ -2171,7 +2171,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
                 <dt className="text-body">数据冗余策略</dt>
                 <dd className="flex items-center gap-1">
                   <select value={data.redundancy} onChange={(e) => onRedundancyChange(e.target.value)} aria-label="数据冗余策略" className="field">
-                    {getCephHybridAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（生产环境不建议）' : ''}</option>)}
+                    {getCephHybridAllowedSchemes(data.nodeCount).map(s => <option key={s.scheme} value={s.scheme}>{s.scheme}{s.notRecommended ? '（不建议用于生产）' : ''}</option>)}
                   </select>
                 </dd>
               </div>
@@ -2202,7 +2202,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
               </div>
               <div className="text-xs text-mute">
                 <dt>综合得盘率</dt>
-                <dd>{(effectiveRate * 100).toFixed(1)}%（含预留 1 节点 × 均衡损失 70%）</dd>
+                <dd>{(effectiveRate * 100).toFixed(1)}%（已预留 1 台节点，容量再按 70% 计（均衡损失））</dd>
               </div>
             </dl>
           </div>
@@ -2249,14 +2249,14 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
                 {!isCacheSufficient && (
                   <span className="inline-flex items-center gap-1 text-xs text-error-deep">
                     <WarnIcon className="h-3 w-3" />
-                    不足
+                    容量不足
                   </span>
                 )}
               </dd>
             </div>
             <div className="text-xs text-mute">
-              <dt>索引盘容量要求</dt>
-              <dd>≥ {requiredCacheTB.toFixed(2)}TB（实际 {data.cacheConfig.totalSize.toFixed(2)}TB）</dd>
+              <dt>索引盘容量下限</dt>
+              <dd>≥ {requiredCacheTB.toFixed(2)}TB（当前 {data.cacheConfig.totalSize.toFixed(2)}TB）</dd>
             </div>
             <div>
               <dt className="text-body">网卡</dt>
@@ -2265,7 +2265,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
           </dl>
         </div>
         <div>
-          <h3 className="eyebrow mb-3">性能（RGW 对象存储预测数据）</h3>
+          <h3 className="eyebrow mb-3">性能（RGW 对象存储，预测值）</h3>
           <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div>
               <dt className="text-body">读 BW (4MiB)</dt>
@@ -2364,7 +2364,7 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
               </div>
               <div className="text-xs text-mute">
                 <dt>说明</dt>
-                <dd>含 10% 元数据与系统保留，热备节点不计容量</dd>
+                <dd>已计入 10% 元数据与系统预留，热备节点不计入容量</dd>
               </div>
             </dl>
           </div>
@@ -2413,7 +2413,7 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
           </dl>
         </div>
         <div>
-          <h3 className="eyebrow mb-3">性能（预测数据，含热备节点）</h3>
+          <h3 className="eyebrow mb-3">性能（预测值，含热备节点）</h3>
           <dl className="stat-grid grid grid-cols-2 gap-2 sm:grid-cols-3">
             <div>
               <dt className="text-body">读 BW (4MiB)</dt>

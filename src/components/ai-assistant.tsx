@@ -100,7 +100,7 @@ const SUGGESTIONS = [
 ]
 
 const WELCOME =
-  '直接描述你的业务需求即可——数据量、协议、GPU 规模和预算约束都可以告诉我。我会先确认关键条件（也可以直接点选候选项），再选择合适的方案，并将容量与带宽填入上方的规划表单。\n\n如果想跳过提问，只需说「按经验来」。我会参考行业常见值补齐参数，并逐条列出采用的假设。\n\n目前仅支持存储、K8s、网络、GPU 和 AI 基础设施相关问题。'
+  '说说你的业务需求就行——数据量、协议、GPU 规模、预算都可以讲。我会先把关键条件问清楚（也可以直接点选项回答），再选出方案，把容量和带宽填进上面的规划表单。\n\n想跳过提问，说「按经验来」就好。我会按行业常见值补齐，并一条条列出用到的假设。\n\n只聊存储、K8s、网络、GPU 和 AI 基础设施相关的问题。'
 
 function SparkIcon({ className }: { className?: string }) {
   return (
@@ -220,7 +220,7 @@ function AppliedPlan({ plan, applied, onRestore }: {
       >
         {applied ? '查看规划结果' : '恢复这组参数并查看'}
       </button>
-      {!applied && <p className="mt-1.5 text-xs text-mute">表单参数已被改动，点上面按钮可还原成这组。</p>}
+      {!applied && <p className="mt-1.5 text-xs text-mute">表单已经改过了，点上面的按钮可以恢复成这一组。</p>}
     </div>
   )
 }
@@ -425,7 +425,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         // 边缘 WAF 限流返回的是 Cloudflare 自己的 HTML 拦截页，解析不出我们的 JSON，
         // 所以按状态码兜一条明确的提示
         const detail = await res.json().catch(() => null)
-        const fallback = res.status === 429 ? '请求过于频繁，请稍后再试。' : '请求失败，请稍后重试。'
+        const fallback = res.status === 429 ? '提问太频繁了，请稍后再试。' : '请求失败了，请稍后再试。'
         throw new Error((detail as { error?: string } | null)?.error ?? fallback)
       }
 
@@ -456,7 +456,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           } else if (event.type === 'search') {
             patchLast((t) => ({ ...t, searching: true }))
           } else if (event.type === 'error') {
-            throw new Error(event.message ?? '生成失败，请重试。')
+            throw new Error(event.message ?? '生成失败了，请再试一次。')
           }
         }
       }
@@ -464,7 +464,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
       const { text, plan, quickReplies } = parseAssistantReply(answer)
       patchLast((t) => ({
         ...t,
-        text: text || '（没有收到回复内容，请重试。）',
+        text: text || '没有收到回复，请再试一次。',
         plan,
         quickReplies,
         searching: false,
@@ -472,7 +472,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
       if (plan) onApplyPlan(plan)
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') return
-      setError(err instanceof Error ? err.message : '请求失败，请稍后重试。')
+      setError(err instanceof Error ? err.message : '请求失败了，请稍后再试。')
       // 丢掉空的助手占位，用户可以直接重问
       setTurns((prev) => (prev[prev.length - 1]?.role === 'assistant' && !prev[prev.length - 1]?.text ? prev.slice(0, -1) : prev))
     } finally {
@@ -570,7 +570,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         <header
           onPointerDown={startInteraction('move')}
           onDoubleClick={() => !maximized && setGeometry(defaultGeometry())}
-          title={maximized ? undefined : '拖动可移动位置，双击恢复默认位置'}
+          title={maximized ? undefined : '拖动可移动，双击回到默认位置'}
           className={`flex shrink-0 touch-none select-none items-center justify-between gap-3 border-b border-hairline px-4 py-3 ${
             maximized ? '' : 'cursor-grab active:cursor-grabbing'
           }`}
@@ -582,7 +582,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
                 <SparkIcon className="h-3.5 w-3.5 text-violet" />
                 AI 规划助手
               </p>
-              <p className="mt-0.5 text-xs text-mute">描述需求，自动选方案并填参数</p>
+              <p className="mt-0.5 text-xs text-mute">说说需求，帮你选方案、填参数</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
@@ -623,7 +623,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
                 <RichText text={WELCOME} />
               </div>
               <div className="space-y-2">
-                <p className="eyebrow">试试这些</p>
+                <p className="eyebrow">可以这样问</p>
                 {SUGGESTIONS.map((s) => (
                   <button
                     key={s}
@@ -698,7 +698,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
               rows={2}
               maxLength={2000}
               placeholder="例如：256 张卡的训练集群，数据 1PB，要 NFS 和 S3"
-              aria-label="描述你的存储需求"
+              aria-label="说说你的存储需求"
               /* ai-composer-input：小屏下把字号顶到 16px，iOS 才不会一聚焦就把整页放大 */
               className="ai-composer-input max-h-32 min-h-[3.25rem] flex-1 resize-none rounded-md border border-hairline bg-canvas px-3 py-2 text-[13px] leading-relaxed text-ink transition placeholder:text-mute hover:border-hairline-strong focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-ink/10"
             />
@@ -712,7 +712,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
               <SendIcon className="h-4 w-4" />
             </button>
           </div>
-          <p className="mt-2 text-xs text-mute">Enter 发送 · Shift + Enter 换行 · 内容由 AI 生成，请自行复核</p>
+          <p className="mt-2 text-xs text-mute">Enter 发送 · Shift + Enter 换行 · 内容由 AI 生成，请再核对一遍</p>
         </div>
       </div>
     </>

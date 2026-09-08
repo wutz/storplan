@@ -38,8 +38,8 @@ async function checkRateLimit(request: Request): Promise<Response | null> {
   const ip = request.headers.get('cf-connecting-ip') ?? 'local'
 
   const checks: Array<[RateLimiter | undefined, string, string]> = [
-    [CHAT_IP_LIMITER, `ip:${ip}`, '请求过于频繁，请稍后再试（每分钟最多 8 次提问）。'],
-    [CHAT_GLOBAL_LIMITER, 'global', '当前访问量较大，AI 助手暂时限流，请稍后再试。'],
+    [CHAT_IP_LIMITER, `ip:${ip}`, '提问太频繁了，请稍后再试（每分钟最多 8 次）。'],
+    [CHAT_GLOBAL_LIMITER, 'global', '当前比较忙，AI 助手暂时限流，请稍后再试。'],
   ]
 
   for (const [limiter, key, message] of checks) {
@@ -77,24 +77,24 @@ function json(body: unknown, status: number): Response {
 }
 
 function parseMessages(input: unknown): ChatMessage[] | string {
-  if (!input || typeof input !== 'object') return '请求体格式不正确。'
+  if (!input || typeof input !== 'object') return '请求格式不正确。'
   const raw = (input as { messages?: unknown }).messages
-  if (!Array.isArray(raw) || raw.length === 0) return '请求缺少对话内容。'
-  if (raw.length > CHAT_LIMITS.maxMessages) return '对话轮次过多，请开始新的对话。'
+  if (!Array.isArray(raw) || raw.length === 0) return '请求里没有对话内容。'
+  if (raw.length > CHAT_LIMITS.maxMessages) return '对话轮次太多了，请开一轮新对话。'
 
   const messages: ChatMessage[] = []
   let total = 0
   for (const item of raw) {
-    if (!item || typeof item !== 'object') return '对话内容格式不正确。'
+    if (!item || typeof item !== 'object') return '对话内容格式不对。'
     const { role, content } = item as { role?: unknown; content?: unknown }
-    if (role !== 'user' && role !== 'assistant') return '对话内容格式不正确。'
+    if (role !== 'user' && role !== 'assistant') return '对话内容格式不对。'
     if (typeof content !== 'string' || content.trim() === '') return '对话内容不能为空。'
-    if (content.length > CHAT_LIMITS.maxCharsPerMessage) return '单条消息过长，请精简后重试。'
+    if (content.length > CHAT_LIMITS.maxCharsPerMessage) return '这条消息太长了，请缩短后再试。'
     total += content.length
-    if (total > CHAT_LIMITS.maxTotalChars) return '对话内容过长，请开始新的对话。'
+    if (total > CHAT_LIMITS.maxTotalChars) return '对话内容太长了，请开一轮新对话。'
     messages.push({ role, content })
   }
-  if (messages[messages.length - 1]?.role !== 'user') return '对话内容格式不正确。'
+  if (messages[messages.length - 1]?.role !== 'user') return '对话内容格式不对。'
   return messages
 }
 
@@ -121,7 +121,7 @@ async function handleChat({ request }: { request: Request }): Promise<Response> 
   const model = process.env.LLM_MODEL || DEFAULT_MODEL
 
   if (!apiKey) {
-    return json({ error: 'AI 助手未配置：服务端缺少 LLM_API_KEY。' }, 503)
+    return json({ error: 'AI 助手还没配置：服务端缺少 LLM_API_KEY。' }, 503)
   }
 
   // 限流放在解析请求体之前：被限的请求不该再消耗解析与上游调用
@@ -132,7 +132,7 @@ async function handleChat({ request }: { request: Request }): Promise<Response> 
   try {
     body = await request.json()
   } catch {
-    return json({ error: '请求体不是合法 JSON。' }, 400)
+    return json({ error: '请求不是合法的 JSON。' }, 400)
   }
 
   const parsed = parseMessages(body)
@@ -159,12 +159,12 @@ async function handleChat({ request }: { request: Request }): Promise<Response> 
       }),
     })
   } catch {
-    return json({ error: '无法连接 AI 服务，请稍后重试。' }, 502)
+    return json({ error: '连不上 AI 服务，请稍后再试。' }, 502)
   }
 
   if (!upstream.ok || !upstream.body) {
     // 上游错误正文可能带账号 / 路由信息，不透传给浏览器，只留状态码便于排查
-    return json({ error: `AI 服务返回错误（HTTP ${upstream.status}），请稍后重试。` }, 502)
+    return json({ error: `AI 服务返回了错误（HTTP ${upstream.status}），请稍后再试。` }, 502)
   }
 
   const encoder = new TextEncoder()
@@ -206,14 +206,14 @@ async function handleChat({ request }: { request: Request }): Promise<Response> 
                 textBlock = false
                 break
               case 'error':
-                send({ type: 'error', message: 'AI 服务在生成过程中出错，请重试。' })
+                send({ type: 'error', message: 'AI 服务生成时出错了，请再试一次。' })
                 break
             }
           }
         }
         send({ type: 'done' })
       } catch {
-        send({ type: 'error', message: '连接中断，请重试。' })
+        send({ type: 'error', message: '连接中断了，请再试一次。' })
       } finally {
         controller.close()
         reader.releaseLock()

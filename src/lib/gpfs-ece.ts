@@ -217,7 +217,7 @@ export function planGPFSECE(req: GPFSECEPlanRequest): GPFSECEPlanResult {
   }
 
   if (configs.length === 0) {
-    throw new Error('无法找到满足需求的配置');
+    throw new Error('按当前需求找不到合适配置，请调整容量、带宽或方案后再试');
   }
 
   // 选择服务器台数最少的方案

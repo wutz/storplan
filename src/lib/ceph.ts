@@ -259,7 +259,7 @@ export function planCeph(req: CephPlanRequest): CephPlanResult {
   }
 
   if (configs.length === 0) {
-    throw new Error('无法找到满足需求的配置');
+    throw new Error('按当前需求找不到合适配置，请调整容量、带宽或方案后再试');
   }
 
   // 选择节点数最少的方案；节点数相同时选可用容量最接近需求（更省成本）的方案
