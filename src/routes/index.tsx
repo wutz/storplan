@@ -979,10 +979,10 @@ function StorplanApp() {
           <div aria-hidden className="pointer-events-none absolute inset-0" style={HERO_MESH} />
           <div className={`relative px-6 sm:px-10 ${hasSelection ? 'py-7 sm:py-8' : 'py-10 sm:py-14'}`}>
             <p className="font-mono text-xs font-normal uppercase text-mute">Storage Capacity &amp; Performance Planner</p>
-            <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-ink sm:text-4xl">把容量与带宽需求，换算成可采购的集群配置。</h2>
+            <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-ink sm:text-4xl">从容量与带宽需求，到可采购的集群配置。</h2>
             {!hasSelection && (
               <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-body">
-                输入容量与带宽需求，对比 VastData、GPFS/Scale、Weka、XSKY XEOS 和 Ceph 各方案的集群规模、硬件配置与性能指标。
+                输入需求即可对比 VastData、GPFS/Scale、Weka、XSKY XEOS 和 Ceph 各方案的集群规模、硬件配置与性能指标。
               </p>
             )}
           </div>
