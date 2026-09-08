@@ -1,8 +1,8 @@
 /**
- * AI 规划助手：右下角浮动按钮 + 多轮对话面板。
+ * AI 规划助手：右下角的浮动按钮和多轮对话面板。
  *
- * 模型只做“听懂需求 → 选方案 → 定参数”，参数通过 onApplyPlan 写回页面顶部的规划表单，
- * 由本站既有的容量 / 性能计算逻辑出结果。样式沿用 DESIGN.md（发丝线 + 堆叠阴影 + 墨黑主 CTA）。
+ * 模型只负责听懂需求、选方案、定参数；定好的参数通过 onApplyPlan 写回页面顶部的规划表单，
+ * 具体数字仍由本站既有的容量 / 性能计算逻辑算出来。样式沿用 DESIGN.md（发丝线 + 堆叠阴影 + 墨黑主 CTA）。
  */
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -100,7 +100,7 @@ const SUGGESTIONS = [
 ]
 
 const WELCOME =
-  '直接描述你的业务需求即可——数据量、协议、GPU 规模和预算约束都可以告诉我。我会先确认关键条件（也可以直接点选候选项），再选择合适的方案，并将容量与带宽填入上方的规划表单。\n\n如果想跳过提问，只需说「按经验来」。我会参考行业常见值补齐参数，并逐条列出采用的假设。\n\n目前仅支持存储、K8s、网络、GPU 和 AI 基础设施相关问题。'
+  '直接描述你的业务需求就行：数据量、协议、GPU 规模、预算约束都可以告诉我。我会先确认关键条件（也可以直接点选候选项），再选出合适的方案，并把容量与带宽填进上方的规划表单。\n\n想跳过提问，直接说「按经验来」即可。我会参考行业常见值补齐参数，并逐条列出所用假设。\n\n目前只支持存储、K8s、网络、GPU 和 AI 基础设施相关的问题。'
 
 function SparkIcon({ className }: { className?: string }) {
   return (
@@ -207,7 +207,7 @@ function AppliedPlan({ plan, applied, onRestore }: {
       {plan.assumptions && plan.assumptions.length > 0 && (
         <div className="mt-2.5 border-t border-hairline pt-2">
           {/* 假设单独列出：用户一眼能挑出不成立的那条，直接回一句就能重算 */}
-          <p className="eyebrow">假设（不成立就告诉我）</p>
+          <p className="eyebrow">假设（不成立请告诉我）</p>
           <ul className="dot-list mt-1 text-xs">
             {plan.assumptions.map((a) => <li key={a}>{a}</li>)}
           </ul>
@@ -220,7 +220,7 @@ function AppliedPlan({ plan, applied, onRestore }: {
       >
         {applied ? '查看规划结果' : '恢复这组参数并查看'}
       </button>
-      {!applied && <p className="mt-1.5 text-xs text-mute">表单参数已被改动，点上面按钮可还原成这组。</p>}
+      {!applied && <p className="mt-1.5 text-xs text-mute">表单参数已改动，点上面的按钮即可还原成这组。</p>}
     </div>
   )
 }
@@ -582,7 +582,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
                 <SparkIcon className="h-3.5 w-3.5 text-violet" />
                 AI 规划助手
               </p>
-              <p className="mt-0.5 text-xs text-mute">描述需求，自动选方案并填参数</p>
+              <p className="mt-0.5 text-xs text-mute">描述需求，自动选方案并填入参数</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">

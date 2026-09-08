@@ -1,3 +1,7 @@
+/**
+ * Weka 全闪并行文件系统规划：数据节点数决定 EC D+P 保护方案（条带宽 5–20），
+ * 容量扣除元数据保留，性能按每块 NVMe 折算并受网络带宽封顶。
+ */
 import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth, MIB_TO_MB } from './utils';
 
 export interface WekaPlanRequest {
@@ -88,7 +92,7 @@ export function getProtectionScheme(dataNodeCount: number, protectionLevel = CON
 
   const stripeWidth = D + P;
   if (stripeWidth < 5 || stripeWidth > 20) {
-    throw new Error(`条带宽度 (${stripeWidth}) 必须在 5-20 范围内`);
+    throw new Error(`条带宽度 (${stripeWidth}) 必须在 5–20 之间`);
   }
 
   return { D, P, stripeWidth, efficiency: D / stripeWidth, scheme: `EC ${D}+${P}` };

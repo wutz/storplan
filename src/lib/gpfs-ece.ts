@@ -1,3 +1,7 @@
+/**
+ * GPFS/Scale 全闪并行文件系统规划：节点数决定可选的 EC 方案（EC4+2P / EC8+3P / EC8+2P），
+ * 容量按得盘率和元数据保留折算，性能按节点数摊算。
+ */
 import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth } from './utils';
 
 export interface GPFSECEPlanRequest {

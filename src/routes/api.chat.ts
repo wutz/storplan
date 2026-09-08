@@ -1,9 +1,9 @@
 /**
  * POST /api/chat —— AI 规划助手的服务端出口。
  *
- * 浏览器只跟这个同源接口说话：上游地址、API Key、模型名全部留在服务端（Cloudflare Secret / .dev.vars），
- * 前端拿不到、构建产物里也不含。上游的 Anthropic SSE 在这里被转成一套最小事件协议再转发，
- * 顺带把 thinking / 工具调用等内部细节挡掉。
+ * 浏览器只跟这个同源接口说话：上游地址、API Key、模型名都留在服务端（Cloudflare Secret / .dev.vars），
+ * 前端拿不到，构建产物里也没有。上游的 Anthropic SSE 在这里转成一套最小事件协议再转发，
+ * thinking、工具调用等内部细节顺带挡掉。
  */
 
 import { createFileRoute } from '@tanstack/react-router'
@@ -80,7 +80,7 @@ function parseMessages(input: unknown): ChatMessage[] | string {
   if (!input || typeof input !== 'object') return '请求体格式不正确。'
   const raw = (input as { messages?: unknown }).messages
   if (!Array.isArray(raw) || raw.length === 0) return '请求缺少对话内容。'
-  if (raw.length > CHAT_LIMITS.maxMessages) return '对话轮次过多，请开始新的对话。'
+  if (raw.length > CHAT_LIMITS.maxMessages) return '对话轮次过多，请开启新对话。'
 
   const messages: ChatMessage[] = []
   let total = 0
@@ -91,7 +91,7 @@ function parseMessages(input: unknown): ChatMessage[] | string {
     if (typeof content !== 'string' || content.trim() === '') return '对话内容不能为空。'
     if (content.length > CHAT_LIMITS.maxCharsPerMessage) return '单条消息过长，请精简后重试。'
     total += content.length
-    if (total > CHAT_LIMITS.maxTotalChars) return '对话内容过长，请开始新的对话。'
+    if (total > CHAT_LIMITS.maxTotalChars) return '对话内容过长，请开启新对话。'
     messages.push({ role, content })
   }
   if (messages[messages.length - 1]?.role !== 'user') return '对话内容格式不正确。'

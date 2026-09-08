@@ -1,3 +1,7 @@
+/**
+ * VastData 统一存储规划：以 EBox 为最小扩展单元，
+ * 容量和性能直接查 vastdata-data.ts 里的参考数据表，不做公式外推。
+ */
 import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth } from './utils';
 import { EBOX_CAPACITY_DATA, EBOX_PERFORMANCE_DATA } from './vastdata-data';
 

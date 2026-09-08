@@ -1,3 +1,6 @@
+/**
+ * 根路由：全局 meta、样式与图标，以及包住各个页面的根布局。
+ */
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
 
 import appCss from '../styles.css?url'

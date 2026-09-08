@@ -1,3 +1,7 @@
+/**
+ * Ceph 全闪统一存储规划（块 / 对象 / 文件）：节点数决定冗余策略（3 副本或 EC），
+ * 再由策略推出得盘率与容错能力，同时给出内存、存储网络和 CephFS 元数据节点的配置。
+ */
 import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth } from './utils';
 
 export interface CephPlanRequest {
