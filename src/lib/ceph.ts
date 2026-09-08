@@ -104,7 +104,7 @@ export function getStorageNetworkConfig(disksPerNode: number): { nicCount: numbe
 }
 
 // CephFS 元数据节点配置（仅 CephFS 需要）：
-// 内存固定 16 × 32GB DDR5 4800；无数据盘；存储网络 1 × 双口 100/200Gb 以太网卡（口速与数据节点一致）；其它与数据节点一致
+// 内存固定 16 × 32GB DDR5 4800；无数据盘；存储网络 1 × 双口 100/200Gb 以太网卡（口速与数据节点一致）；其他与数据节点一致
 export function getMdsMemoryConfig(): { dimmCount: number; dimmSizeGB: number; totalGB: number } {
   return { dimmCount: 16, dimmSizeGB: 32, totalGB: 16 * 32 };
 }
