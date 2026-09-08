@@ -1,3 +1,8 @@
+/**
+ * GPFS/Scale 混闪规划：NVMe 层放元数据与热数据，HDD 层存主数据。
+ * 性能以十节点实测报告为基准折算（见 REPORT_BASELINE）：分层开启时性能由 NVMe 层决定，
+ * 关闭时由 HDD 主轴数决定。EC 与容错规则复用 gpfs-ece。
+ */
 import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth, MIB_TO_MB } from './utils';
 import { EC_SCHEMES, getAllowedECSchemes, getGPFSTolerance, getECScheme } from './gpfs-ece';
 
@@ -147,7 +152,7 @@ export const CONSTANTS = {
   NETWORK_TYPES: [
     { value: 'roce', label: 'RoCE', efficiency: 0.9, speeds: [100, 25] },
     { value: 'ib', label: 'IB', efficiency: 0.9, speeds: [100] },
-    { value: 'eth', label: 'Eth', efficiency: 0.8, speeds: [100, 25] },
+    { value: 'eth', label: 'ETH', efficiency: 0.8, speeds: [100, 25] },
   ] as const,
   NETWORK_SPEEDS: [100, 25] as const, // Gb/s 单端口
   DEFAULT_NETWORK_TYPE: 'roce',

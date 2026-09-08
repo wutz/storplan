@@ -1,6 +1,6 @@
 /**
- * AI 规划助手的系统提示词。方案知识直接由 storage-catalog 生成，页面上写了什么，模型看到的就是什么。
- * 仅在服务端（/api/chat）引用，不进客户端包。
+ * AI 规划助手的系统提示词。方案知识由 storage-catalog 生成，
+ * 页面上写了什么，模型看到的就是什么。只在服务端（/api/chat）引用，不进客户端包。
  */
 
 import { SELECTION_GUIDE, STORAGE_INFO, STORAGE_NAMES, STORAGE_ORDER } from './storage-catalog'

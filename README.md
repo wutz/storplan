@@ -15,7 +15,9 @@
 - **VastData** — 统一存储（NFS、SMB、S3、iSCSI、NVMe-oF）
 - **GPFS ECE** — 高性能文件系统（全闪）
 - **GPFS 混闪** — 大容量并行文件系统（NVMe 元数据层 + HDD 数据层，分别给出开启 / 关闭分层的性能）
+- **Weka** — 全闪并行文件系统
 - **Ceph** — 开源统一存储（块、对象、文件系统）
+- **Ceph 混闪** — 对象存储（HDD 数据层 + NVMe 索引层）
 
 ## AI 规划助手
 
@@ -150,20 +152,30 @@ npm run preview
 storplan/
 ├── src/
 │   ├── components/
-│   │   └── ai-assistant.tsx      # AI 规划助手对话面板
-│   ├── lib/                      # 核心计算逻辑
-│   │   ├── utils.ts              # 容量/带宽解析工具
-│   │   ├── xeos.ts               # XEOS 规划器
-│   │   ├── storage-catalog.ts    # 方案知识库（页面与 AI 提示词共用）
+│   │   └── ai-assistant.tsx      # AI 规划助手：浮动按钮 + 多轮对话面板
+│   ├── lib/                      # 容量与性能计算逻辑
+│   │   ├── utils.ts              # 容量 / 带宽的单位解析与格式化
+│   │   ├── storage-catalog.ts    # 方案知识库，页面与 AI 提示词共用
+│   │   ├── xeos.ts               # XSKY XEOS 对象存储规划
+│   │   ├── vastdata.ts           # VastData 统一存储规划
+│   │   ├── vastdata-data.ts      # VastData 容量 / 性能参考数据（自动生成）
+│   │   ├── gpfs-ece.ts           # GPFS/Scale 全闪并行文件系统规划
+│   │   ├── gpfs-hybrid.ts        # GPFS/Scale 混闪规划
+│   │   ├── ceph.ts               # Ceph 全闪统一存储规划
+│   │   ├── ceph-hybrid.ts        # Ceph 混闪对象存储规划
+│   │   ├── weka.ts               # Weka 全闪并行文件系统规划
 │   │   ├── ai-chat.ts            # 对话契约与规划指令解析
-│   │   └── ai-system-prompt.ts   # AI 系统提示词（仅服务端）
+│   │   └── ai-system-prompt.ts   # AI 系统提示词，仅服务端引用
 │   ├── routes/                   # 路由页面
-│   │   ├── __root.tsx            # 根布局
-│   │   ├── index.tsx             # 首页（规划表单）
-│   │   └── api.chat.ts           # POST /api/chat（LLM 流式代理）
-│   ├── router.tsx                # 路由配置
+│   │   ├── __root.tsx            # 根布局与全局 meta
+│   │   ├── index.tsx             # 首页：选型、参数表单与结果卡片
+│   │   └── api.chat.ts           # POST /api/chat，LLM 流式代理
+│   ├── router.tsx                # 路由实例
 │   └── styles.css                # 全局样式
+├── scripts/
+│   └── setup-waf-ratelimit.mjs   # 创建 / 更新 WAF 限流规则
 ├── dist/                # 构建输出
+├── DESIGN.md            # 设计规范（颜色、排版、组件样式）
 ├── package.json
 ├── tsconfig.json
 └── vite.config.ts

@@ -1,3 +1,6 @@
+/**
+ * 创建 TanStack Router 实例，路由树由 routeTree.gen.ts 自动生成。
+ */
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
 

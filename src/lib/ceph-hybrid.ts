@@ -1,3 +1,7 @@
+/**
+ * Ceph 混闪对象存储（RGW）规划：HDD 存数据，NVMe 索引盘按「HDD 总容量 / 80」选型。
+ * 冗余策略与容量折算复用 ceph.ts，性能按每块 HDD 的平均值摊算。
+ */
 import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth } from './utils';
 import {
   getRedundancyScheme,
