@@ -2038,7 +2038,7 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
               <dd>{storageNet.label}</dd>
             </div>
             <div>
-              <dt className="text-body">管理网络（可选）</dt>
+              <dt className="text-body">管理网络（选配）</dt>
               <dd>1 × 双口 25Gb 以太网卡</dd>
             </div>
             <div>
@@ -2076,7 +2076,7 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
               <dd>{mdsStorageNet.label}</dd>
             </div>
             <div>
-              <dt className="text-body">管理网络（可选）</dt>
+              <dt className="text-body">管理网络（选配）</dt>
               <dd>1 × 双口 25Gb 以太网卡</dd>
             </div>
             <div>
