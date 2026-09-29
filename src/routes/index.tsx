@@ -963,7 +963,7 @@ function StorplanApp() {
             <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 shrink-0 rounded-lg" />
             <div className="min-w-0">
               <h1 className="text-[15px] font-semibold tracking-tight text-ink">Storplan</h1>
-              <p className="text-xs text-mute">存储容量与性能规划</p>
+              <p className="truncate text-xs text-mute">存储容量与性能规划</p>
             </div>
           </div>
           <nav className="-mr-1 flex shrink-0 items-center gap-0.5">

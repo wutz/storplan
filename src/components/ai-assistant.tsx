@@ -1,12 +1,12 @@
 /**
  * AI 规划助手：右下角的浮动按钮和多轮对话面板。
- * 大屏（≥1024px）以右侧边栏展开、页面向左让位；更小的屏幕仍是可拖动的浮窗，手机上铺满全屏。
+ * 大屏（≥1024px）以右侧边栏展开、页面向左让位；更小的屏幕从底部升起，页面向上让位，可展开到全屏。
  *
  * 模型只负责听懂需求、选方案、定参数；定好的参数通过 onApplyPlan 写回页面顶部的规划表单，
  * 具体数字仍由本站既有的容量 / 性能计算逻辑算出来。样式沿用 DESIGN.md（发丝线 + 堆叠阴影 + 墨黑主 CTA）。
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { parseAssistantReply } from '#/lib/ai-chat'
 import type { ChatMessage, PlanDirective } from '#/lib/ai-chat'
 import { STORAGE_NAMES } from '#/lib/storage-catalog'
@@ -21,80 +21,35 @@ type Turn = {
   searching?: boolean
 }
 
-/** 面板几何：拖动与缩放后固定用绝对坐标定位，默认贴右下角 */
-type Geometry = { left: number; top: number; width: number; height: number }
-
-const DEFAULT_SIZE = { width: 416, height: 576 }
-const MIN_SIZE = { width: 300, height: 320 }
-const GEOMETRY_STORAGE_KEY = 'storplan.ai-panel.geometry'
-/** 小于这个宽度按手机处理：默认最大化、不给拖动与缩放 */
+/** 小于这个宽度按手机处理：打开时不自动聚焦输入框（免得键盘一弹就挡住欢迎语） */
 const COMPACT_WIDTH = 640
 /** 大屏以右侧边栏呈现：贴右、铺满高度，页面内容让出这块宽度而不是被盖住 */
 const SIDEBAR_QUERY = '(min-width: 1024px)'
 const SIDEBAR_WIDTH = 420
+/** 小屏底部面板默认占视口高度的比例；上限留出顶部一截，让用户看得到页面还在 */
+const SHEET_RATIO = 0.6
+const SHEET_MIN_HEIGHT = 360
+const SHEET_TOP_GAP = 48
+
+/** 底部面板的位置：高度，以及离布局视口底边的距离（手机软键盘弹起时不为 0） */
+type SheetFrame = { height: number; bottom: number }
 
 /**
- * 以「视觉视口」为准而不是 window.innerWidth/Height：
- * 手机弹出软键盘时布局视口不变、视觉视口会变矮，只有跟着它算面板才不会被键盘盖住输入框。
- * offsetLeft/Top 是视觉视口相对布局视口的位移（iOS 键盘弹起时页面会被顶上去），
- * fixed 定位跟的是布局视口，所以要把这段位移补回去。
+ * 以「视觉视口」为准而不是 window.innerHeight：
+ * 手机弹出软键盘时布局视口不变、视觉视口会变矮，fixed 定位的 bottom: 0 会落到键盘后面。
+ * 把视觉视口下沿到布局视口下沿的这段距离算出来当作 bottom，面板就能贴在键盘上方。
  */
-function viewport() {
+function sheetFrame(expanded: boolean): SheetFrame {
   const vv = window.visualViewport
-  return {
-    vw: vv?.width ?? window.innerWidth,
-    vh: vv?.height ?? window.innerHeight,
-    offsetLeft: vv?.offsetLeft ?? 0,
-    offsetTop: vv?.offsetTop ?? 0,
-  }
-}
-
-function marginFor(viewportWidth: number): number {
-  return viewportWidth < COMPACT_WIDTH ? 8 : 20
+  const vh = vv?.height ?? window.innerHeight
+  const bottom = Math.max(0, window.innerHeight - (vv ? vv.offsetTop + vv.height : window.innerHeight))
+  if (expanded) return { height: vh, bottom }
+  const height = Math.min(Math.max(Math.round(vh * SHEET_RATIO), SHEET_MIN_HEIGHT), vh - SHEET_TOP_GAP)
+  return { height, bottom }
 }
 
 function isCompact(): boolean {
-  return viewport().vw < COMPACT_WIDTH
-}
-
-/** 最大化：铺满视觉视口，只留一圈边距 */
-function maximizedGeometry(): Geometry {
-  const { vw, vh, offsetLeft, offsetTop } = viewport()
-  const margin = marginFor(vw)
-  return { left: offsetLeft + margin, top: offsetTop + margin, width: vw - margin * 2, height: vh - margin * 2 }
-}
-
-function defaultGeometry(): Geometry {
-  const { vw, vh, offsetLeft, offsetTop } = viewport()
-  const margin = marginFor(vw)
-  const width = Math.min(DEFAULT_SIZE.width, vw - margin * 2)
-  const height = Math.min(DEFAULT_SIZE.height, vh - margin * 2)
-  return { width, height, left: offsetLeft + vw - width - margin, top: offsetTop + vh - height - margin }
-}
-
-/** 保证面板始终留在视口内，且不小于最小尺寸（窗口缩小、恢复存档时都要过一遍） */
-function clampGeometry(g: Geometry): Geometry {
-  const { vw, vh, offsetLeft, offsetTop } = viewport()
-  const width = Math.min(Math.max(g.width, MIN_SIZE.width), vw)
-  const height = Math.min(Math.max(g.height, MIN_SIZE.height), vh)
-  return {
-    width,
-    height,
-    left: Math.min(Math.max(g.left, offsetLeft), offsetLeft + Math.max(vw - width, 0)),
-    top: Math.min(Math.max(g.top, offsetTop), offsetTop + Math.max(vh - height, 0)),
-  }
-}
-
-function readStoredGeometry(): Geometry | null {
-  try {
-    const raw = localStorage.getItem(GEOMETRY_STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as Partial<Geometry>
-    if (['left', 'top', 'width', 'height'].some((k) => !Number.isFinite(parsed[k as keyof Geometry]))) return null
-    return clampGeometry(parsed as Geometry)
-  } catch {
-    return null
-  }
+  return (window.visualViewport?.width ?? window.innerWidth) < COMPACT_WIDTH
 }
 
 const SUGGESTIONS = [
@@ -119,19 +74,6 @@ function CloseIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className={className}>
       <path d="M2.5 2.5l7 7m0-7l-7 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function GripIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" className={className}>
-      <circle cx="4.5" cy="3" r="0.9" />
-      <circle cx="7.5" cy="3" r="0.9" />
-      <circle cx="4.5" cy="6" r="0.9" />
-      <circle cx="7.5" cy="6" r="0.9" />
-      <circle cx="4.5" cy="9" r="0.9" />
-      <circle cx="7.5" cy="9" r="0.9" />
     </svg>
   )
 }
@@ -248,19 +190,16 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [geometry, setGeometry] = useState<Geometry | null>(null)
-  const [maximized, setMaximized] = useState(false)
   const [sidebar, setSidebar] = useState(false)
-  // 收放动画的锚点：启动按钮中心在面板内的坐标
-  const [transformOrigin, setTransformOrigin] = useState('100% 100%')
+  /** 小屏底部面板是否展开到全屏 */
+  const [expanded, setExpanded] = useState(false)
+  const [sheet, setSheet] = useState<SheetFrame | null>(null)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const launcherRef = useRef<HTMLButtonElement>(null)
-  /** 最大化前的位置尺寸，还原时用 */
-  const restoreRef = useRef<Geometry | null>(null)
   /** 面板隐藏期间不自动滚到底，这样再打开时停在离开前的位置 */
   const openRef = useRef(open)
   openRef.current = open
@@ -279,66 +218,52 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
     return () => mq.removeEventListener('change', sync)
   }, [])
 
-  // 侧边栏展开时通过 CSS 变量让页面右侧留出同宽空白（styles.css 里给 body 加 padding）
+  // 面板展开时通过 CSS 变量让页面让出空间（styles.css 里给 body 加 padding）：
+  // 大屏让出右侧同宽，小屏让出底部同高，页面内容始终能滚到面板外面看全
+  const sheetHeight = open && !sidebar && !expanded && sheet ? sheet.height : 0
   useEffect(() => {
     const root = document.documentElement
     root.style.setProperty('--ai-sidebar-width', open && sidebar ? `${SIDEBAR_WIDTH}px` : '0px')
+    root.style.setProperty('--ai-sheet-height', `${sheetHeight}px`)
     return () => {
       root.style.removeProperty('--ai-sidebar-width')
+      root.style.removeProperty('--ai-sheet-height')
     }
-  }, [open, sidebar])
+  }, [open, sidebar, sheetHeight])
 
-  // 首帧不读 localStorage，避免 SSR 与客户端渲染不一致
+  // 底部面板跟着视口重算 —— 手机软键盘弹起走的是 visualViewport 的 resize/scroll，window resize 不一定触发
   useEffect(() => {
-    // 手机上默认最大化：屏幕本来就窄，浮窗式的小卡片只会让对话更难读
-    if (isCompact()) {
-      setMaximized(true)
-      setGeometry(maximizedGeometry())
-      return
-    }
-    setGeometry(readStoredGeometry() ?? defaultGeometry())
-  }, [])
-
-  useEffect(() => {
-    // 最大化是临时状态，别把它当成用户选的窗口尺寸存下来
-    if (!geometry || maximized) return
-    try {
-      localStorage.setItem(GEOMETRY_STORAGE_KEY, JSON.stringify(geometry))
-    } catch {
-      // 隐私模式下写不了，忽略即可
-    }
-  }, [geometry, maximized])
-
-  // 视口变化后把面板拉回视口内；最大化时直接跟着视口重算 ——
-  // 手机软键盘弹起走的是 visualViewport 的 resize/scroll，window resize 不一定触发
-  useEffect(() => {
-    const onResize = () => {
-      setGeometry((g) => (maximized ? maximizedGeometry() : g ? clampGeometry(g) : g))
-    }
-    window.addEventListener('resize', onResize)
-    window.visualViewport?.addEventListener('resize', onResize)
-    window.visualViewport?.addEventListener('scroll', onResize)
+    const update = () => setSheet(sheetFrame(expanded))
+    update()
+    window.addEventListener('resize', update)
+    window.visualViewport?.addEventListener('resize', update)
+    window.visualViewport?.addEventListener('scroll', update)
     return () => {
-      window.removeEventListener('resize', onResize)
-      window.visualViewport?.removeEventListener('resize', onResize)
-      window.visualViewport?.removeEventListener('scroll', onResize)
+      window.removeEventListener('resize', update)
+      window.visualViewport?.removeEventListener('resize', update)
+      window.visualViewport?.removeEventListener('scroll', update)
     }
-  }, [maximized])
+  }, [expanded])
+
+  // 收起后下次打开回到半屏，别让用户一打开就被全屏面板吞掉页面
+  useEffect(() => {
+    if (!open) setExpanded(false)
+  }, [open])
 
   useEffect(() => {
     // 手机上不自动聚焦：一打开就顶起键盘，反而看不见欢迎语和示例
     if (open && !isCompact()) inputRef.current?.focus()
   }, [open])
 
-  // 手机上铺满屏幕时锁住背后页面，避免滑动对话内容时把整页也带着滚
+  // 底部面板展开到全屏时锁住背后页面，避免滑动对话内容时把整页也带着滚
   useEffect(() => {
-    if (!open || !maximized || !isCompact()) return
+    if (!open || sidebar || !expanded) return
     const previous = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = previous
     }
-  }, [open, maximized])
+  }, [open, sidebar, expanded])
 
   useEffect(() => {
     if (!openRef.current) return
@@ -346,85 +271,15 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
     if (el) el.scrollTop = el.scrollHeight
   }, [turns, busy])
 
+  // 面板与页面并排（大屏在右、小屏在下），用户要边聊边改表单，所以点页面不自动收起，只认 Esc 和关闭按钮
   useEffect(() => {
     if (!open) return
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    // 点面板外自动收起（点启动按钮除外，否则会“关了又开”）；
-    // 侧边栏与页面并排，用户要边聊边改表单，所以不自动收起
-    const onPointerDown = (e: PointerEvent) => {
-      if (sidebar) return
-      // contains() 只接受 Node，事件目标万一不是（合成事件可能给 window），先挡一道
-      const target = e.target
-      if (!(target instanceof Node)) return
-      if (panelRef.current?.contains(target) || launcherRef.current?.contains(target)) return
-      setOpen(false)
-    }
     window.addEventListener('keydown', onKeyDown)
-    window.addEventListener('pointerdown', onPointerDown)
-    return () => {
-      window.removeEventListener('keydown', onKeyDown)
-      window.removeEventListener('pointerdown', onPointerDown)
-    }
-  }, [open, sidebar])
-
-  /**
-   * macOS「缩放特效」式的开合：窗口从 Dock 图标里长出来、收起时缩回图标。
-   * 做法是把 transform-origin 定到启动按钮中心（换算成面板内坐标），收起时 scale 到极小 ——
-   * 面板无论被拖到哪儿，都朝那颗按钮飞。
-   *
-   * 几何一确定就先算好（而不是等到开合那一刻）：transform-origin 不参与过渡、改了立即生效，
-   * 若与展开同一次提交才写入，第一帧仍用旧原点，首次展开就会从面板角上而不是按钮上长出来。
-   * 面板可见时 scale 为 1，此时改原点不影响成像，所以拖动 / 缩放中跟着重算是安全的。
-   */
-  useLayoutEffect(() => {
-    const launcher = launcherRef.current?.getBoundingClientRect()
-    if (!launcher || !geometry) return
-    setTransformOrigin(
-      `${launcher.left + launcher.width / 2 - geometry.left}px ${launcher.top + launcher.height / 2 - geometry.top}px`,
-    )
-  }, [open, geometry])
-
-  /**
-   * 拖动（抓卡头）与缩放（抓左上角手柄）。缩放固定右下角不动，
-   * 因为面板默认贴在右下，这样手感和窗口一致。
-   */
-  const startInteraction = (mode: 'move' | 'resize') => (e: React.PointerEvent) => {
-    // 最大化时窗口就该钉死，拖不动也拉不了
-    if (!geometry || maximized || e.button !== 0) return
-    if (mode === 'move' && (e.target as HTMLElement).closest('button, textarea, a')) return
-    e.preventDefault()
-
-    const start = { x: e.clientX, y: e.clientY, geo: geometry }
-    const onMove = (ev: PointerEvent) => {
-      const dx = ev.clientX - start.x
-      const dy = ev.clientY - start.y
-      if (mode === 'move') {
-        setGeometry(clampGeometry({ ...start.geo, left: start.geo.left + dx, top: start.geo.top + dy }))
-        return
-      }
-      const right = start.geo.left + start.geo.width
-      const bottom = start.geo.top + start.geo.height
-      const width = Math.max(MIN_SIZE.width, Math.min(start.geo.width - dx, right))
-      const height = Math.max(MIN_SIZE.height, Math.min(start.geo.height - dy, bottom))
-      setGeometry(clampGeometry({ width, height, left: right - width, top: bottom - height }))
-    }
-    const onUp = () => window.removeEventListener('pointermove', onMove)
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp, { once: true })
-  }
-
-  const toggleMaximize = () => {
-    if (maximized) {
-      setMaximized(false)
-      setGeometry(clampGeometry(restoreRef.current ?? defaultGeometry()))
-      return
-    }
-    restoreRef.current = geometry
-    setMaximized(true)
-    setGeometry(maximizedGeometry())
-  }
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [open])
 
   // 关闭面板或卸载时掐断进行中的请求，避免流在后台继续跑
   useEffect(() => () => abortRef.current?.abort(), [])
@@ -564,7 +419,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         aria-hidden={!open}
         inert={!open}
         className={`ai-panel fixed z-40 flex flex-col overflow-hidden bg-canvas ${
-          sidebar ? 'border-l border-hairline' : 'rounded-2xl border border-hairline'
+          sidebar ? 'border-l border-hairline' : expanded ? '' : 'rounded-t-2xl border-t border-hairline'
         }`}
         style={sidebar ? {
           /* 侧边栏：贴右、铺满高度，从右侧滑入；页面同时让出宽度（见 --ai-sidebar-width） */
@@ -579,55 +434,37 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
             ? 'transform 280ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s'
             : 'transform 220ms cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 220ms',
         } : {
-          left: geometry?.left ?? 0,
-          top: geometry?.top ?? 0,
-          width: geometry?.width ?? DEFAULT_SIZE.width,
-          height: geometry?.height ?? DEFAULT_SIZE.height,
-          boxShadow: '0 1px 1px rgba(0,0,0,0.05), 0 8px 16px -4px rgba(0,0,0,0.06), 0 24px 32px -8px rgba(0,0,0,0.09)',
-          transformOrigin,
-          opacity: open ? 1 : 0,
-          /*
-            收起时缩到极小、落在启动按钮上。终态缩放比就是落点误差：面板被拖远后，
-            末帧中心会停在「按钮 → 面板中心」这条线的 scale 处（0.04 时约差 30px），
-            所以取 0.01 —— 既基本压到按钮上，又不用 scale(0)（非可逆矩阵，个别浏览器会另眼相看）。
-          */
-          transform: open ? 'scale(1)' : 'scale(0.01)',
-          visibility: geometry && open ? 'visible' : 'hidden',
-          /*
-            展开：形变走 macOS 那条“起步快、尾段长”的曲线，透明度更快补齐，避免看起来是块半透明玻璃在放大。
-            收起：略快一点、尾段加速（ease-in），透明度延后再退，让面板在缩小过程中一直看得见，
-            最后 visibility 在动画结束那刻才切，否则退出动画会被截断。
-          */
+          /* 底部面板：贴底、横向铺满，从底部升起；半屏时页面同时让出底部高度（见 --ai-sheet-height） */
+          left: 0,
+          right: 0,
+          bottom: sheet?.bottom ?? 0,
+          height: sheet?.height ?? 0,
+          boxShadow: open ? '0 -8px 24px -12px rgba(0,0,0,0.14)' : 'none',
+          transform: open ? 'translateY(0)' : 'translateY(100%)',
+          visibility: sheet && open ? 'visible' : 'hidden',
           transition: open
-            ? 'transform 320ms cubic-bezier(0.32, 0.72, 0, 1), opacity 160ms ease-out, visibility 0s'
-            : 'transform 240ms cubic-bezier(0.4, 0, 0.7, 0.2), opacity 200ms ease-in 60ms, visibility 0s linear 240ms',
+            ? 'transform 300ms cubic-bezier(0.32, 0.72, 0, 1), height 240ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s'
+            : 'transform 220ms cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 220ms',
         }}
       >
-        {/* 左上角缩放手柄：拖动时右下角固定不动；最大化时没有可拉的余地，收起来 */}
-        {!maximized && !sidebar && (
+        {/* 底部面板顶上的抓手：点一下在半屏 / 全屏之间切换 */}
+        {!sidebar && (
           <button
             type="button"
-            aria-label="拖动以调整对话框大小"
-            onPointerDown={startInteraction('resize')}
-            className="absolute left-1 top-1 z-10 hidden h-6 w-6 touch-none items-center justify-center rounded-md text-hairline-strong hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 sm:inline-flex"
+            onClick={() => setExpanded((v) => !v)}
+            aria-label={expanded ? '收回半屏' : '展开到全屏'}
+            className="flex h-4 shrink-0 items-end justify-center focus-visible:outline-none"
           >
-            {/* 圆角 + overflow-hidden 会把最角上那几像素裁掉，所以手柄向内缩一点，别贴死角 */}
-            <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className="h-3 w-3">
-              <path d="M10 2H2v8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <span className="h-1 w-9 rounded-full bg-hairline-strong/60" aria-hidden />
           </button>
         )}
 
         <header
-          onPointerDown={sidebar ? undefined : startInteraction('move')}
-          onDoubleClick={() => !maximized && !sidebar && setGeometry(defaultGeometry())}
-          title={maximized || sidebar ? undefined : '拖动可移动位置，双击恢复默认位置'}
-          className={`flex shrink-0 touch-none select-none items-center justify-between gap-3 border-b border-hairline px-4 py-3 ${
-            maximized || sidebar ? '' : 'cursor-grab active:cursor-grabbing'
+          className={`flex shrink-0 select-none items-center justify-between gap-3 border-b border-hairline px-4 ${
+            sidebar ? 'py-3' : 'pb-2.5 pt-1.5'
           }`}
         >
           <div className="flex min-w-0 items-center gap-1.5">
-            {!maximized && !sidebar && <GripIcon className="h-3 w-3 shrink-0 text-hairline-strong" aria-hidden />}
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-sm font-medium text-ink">
                 <SparkIcon className="h-3.5 w-3.5 text-violet" />
@@ -649,13 +486,13 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           {!sidebar && (
           <button
             type="button"
-            onClick={toggleMaximize}
-            aria-pressed={maximized}
-            aria-label={maximized ? '还原对话框大小' : '最大化对话框'}
-            title={maximized ? '还原大小' : '最大化'}
+            onClick={() => setExpanded((v) => !v)}
+            aria-pressed={expanded}
+            aria-label={expanded ? '收回半屏' : '展开到全屏'}
+            title={expanded ? '收回半屏' : '展开到全屏'}
             className="inline-flex h-7 w-7 items-center justify-center rounded-md text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
           >
-            <MaximizeIcon className="h-3 w-3" maximized={maximized} />
+            <MaximizeIcon className="h-3 w-3" maximized={expanded} />
           </button>
           )}
           <button

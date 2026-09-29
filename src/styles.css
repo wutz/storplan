@@ -52,8 +52,9 @@ html {
     text-size-adjust: 100%;
   }
   body {
-    /* AI 助手在大屏以右侧边栏展开时，页面让出同宽空间（变量由组件写入，默认 0） */
+    /* AI 助手展开时页面让出空间：大屏让出右侧（侧边栏），小屏让出底部（底部面板）；变量由组件写入，默认 0 */
     padding-right: var(--ai-sidebar-width, 0px);
+    padding-bottom: var(--ai-sheet-height, 0px);
     transition: padding-right 280ms cubic-bezier(0.32, 0.72, 0, 1);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
