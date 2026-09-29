@@ -867,14 +867,6 @@ function StorplanApp() {
           </div>
           <nav className="-mr-1 flex shrink-0 items-center gap-0.5">
             <a
-              href="https://storpath.wutz.dev/"
-              target="_blank"
-              rel="noreferrer"
-              className="shrink-0 rounded-md px-2.5 py-1.5 text-sm text-body transition hover:bg-canvas-soft-2 hover:text-ink"
-            >
-              {t('学习路径', 'Learning path')} ↗
-            </a>
-            <a
               href="https://wutz.dev/"
               target="_blank"
               rel="noreferrer"
@@ -1036,12 +1028,6 @@ function StorplanApp() {
         </div>
 
         <footer className="mt-12 space-y-1 pb-8 text-center text-xs text-mute">
-          <div>
-            {t('想知道这些数字怎么算出来的？请看', 'Curious how these numbers are calculated? See')}{' '}
-            <a href="https://storpath.wutz.dev/" target="_blank" rel="noreferrer" className="text-body underline underline-offset-4 transition hover:text-ink">
-              {t('Storpath 存储运维工程师成长路径', 'Storpath: the storage engineer learning path')}
-            </a>
-          </div>
           <div>
             <a href="https://github.com/wutz/storplan" target="_blank" rel="noopener noreferrer" className="transition hover:text-ink">
               GitHub: wutz/storplan
