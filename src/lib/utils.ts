@@ -2,6 +2,7 @@
  * 容量与带宽的单位解析和格式化，各规划器共用。
  * 内部统一以 TiB 计量容量、以 MiB/s 计量带宽，只在解析输入和格式化结果时换算。
  */
+import { tr } from './i18n';
 export const TB_TO_TIB = 0.909;
 export const MIBS_TO_MBPS = 8.388608;
 // 1 MiB/s = 1.048576 MB/s（MB/GB 按 1000 进制换算）
@@ -10,7 +11,7 @@ export const MIB_TO_MB = 1.048576;
 export function parseCapacity(input: string): { tib: number; unit: string; isBinary: boolean } {
   const match = input.match(/^([\d.]+)\s*(TB|PB|TiB|PiB)$/i);
   if (!match) {
-    throw new Error(`容量格式不正确：${input}。请使用形如 "500TB" 或 "1.5PiB" 的写法。`);
+    throw new Error(tr(`容量格式不正确：${input}。请使用形如 "500TB" 或 "1.5PiB" 的写法。`, `Invalid capacity: ${input}. Use a form like "500TB" or "1.5PiB".`));
   }
 
   const value = parseFloat(match[1]);
@@ -23,7 +24,7 @@ export function parseCapacity(input: string): { tib: number; unit: string; isBin
     case 'PB': tib = value * 1000 * TB_TO_TIB; break;
     case 'TIB': tib = value; break;
     case 'PIB': tib = value * 1024; break;
-    default: throw new Error(`不支持的单位：${unit}`);
+    default: throw new Error(tr(`不支持的单位：${unit}`, `Unsupported unit: ${unit}`));
   }
 
   return { tib, unit, isBinary };
@@ -32,7 +33,7 @@ export function parseCapacity(input: string): { tib: number; unit: string; isBin
 export function parseBandwidth(input: string): { mibps: number; unit: string; unitType: string } {
   const match = input.match(/^([\d.]+)\s*(MB\/s|GB\/s|MiB\/s|GiB\/s|Mbps|Gbps)$/i);
   if (!match) {
-    throw new Error(`带宽格式不正确：${input}。请使用形如 "100MB/s"、"1GiB/s"、"800Mbps" 或 "10Gbps" 的写法。`);
+    throw new Error(tr(`带宽格式不正确：${input}。请使用形如 "100MB/s"、"1GiB/s"、"800Mbps" 或 "10Gbps" 的写法。`, `Invalid bandwidth: ${input}. Use a form like "100MB/s", "1GiB/s", "800Mbps" or "10Gbps".`));
   }
 
   const value = parseFloat(match[1]);
@@ -48,7 +49,7 @@ export function parseBandwidth(input: string): { mibps: number; unit: string; un
   else if (unitLower === 'gib/s') { mibps = value * 1024; unitType = 'binary'; }
   else if (unitLower === 'mbps') { mibps = value / MIBS_TO_MBPS; unitType = 'decimal-bit'; }
   else if (unitLower === 'gbps') { mibps = value * 1000 / MIBS_TO_MBPS; unitType = 'decimal-bit'; }
-  else { throw new Error(`不支持的带宽单位：${unit}`); }
+  else { throw new Error(tr(`不支持的带宽单位：${unit}`, `Unsupported bandwidth unit: ${unit}`)); }
 
   return { mibps, unit, unitType };
 }

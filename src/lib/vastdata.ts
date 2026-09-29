@@ -4,6 +4,7 @@
  */
 import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth } from './utils';
 import { EBOX_CAPACITY_DATA, EBOX_PERFORMANCE_DATA } from './vastdata-data';
+import { tr } from './i18n';
 
 interface EboxCapacityEntry {
   ebox_count: number;
@@ -173,7 +174,7 @@ export function planVastData(req: VastDataPlanRequest): VastDataPlanResult {
   }
 
   if (!bestConfig) {
-    throw new Error('所需规模超出 250 台 EBox 的上限，请调小容量或带宽');
+    throw new Error(tr('所需规模超出 250 台 EBox 的上限，请调小容量或带宽', 'Required size exceeds the 250-EBox limit; reduce capacity or bandwidth'));
   }
 
   const bandwidthUnitType = 'decimal-byte';

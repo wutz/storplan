@@ -9,7 +9,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { parseAssistantReply } from '#/lib/ai-chat'
 import type { ChatMessage, PlanDirective } from '#/lib/ai-chat'
-import { STORAGE_NAMES } from '#/lib/storage-catalog'
+import { localizeCatalog } from '#/lib/storage-catalog'
+import { tr, usePrefs } from '#/lib/i18n'
 
 type Turn = {
   role: 'user' | 'assistant'
@@ -87,7 +88,7 @@ function newConversation(): Conversation {
 /** 标签名取第一句提问，没问过就叫「新对话」 */
 function conversationTitle(c: Conversation): string {
   const first = c.turns.find((t) => t.role === 'user')?.text.trim()
-  return first ? first.replace(/\s+/g, ' ') : '新对话'
+  return first ? first.replace(/\s+/g, ' ') : tr('新对话', 'New chat')
 }
 
 /** 从 localStorage 恢复对话；进行中的请求不会跨刷新存活，所以只留已完成的内容 */
@@ -111,14 +112,23 @@ function isCompact(): boolean {
   return (window.visualViewport?.width ?? window.innerWidth) < COMPACT_WIDTH
 }
 
-const SUGGESTIONS = [
-  '128 卡 H100 训练集群，训练数据 500TB，该选哪种存储？',
-  '3PB 医学影像归档，主要走 S3 协议，该怎么规划？',
-  '在 K8s 上搭 AI 平台，PVC 和对象存储各要配多大？',
-]
+const SUGGESTIONS = {
+  zh: [
+    '128 卡 H100 训练集群，训练数据 500TB，该选哪种存储？',
+    '3PB 医学影像归档，主要走 S3 协议，该怎么规划？',
+    '在 K8s 上搭 AI 平台，PVC 和对象存储各要配多大？',
+  ],
+  en: [
+    '128× H100 training cluster with 500TB of training data — which storage should I pick?',
+    '3PB medical imaging archive, mostly over S3 — how should I plan it?',
+    'Building an AI platform on K8s — how big should PVC and object storage be?',
+  ],
+}
 
-const WELCOME =
-  '说说数据量、访问协议、GPU 规模或预算，我来挑方案、把参数填进规划表单。不想细答就说「按经验来」。'
+const WELCOME = {
+  zh: '说说数据量、访问协议、GPU 规模或预算，我来挑方案、把参数填进规划表单。不想细答就说「按经验来」。',
+  en: 'Tell me your data size, access protocols, GPU scale or budget — I\'ll pick a solution and fill in the planning form. Say "use your judgment" to skip the details.',
+}
 
 function SparkIcon({ className }: { className?: string }) {
   return (
@@ -191,23 +201,25 @@ function AppliedPlan({ plan, applied, onRestore }: {
   applied: boolean
   onRestore: (plan: PlanDirective) => void
 }) {
+  const { lang, t } = usePrefs()
+  const { STORAGE_NAMES } = localizeCatalog(lang)
   const bwUnit = plan.bandwidthUnit ?? 'GB/s'
-  const rows: string[] = [`容量 ${plan.capacity.value} ${plan.capacity.unit}`]
-  if (plan.readBandwidth) rows.push(`读 ${plan.readBandwidth} ${bwUnit}`)
-  if (plan.writeBandwidth) rows.push(`写 ${plan.writeBandwidth} ${bwUnit}`)
+  const rows: string[] = [`${t('容量', 'Capacity')} ${plan.capacity.value} ${plan.capacity.unit}`]
+  if (plan.readBandwidth) rows.push(`${t('读', 'Read')} ${plan.readBandwidth} ${bwUnit}`)
+  if (plan.writeBandwidth) rows.push(`${t('写', 'Write')} ${plan.writeBandwidth} ${bwUnit}`)
 
   return (
     <div className="mt-3 rounded-lg border border-hairline bg-canvas p-3">
-      <p className="eyebrow">已填入规划参数</p>
+      <p className="eyebrow">{t('已填入规划参数', 'Applied to planning form')}</p>
       <p className="mt-1.5 text-[13px] leading-relaxed text-ink">
-        {plan.storages.map((k) => STORAGE_NAMES[k]).join('、')}
+        {plan.storages.map((k) => STORAGE_NAMES[k]).join(t('、', ', '))}
       </p>
       <p className="mt-1 font-mono text-xs text-body">{rows.join(' · ')}</p>
       {plan.note && <p className="mt-1.5 text-xs leading-relaxed text-mute">{plan.note}</p>}
       {plan.assumptions && plan.assumptions.length > 0 && (
         <div className="mt-2.5 border-t border-hairline pt-2">
           {/* 假设单独列出：用户一眼能挑出不成立的那条，直接回一句就能重算 */}
-          <p className="eyebrow">所用假设（如有不符请告诉我）</p>
+          <p className="eyebrow">{t('所用假设（如有不符请告诉我）', 'Assumptions (tell me if any are wrong)')}</p>
           <ul className="dot-list mt-1 text-xs">
             {plan.assumptions.map((a) => <li key={a}>{a}</li>)}
           </ul>
@@ -216,11 +228,11 @@ function AppliedPlan({ plan, applied, onRestore }: {
       <button
         type="button"
         onClick={() => onRestore(plan)}
-        className="mt-2.5 inline-flex h-8 items-center rounded-md bg-ink px-3 text-[13px] font-medium text-white transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+        className="mt-2.5 inline-flex h-8 items-center rounded-md bg-ink px-3 text-[13px] font-medium text-on-ink transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
       >
-        {applied ? '查看规划结果' : '恢复这组参数'}
+        {applied ? t('查看规划结果', 'View results') : t('恢复这组参数', 'Restore these parameters')}
       </button>
-      {!applied && <p className="mt-1.5 text-xs text-mute">表单已被改动，点击上方按钮可恢复为这组参数。</p>}
+      {!applied && <p className="mt-1.5 text-xs text-mute">{t('表单已被改动，点击上方按钮可恢复为这组参数。', 'The form has changed since; click above to restore these parameters.')}</p>}
     </div>
   )
 }
@@ -239,6 +251,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
   /** 表单当前是否仍是该方案应用后的状态 */
   isPlanApplied: (plan: PlanDirective) => boolean
 }) {
+  const { lang, t } = usePrefs()
   const [open, setOpen] = useState(false)
   // 首帧用固定 id 渲染，挂载后再从 localStorage 恢复，避免 SSR 与客户端渲染不一致
   const [conversations, setConversations] = useState<Conversation[]>(() => [{ ...newConversation(), id: 'initial' }])
@@ -422,7 +435,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: history }),
+        body: JSON.stringify({ messages: history, lang }),
         signal: controller.signal,
       })
 
@@ -430,7 +443,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         // 边缘 WAF 限流返回的是 Cloudflare 自己的 HTML 拦截页，解析不出我们的 JSON，
         // 所以按状态码兜一条明确的提示
         const detail = await res.json().catch(() => null)
-        const fallback = res.status === 429 ? '请求过于频繁，请稍后再试。' : '请求失败，请稍后重试。'
+        const fallback = res.status === 429 ? t('请求过于频繁，请稍后再试。', 'Too many requests, please try again later.') : t('请求失败，请稍后重试。', 'Request failed, please try again later.')
         throw new Error((detail as { error?: string } | null)?.error ?? fallback)
       }
 
@@ -461,15 +474,15 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           } else if (event.type === 'search') {
             patchLast((t) => ({ ...t, searching: true }))
           } else if (event.type === 'error') {
-            throw new Error(event.message ?? '生成失败，请重试。')
+            throw new Error(event.message ?? t('生成失败，请重试。', 'Generation failed, please retry.'))
           }
         }
       }
 
       const { text, plan, quickReplies } = parseAssistantReply(answer)
-      patchLast((t) => ({
-        ...t,
-        text: text || '（没有收到回复，请重试。）',
+      patchLast((turn) => ({
+        ...turn,
+        text: text || t('（没有收到回复，请重试。）', '(No reply received, please retry.)'),
         plan,
         quickReplies,
         searching: false,
@@ -482,7 +495,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         const last = c.turns[c.turns.length - 1]
         return {
           ...c,
-          error: err instanceof Error ? err.message : '请求失败，请稍后重试。',
+          error: err instanceof Error ? err.message : t('请求失败，请稍后重试。', 'Request failed, please try again later.'),
           turns: last?.role === 'assistant' && !last.text ? c.turns.slice(0, -1) : c.turns,
         }
       })
@@ -590,7 +603,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         aria-expanded={open}
         aria-hidden={open}
         tabIndex={open ? -1 : 0}
-        className="ai-fade fixed bottom-5 right-5 z-40 inline-flex h-11 items-center gap-2 rounded-full bg-ink px-4 text-sm font-medium text-white hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+        className="ai-fade fixed bottom-5 right-5 z-40 inline-flex h-11 items-center gap-2 rounded-full bg-ink px-4 text-sm font-medium text-on-ink hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
         style={{
           boxShadow: '0 1px 1px rgba(0,0,0,0.05), 0 8px 16px -4px rgba(0,0,0,0.12)',
           opacity: open ? 0 : 1,
@@ -603,7 +616,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         }}
       >
         <SparkIcon className="h-4 w-4" />
-        AI 规划助手
+        {t('AI 规划助手', 'AI assistant')}
       </button>
 
       {/*
@@ -614,7 +627,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
       <div
         ref={panelRef}
         role="dialog"
-        aria-label="AI 规划助手"
+        aria-label={t('AI 规划助手', 'AI planning assistant')}
         aria-hidden={!open}
         inert={!open}
         className={`ai-panel fixed z-40 flex flex-col overflow-hidden bg-canvas ${
@@ -653,8 +666,8 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
             type="button"
             onPointerDown={startSheetResize}
             onKeyDown={onSheetHandleKeyDown}
-            aria-label="拖动调整高度，点击切换半屏 / 全屏（也可用上下方向键调整）"
-            title="拖动调整高度，点击切换全屏"
+            aria-label={t('拖动调整高度，点击切换半屏 / 全屏（也可用上下方向键调整）', 'Drag to resize, click to toggle half / full screen (arrow keys also work)')}
+            title={t('拖动调整高度，点击切换全屏', 'Drag to resize, click to toggle full screen')}
             className="group flex h-5 shrink-0 cursor-ns-resize touch-none items-end justify-center focus-visible:outline-none"
           >
             <span
@@ -671,10 +684,10 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           {conversations.length === 1 ? (
             <p className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-medium text-ink">
               <SparkIcon className="h-3.5 w-3.5 shrink-0 text-violet" />
-              <span className="truncate">AI 规划助手</span>
+              <span className="truncate">{t('AI 规划助手', 'AI planning assistant')}</span>
             </p>
           ) : (
-            <div ref={tabsRef} role="tablist" aria-label="对话列表" className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div ref={tabsRef} role="tablist" aria-label={t('对话列表', 'Conversations')} className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {conversations.map((c) => {
                 const selected = c.id === active.id
                 const title = conversationTitle(c)
@@ -693,13 +706,13 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
                       title={title}
                       className="flex h-full min-w-0 items-center gap-1.5 rounded-md pl-2 pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                     >
-                      {c.busy && <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-brand" aria-label="正在回复" />}
+                      {c.busy && <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-brand" aria-label={t('正在回复', 'Replying')} />}
                       <span className="truncate">{title}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => closeConversation(c.id)}
-                      aria-label={`关闭对话：${title}`}
+                      aria-label={t(`关闭对话：${title}`, `Close chat: ${title}`)}
                       className={`mr-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-mute transition hover:text-ink focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                         selected ? '' : 'sm:opacity-0 sm:group-hover:opacity-100'
                       }`}
@@ -714,8 +727,8 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           <button
             type="button"
             onClick={createConversation}
-            aria-label="新建对话"
-            title="新建对话"
+            aria-label={t('新建对话', 'New chat')}
+            title={t('新建对话', 'New chat')}
             className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
           >
             <PlusIcon className="h-3 w-3" />
@@ -723,8 +736,8 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           <button
             type="button"
             onClick={() => setOpen(false)}
-            aria-label="关闭 AI 规划助手"
-            title="关闭"
+            aria-label={t('关闭 AI 规划助手', 'Close AI planning assistant')}
+            title={t('关闭', 'Close')}
             className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
           >
             <CloseIcon className="h-3 w-3" />
@@ -735,10 +748,10 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           {showWelcome && (
             <>
               <div className="text-[13px] leading-relaxed text-body">
-                <RichText text={WELCOME} />
+                <RichText text={WELCOME[lang]} />
               </div>
               <div className="space-y-1">
-                {SUGGESTIONS.map((s) => (
+                {SUGGESTIONS[lang].map((s) => (
                   <button
                     key={s}
                     type="button"
@@ -755,7 +768,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           {turns.map((turn, i) =>
             turn.role === 'user' ? (
               <div key={i} className="flex justify-end">
-                <div className="max-w-[85%] rounded-2xl bg-ink px-3.5 py-2.5 text-[13px] leading-relaxed text-white">
+                <div className="max-w-[85%] rounded-2xl bg-ink px-3.5 py-2.5 text-[13px] leading-relaxed text-on-ink">
                   {turn.text}
                 </div>
               </div>
@@ -769,7 +782,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
                       <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-hairline-strong [animation-delay:150ms]" />
                       <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-hairline-strong [animation-delay:300ms]" />
                     </span>
-                    {turn.searching ? '正在联网核实…' : '正在思考…'}
+                    {turn.searching ? t('正在联网核实…', 'Checking the web…') : t('正在思考…', 'Thinking…')}
                   </p>
                 )}
                 {turn.plan && <AppliedPlan plan={turn.plan} applied={isPlanApplied(turn.plan)} onRestore={onRestorePlan} />}
@@ -811,8 +824,8 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
               }}
               rows={1}
               maxLength={2000}
-              placeholder="描述你的存储需求，Enter 发送"
-              aria-label="描述你的存储需求"
+              placeholder={t('描述你的存储需求，Enter 发送', 'Describe your storage needs, Enter to send')}
+              aria-label={t('描述你的存储需求', 'Describe your storage needs')}
               /* ai-composer-input：小屏下把字号顶到 16px，iOS 才不会一聚焦就把整页放大 */
               className="ai-composer-input max-h-32 min-h-[2.25rem] flex-1 resize-none bg-transparent px-2 py-1.5 text-[13px] leading-relaxed text-ink placeholder:text-mute focus:outline-none [field-sizing:content]"
             />
@@ -820,13 +833,13 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
               type="button"
               onClick={() => void send(input)}
               disabled={busy || input.trim() === ''}
-              aria-label="发送"
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink text-white transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-30"
+              aria-label={t('发送', 'Send')}
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink text-on-ink transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-30"
             >
               <SendIcon className="h-3.5 w-3.5" />
             </button>
           </div>
-          <p className="mt-1.5 text-center text-[11px] text-mute">AI 生成内容，请自行核实</p>
+          <p className="mt-1.5 text-center text-[11px] text-mute">{t('AI 生成内容，请自行核实', 'AI-generated content, please verify')}</p>
         </div>
       </div>
     </>

@@ -19,6 +19,12 @@
 - **Ceph** — 开源统一存储（块、对象、文件系统）
 - **Ceph 混闪** — 对象存储（HDD 数据层 + NVMe 索引层）
 
+## 主题与语言
+
+- **白天 / 夜间主题**：默认跟随系统明暗并随系统实时切换，也可在顶栏右侧按钮固定为白天或夜间。
+- **中文 / English**：顶栏右侧一键切换；首次访问按浏览器语言选择。AI 助手也会用当前界面语言回答。
+- 两项偏好都记在 cookie 里，服务端首屏即按偏好渲染，不会闪烁。
+
 ## AI 规划助手
 
 右下角的「AI 规划助手」支持多轮对话：用自然语言描述业务需求（数据量、协议、GPU 规模、预算约束），
@@ -152,10 +158,13 @@ npm run preview
 storplan/
 ├── src/
 │   ├── components/
-│   │   └── ai-assistant.tsx      # AI 规划助手：浮动按钮 + 多轮对话面板
+│   │   ├── ai-assistant.tsx      # AI 规划助手：浮动按钮 + 多轮对话面板
+│   │   └── prefs-switcher.tsx    # 顶栏的主题 / 语言切换按钮
 │   ├── lib/                      # 容量与性能计算逻辑
 │   │   ├── utils.ts              # 容量 / 带宽的单位解析与格式化
+│   │   ├── i18n.tsx              # 语言与主题偏好（cookie + 首帧主题脚本）
 │   │   ├── storage-catalog.ts    # 方案知识库，页面与 AI 提示词共用
+│   │   ├── storage-catalog-en.ts # 方案知识库英文版
 │   │   ├── xeos.ts               # XSKY XEOS 对象存储规划
 │   │   ├── vastdata.ts           # VastData 统一存储规划
 │   │   ├── vastdata-data.ts      # VastData 容量 / 性能参考数据（自动生成）
@@ -190,7 +199,3 @@ storplan/
 ```bash
 npm run deploy
 ```
-
-## 相关项目
-
-- [Storpath](https://storpath.wutz.dev/) —— 存储运维工程师成长路径，交互式课程（[源码](https://github.com/wutz/storpath)）。本工具算出的容量与性能口径，在那边的 L3「容量与性能规划」里有推导过程。

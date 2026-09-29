@@ -10,6 +10,7 @@ import {
   CONSTANTS as CEPH_CONSTANTS,
 } from './ceph';
 import type { RedundancyScheme } from './ceph';
+import { tr } from './i18n';
 
 export { getRedundancyScheme, getAllowedRedundancySchemes, calculateCapacityTiB };
 export type { RedundancyScheme };
@@ -184,7 +185,7 @@ export function planCephHybrid(req: CephHybridPlanRequest): CephHybridPlanResult
   }
 
   if (configs.length === 0) {
-    throw new Error('找不到满足需求的配置，请调小容量或带宽后重试');
+    throw new Error(tr('找不到满足需求的配置，请调小容量或带宽后重试', 'No configuration meets the requirement; reduce capacity or bandwidth and try again'));
   }
 
   // 选择节点数最少的方案；节点数相同时选可用容量最接近需求（更省成本）的方案

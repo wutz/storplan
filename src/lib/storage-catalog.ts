@@ -3,6 +3,8 @@
  * 页面上的选型参考卡片、方案卡说明区和 AI 助手的系统提示词都读这一份数据，改一处两边同步。
  */
 
+import { SELECTION_GUIDE_EN, STORAGE_INFO_EN, STORAGE_NAMES_EN } from './storage-catalog-en'
+
 export const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'gpfs-hybrid', 'weka', 'xeos', 'ceph', 'ceph-hybrid'] as const
 
 export type StorageKey = (typeof STORAGE_ORDER)[number]
@@ -201,4 +203,11 @@ export const STORAGE_INFO: Record<StorageKey, { description: string; pros: strin
     cons: ['软件授权费用较高', '依赖第三方厂商技术支持'],
     limits: ['条带宽度 D+P 限制在 5–20 之间，且 D 必须大于 P'],
   },
+}
+
+/** 按界面语言取选型参考与方案说明（形状与中文版一致） */
+export function localizeCatalog(lang: 'zh' | 'en') {
+  return lang === 'en'
+    ? { SELECTION_GUIDE: SELECTION_GUIDE_EN, STORAGE_INFO: STORAGE_INFO_EN, STORAGE_NAMES: STORAGE_NAMES_EN }
+    : { SELECTION_GUIDE, STORAGE_INFO, STORAGE_NAMES }
 }
