@@ -36,38 +36,38 @@ export const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[
         name: 'VastData',
         pros: '支持多种存储协议，可替代 Ceph；支持多租户、QoS 与去重；授权费用摊薄后建设成本低；有原厂技术支持',
         cons: '性能略低于 GPFS ECE，采购周期较长',
-        scenarios: '多租户场景，需要 QoS 与技术支持',
+        scenarios: '多租户共享，需要 QoS 和原厂支持',
       },
       {
         key: 'gpfs-ece',
         name: 'GPFS ECE',
         pros: '性能高、生态成熟，软件授权费用低',
         cons: '多租户支持较弱，依赖第三方厂商技术支持',
-        scenarios: '单租户高性能场景，预算有限',
+        scenarios: '单租户高性能，预算有限',
       },
       {
         key: 'gpfs-hybrid',
         name: 'GPFS 混闪',
         pros: '每 TB 成本远低于全闪；大块带宽随 HDD 数量线性增长；与全闪 GPFS 共用同一套运维体系',
         cons: '小文件随机性能依赖 NVMe 层命中率；HDD 重建慢；多租户支持较弱',
-        scenarios: '大容量冷温数据，以大文件顺序读写为主的场景',
+        scenarios: '大容量温冷数据，以大文件顺序读写为主',
       },
       {
         key: 'weka',
         name: 'Weka',
         pros: '性能高于 GPFS ECE；支持多租户',
         cons: '软件授权费用高，依赖第三方厂商技术支持',
-        scenarios: '追求极致性能，预算充足',
+        scenarios: '追求极致性能，预算充裕',
       },
       {
         key: 'ceph',
         name: 'CephFS',
         pros: '开源，无软件授权费用；支持多租户',
         cons: '不支持 QoS；元数据缓存受节点内存限制，内存不足时性能锐减；运维成本高；无原厂技术支持',
-        scenarios: '预算有限、非 AI 场景的通用共享文件存储',
+        scenarios: '预算有限的非 AI 通用共享文件存储',
       },
     ],
-    notes: ['CephFS 不建议应用于 AI 场景'],
+    notes: ['CephFS 不建议用于 AI 场景'],
   },
   {
     title: '对象存储',
@@ -77,7 +77,7 @@ export const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[
         name: 'XSKY XEOS',
         pros: '功能齐全、稳定；支持大规模扩展与 QoS；有原厂技术支持',
         cons: '软件授权费用高',
-        scenarios: '生产环境，需要稳定性与技术支持',
+        scenarios: '生产环境，看重稳定性和原厂支持',
       },
       {
         key: 'ceph-hybrid',
@@ -91,7 +91,7 @@ export const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[
         name: 'VastData S3',
         pros: '性能高；可与文件系统共用同一集群；支持 QoS 与大规模扩展；有原厂技术支持',
         cons: '全闪架构成本较高，只适合高性能场景',
-        scenarios: '高性能对象存储需求',
+        scenarios: '需要高性能对象存储',
       },
     ],
   },
@@ -103,7 +103,7 @@ export const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[
         name: 'VastData Block',
         pros: '性能高，有原厂技术支持',
         cons: '当前版本暂不支持 QoS',
-        scenarios: '高性能块存储需求，可接受新产品',
+        scenarios: '需要高性能块存储，能接受较新的产品',
       },
       {
         key: 'ceph',
@@ -125,7 +125,7 @@ export const STORAGE_INFO: Record<StorageKey, { description: string; pros: strin
   vastdata: {
     description: 'VastData 是基于 NVMe SSD 和 SCM 的全闪统一存储平台，一套系统同时提供文件、对象和块存储服务。',
     pros: ['支持多种存储协议，可替代 Ceph', '支持多租户', '去重与压缩可提升集群可用容量', '支持 QoS（含元数据 QoS）', '有原厂技术支持'],
-    cons: ['采购费用高于 GPFS', '采用 QLC 大容量盘，性能低于 GPFS 等使用 TLC 小容量盘的方案', '采购周期较长'],
+    cons: ['采购费用高于 GPFS', '使用 QLC 大容量盘，性能不及采用 TLC 小容量盘的 GPFS 等方案', '采购周期较长'],
   },
   'gpfs-ece': {
     description: 'IBM GPFS/Scale ECE（Erasure Coding Edition）是基于 NVMe SSD 和 RDMA 网络的高性能并行文件系统。',
@@ -174,7 +174,7 @@ export const STORAGE_INFO: Record<StorageKey, { description: string; pros: strin
     ],
     limits: [
       '文件系统热数据文件数建议不超过 5000 万个（约需 200GB 内存）',
-      '文件系统不建议应用于 AI 场景',
+      '文件系统不建议用于 AI 场景',
     ],
   },
   'ceph-hybrid': {
@@ -197,7 +197,7 @@ export const STORAGE_INFO: Record<StorageKey, { description: string; pros: strin
   },
   weka: {
     description: 'Weka（WekaFS）是基于 NVMe SSD 和高速网络的全闪并行文件系统，适合 AI / HPC 等高性能场景。',
-    pros: ['性能极高，是同类方案中最高的', '支持分层到对象存储，可构建低成本混闪文件系统', '支持多租户', '支持 QoS'],
+    pros: ['性能在同类方案中最高', '支持分层到对象存储，可构建低成本混闪文件系统', '支持多租户', '支持 QoS'],
     cons: ['软件授权费用较高', '依赖第三方厂商技术支持'],
     limits: ['条带宽度 D+P 限制在 5–20 之间，且 D 必须大于 P'],
   },

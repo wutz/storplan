@@ -173,7 +173,7 @@ export function planVastData(req: VastDataPlanRequest): VastDataPlanResult {
   }
 
   if (!bestConfig) {
-    throw new Error('无法找到满足需求的配置（超出 250 EBox 限制）');
+    throw new Error('所需规模超出 250 台 EBox 的上限，请调小容量或带宽');
   }
 
   const bandwidthUnitType = 'decimal-byte';

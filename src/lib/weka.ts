@@ -197,5 +197,5 @@ export function planWeka(req: WekaPlanRequest): WekaPlanResult {
     }
   }
 
-  throw new Error('无法找到满足所有需求的配置方案');
+  throw new Error('找不到满足需求的配置，请调小容量或带宽后重试');
 }

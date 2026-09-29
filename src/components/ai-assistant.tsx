@@ -94,13 +94,13 @@ function readStoredGeometry(): Geometry | null {
 }
 
 const SUGGESTIONS = [
-  '128 张 H100 训练集群，训练数据 500TB，选什么存储？',
-  '要存 3PB 影像归档，主要是 S3 协议，怎么规划？',
-  'K8s 上跑 AI 平台，需要 PVC 和对象存储，各配多大？',
+  '128 卡 H100 训练集群，训练数据 500TB，该选哪种存储？',
+  '3PB 医学影像归档，主要走 S3 协议，该怎么规划？',
+  '在 K8s 上搭 AI 平台，PVC 和对象存储各要配多大？',
 ]
 
 const WELCOME =
-  '直接描述你的业务需求就行：数据量、协议、GPU 规模、预算约束都可以告诉我。我会先确认关键条件（也可以直接点选候选项），再选出合适的方案，并把容量与带宽填进上方的规划表单。\n\n想跳过提问，直接说「按经验来」即可。我会参考行业常见值补齐参数，并逐条列出所用假设。\n\n目前只支持存储、K8s、网络、GPU 和 AI 基础设施相关的问题。'
+  '说说你的业务需求就行：数据量、访问协议、GPU 规模、预算都可以。我会先确认几个关键条件（候选项可以直接点选），再挑出合适的方案，把容量和带宽填进页面上的规划表单。\n\n不想回答问题？直接说「按经验来」，我会用行业常见值补齐参数，并列出每一条假设。\n\n我只回答存储、K8s、网络、GPU 和 AI 基础设施相关的问题。'
 
 function SparkIcon({ className }: { className?: string }) {
   return (
@@ -207,7 +207,7 @@ function AppliedPlan({ plan, applied, onRestore }: {
       {plan.assumptions && plan.assumptions.length > 0 && (
         <div className="mt-2.5 border-t border-hairline pt-2">
           {/* 假设单独列出：用户一眼能挑出不成立的那条，直接回一句就能重算 */}
-          <p className="eyebrow">假设（不成立请告诉我）</p>
+          <p className="eyebrow">所用假设（如有不符请告诉我）</p>
           <ul className="dot-list mt-1 text-xs">
             {plan.assumptions.map((a) => <li key={a}>{a}</li>)}
           </ul>
@@ -218,9 +218,9 @@ function AppliedPlan({ plan, applied, onRestore }: {
         onClick={() => onRestore(plan)}
         className="mt-2.5 inline-flex h-8 items-center rounded-md bg-ink px-3 text-[13px] font-medium text-white transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
       >
-        {applied ? '查看规划结果' : '恢复这组参数并查看'}
+        {applied ? '查看规划结果' : '恢复这组参数'}
       </button>
-      {!applied && <p className="mt-1.5 text-xs text-mute">表单参数已改动，点上面的按钮即可还原成这组。</p>}
+      {!applied && <p className="mt-1.5 text-xs text-mute">表单已被改动，点击上方按钮可恢复为这组参数。</p>}
     </div>
   )
 }
@@ -477,7 +477,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
       const { text, plan, quickReplies } = parseAssistantReply(answer)
       patchLast((t) => ({
         ...t,
-        text: text || '（没有收到回复内容，请重试。）',
+        text: text || '（没有收到回复，请重试。）',
         plan,
         quickReplies,
         searching: false,
@@ -595,7 +595,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
                 <SparkIcon className="h-3.5 w-3.5 text-violet" />
                 AI 规划助手
               </p>
-              <p className="mt-0.5 text-xs text-mute">描述需求，自动选方案并填入参数</p>
+              <p className="mt-0.5 text-xs text-mute">说出需求，自动选方案、填参数</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
@@ -668,7 +668,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
                       <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-hairline-strong [animation-delay:150ms]" />
                       <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-hairline-strong [animation-delay:300ms]" />
                     </span>
-                    {turn.searching ? '正在联网查证…' : '正在分析…'}
+                    {turn.searching ? '正在联网核实…' : '正在思考…'}
                   </p>
                 )}
                 {turn.plan && <AppliedPlan plan={turn.plan} applied={isPlanApplied(turn.plan)} onRestore={onRestorePlan} />}
@@ -710,7 +710,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
               }}
               rows={2}
               maxLength={2000}
-              placeholder="例如：256 张卡的训练集群，数据 1PB，要 NFS 和 S3"
+              placeholder="例如：256 卡训练集群，数据 1PB，需要 NFS 和 S3"
               aria-label="描述你的存储需求"
               /* ai-composer-input：小屏下把字号顶到 16px，iOS 才不会一聚焦就把整页放大 */
               className="ai-composer-input max-h-32 min-h-[3.25rem] flex-1 resize-none rounded-md border border-hairline bg-canvas px-3 py-2 text-[13px] leading-relaxed text-ink transition placeholder:text-mute hover:border-hairline-strong focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-brand/20"
@@ -725,7 +725,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
               <SendIcon className="h-4 w-4" />
             </button>
           </div>
-          <p className="mt-2 text-xs text-mute">Enter 发送 · Shift + Enter 换行 · 内容由 AI 生成，请自行复核</p>
+          <p className="mt-2 text-xs text-mute">Enter 发送，Shift + Enter 换行 · AI 生成内容，请自行核实</p>
         </div>
       </div>
     </>
