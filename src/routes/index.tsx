@@ -38,123 +38,30 @@ type PlanResults = {
   weka?: WekaPlanResult
 }
 
-// 每个存储产品的官网主题色（Tailwind 静态类名，避免运行时拼接导致 JIT 漏扫）
-// VastData → 品牌紫 / GPFS·Scale（IBM）→ IBM 蓝 / XSKY → 天空青
+// 每个存储产品的官网品牌色：只用于小圆点标识，其余界面保持黑白灰
 type Theme = {
   /** 选择卡上的完整名称（含类型说明） */
   label: string
   /** 方案卡头的短名称 */
   title: string
   category: string
-  accentText: string
-  accentBgSoft: string
-  accentBorder: string
-  chip: string
-  bigValue: string
-  selectedCard: string
-  dot: string
-  accentBar: string
+  /** 品牌色（十六进制），用于圆点标识 */
+  color: string
 }
 
 const THEME: Record<string, Theme> = {
-  vastdata: {
-    // VastData 官网品牌色：亮青 #1FD9FE 配深藏蓝文字 #0D1021
-    label: 'VastData（统一存储）',
-    title: 'VastData',
-    category: '文件 · 对象 · 块',
-    accentText: 'text-[#0D1021]',
-    accentBgSoft: 'bg-[#1FD9FE]/10',
-    accentBorder: 'border-[#1FD9FE]',
-    chip: 'bg-[#1FD9FE]/20 text-[#0D1021]',
-    bigValue: 'text-[#0D1021]',
-    selectedCard: 'border-[#1FD9FE] bg-[#1FD9FE]/10',
-    dot: 'bg-[#1FD9FE]',
-    accentBar: 'bg-[#1FD9FE]',
-  },
-  'gpfs-ece': {
-    // IBM 官网品牌色：IBM 蓝 #0F62FE
-    label: 'GPFS/Scale（文件系统）',
-    title: 'GPFS/Scale',
-    category: '并行文件系统',
-    accentText: 'text-[#0F62FE]',
-    accentBgSoft: 'bg-[#0F62FE]/10',
-    accentBorder: 'border-[#0F62FE]',
-    chip: 'bg-[#0F62FE]/15 text-[#0F62FE]',
-    bigValue: 'text-[#0F62FE]',
-    selectedCard: 'border-[#0F62FE] bg-[#0F62FE]/10',
-    dot: 'bg-[#0F62FE]',
-    accentBar: 'bg-[#0F62FE]',
-  },
-  'gpfs-hybrid': {
-    // IBM 官网品牌色（混闪用更深的 IBM Blue 80 区分全闪）
-    label: 'GPFS/Scale 混闪（文件系统）',
-    title: 'GPFS/Scale（混闪）',
-    category: '混闪并行文件系统',
-    accentText: 'text-[#002D9C]',
-    accentBgSoft: 'bg-[#002D9C]/10',
-    accentBorder: 'border-[#002D9C]',
-    chip: 'bg-[#002D9C]/15 text-[#002D9C]',
-    bigValue: 'text-[#002D9C]',
-    selectedCard: 'border-[#002D9C] bg-[#002D9C]/10',
-    dot: 'bg-[#002D9C]',
-    accentBar: 'bg-[#002D9C]',
-  },
-  xeos: {
-    // XSKY 官网品牌色：星辰紫 #7855FA
-    label: 'XSKY XEOS（对象存储）',
-    title: 'XSKY XEOS',
-    category: '对象存储',
-    accentText: 'text-[#7855FA]',
-    accentBgSoft: 'bg-[#7855FA]/10',
-    accentBorder: 'border-[#7855FA]',
-    chip: 'bg-[#7855FA]/15 text-[#7855FA]',
-    bigValue: 'text-[#7855FA]',
-    selectedCard: 'border-[#7855FA] bg-[#7855FA]/10',
-    dot: 'bg-[#7855FA]',
-    accentBar: 'bg-[#7855FA]',
-  },
-  ceph: {
-    // Ceph 官网品牌色：红 #EF5C55
-    label: 'Ceph（全闪统一存储）',
-    title: 'Ceph（全闪）',
-    category: '块 · 对象 · 文件',
-    accentText: 'text-[#C43E38]',
-    accentBgSoft: 'bg-[#EF5C55]/10',
-    accentBorder: 'border-[#EF5C55]',
-    chip: 'bg-[#EF5C55]/15 text-[#C43E38]',
-    bigValue: 'text-[#C43E38]',
-    selectedCard: 'border-[#EF5C55] bg-[#EF5C55]/10',
-    dot: 'bg-[#EF5C55]',
-    accentBar: 'bg-[#EF5C55]',
-  },
-  'ceph-hybrid': {
-    // Ceph 官网品牌色（混闪用更深的暗红区分全闪）
-    label: 'Ceph（混闪对象存储）',
-    title: 'Ceph（混闪）',
-    category: '混闪对象存储',
-    accentText: 'text-[#9A2E29]',
-    accentBgSoft: 'bg-[#9A2E29]/10',
-    accentBorder: 'border-[#9A2E29]',
-    chip: 'bg-[#9A2E29]/15 text-[#9A2E29]',
-    bigValue: 'text-[#9A2E29]',
-    selectedCard: 'border-[#9A2E29] bg-[#9A2E29]/10',
-    dot: 'bg-[#9A2E29]',
-    accentBar: 'bg-[#9A2E29]',
-  },
-  weka: {
-    // Weka 官网品牌色：紫罗兰 #7C03EC
-    label: 'Weka（文件系统）',
-    title: 'Weka',
-    category: '并行文件系统',
-    accentText: 'text-[#7C03EC]',
-    accentBgSoft: 'bg-[#7C03EC]/10',
-    accentBorder: 'border-[#7C03EC]',
-    chip: 'bg-[#7C03EC]/15 text-[#7C03EC]',
-    bigValue: 'text-[#7C03EC]',
-    selectedCard: 'border-[#7C03EC] bg-[#7C03EC]/10',
-    dot: 'bg-[#7C03EC]',
-    accentBar: 'bg-[#7C03EC]',
-  },
+  vastdata: { label: 'VastData（统一存储）', title: 'VastData', category: '文件 · 对象 · 块', color: '#1FD9FE' }, // VastData 官网品牌色：亮青 #1FD9FE 配深藏蓝文字 #0D1021
+  'gpfs-ece': { label: 'GPFS/Scale（文件系统）', title: 'GPFS/Scale', category: '并行文件系统', color: '#0F62FE' }, // IBM 官网品牌色：IBM 蓝 #0F62FE
+  'gpfs-hybrid': { label: 'GPFS/Scale 混闪（文件系统）', title: 'GPFS/Scale（混闪）', category: '混闪并行文件系统', color: '#002D9C' }, // IBM 官网品牌色（混闪用更深的 IBM Blue 80 区分全闪）
+  xeos: { label: 'XSKY XEOS（对象存储）', title: 'XSKY XEOS', category: '对象存储', color: '#7855FA' }, // XSKY 官网品牌色：星辰紫 #7855FA
+  ceph: { label: 'Ceph（全闪统一存储）', title: 'Ceph（全闪）', category: '块 · 对象 · 文件', color: '#EF5C55' }, // Ceph 官网品牌色：红 #EF5C55
+  'ceph-hybrid': { label: 'Ceph（混闪对象存储）', title: 'Ceph（混闪）', category: '混闪对象存储', color: '#9A2E29' }, // Ceph 官网品牌色（混闪用更深的暗红区分全闪）
+  weka: { label: 'Weka（文件系统）', title: 'Weka', category: '并行文件系统', color: '#7C03EC' }, // Weka 官网品牌色：紫罗兰 #7C03EC
+}
+
+// 品牌色圆点
+function BrandDot({ color, className = 'h-2 w-2' }: { color: string; className?: string }) {
+  return <span aria-hidden className={`shrink-0 rounded-full ${className}`} style={{ backgroundColor: color }} />
 }
 
 // 勾选指示图标（用于方案选择卡片）
@@ -185,24 +92,6 @@ function ChevronIcon({ className }: { className?: string }) {
     </svg>
   )
 }
-
-// 品牌网格渐变（DESIGN.md：蓝 / 紫 / 琥珀 / 青多色 mesh，仅 hero 尺度装饰）
-const HERO_MESH: React.CSSProperties = {
-  backgroundImage: [
-    'radial-gradient(50% 80% at 12% 0%, rgba(0,124,240,0.16) 0%, transparent 60%)',
-    'radial-gradient(45% 70% at 88% 8%, rgba(121,40,202,0.15) 0%, transparent 62%)',
-    'radial-gradient(55% 75% at 55% 110%, rgba(249,203,40,0.13) 0%, transparent 58%)',
-    'radial-gradient(38% 55% at 100% 88%, rgba(0,223,216,0.14) 0%, transparent 60%)',
-    'radial-gradient(42% 60% at 0% 96%, rgba(255,0,128,0.08) 0%, transparent 60%)',
-  ].join(', '),
-}
-
-// Hero 概览：数字取自方案目录，增删方案时自动跟着变
-const HERO_STATS = [
-  { label: '可对比方案', value: String(STORAGE_ORDER.length) },
-  { label: '存储类别', value: String(SELECTION_GUIDE.length) },
-  { label: '规划依据', value: '容量 · 带宽' },
-]
 
 function SparkleIcon({ className }: { className?: string }) {
   return (
@@ -990,48 +879,22 @@ function StorplanApp() {
       {/* @container：下面的分栏按内容区宽度而不是窗口宽度来算，AI 侧边栏展开挤窄页面时自动减少列数 */}
       <div className="@container mx-auto max-w-7xl px-4 sm:px-8">
 
-        {/* 品牌 hero：多色 mesh 渐变背景（DESIGN.md hero-band） */}
-        <section className="relative mt-6 overflow-hidden rounded-2xl border border-hairline bg-canvas sm:mt-8">
-          <div aria-hidden className="pointer-events-none absolute inset-0" style={HERO_MESH} />
-          <div className={`relative px-6 sm:px-10 ${hasSelection ? 'py-7 sm:py-8' : 'py-10 sm:py-14'}`}>
-            <p className="inline-flex items-center gap-2 font-mono text-xs font-normal uppercase text-mute">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden />
-              Storage Capacity &amp; Performance Planner
-            </p>
-            <h2 className={`mt-3 max-w-3xl text-balance font-semibold tracking-tight text-ink ${hasSelection ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-5xl sm:leading-[1.1]'}`}>从容量与带宽需求，<br className="hidden sm:inline" />直达可采购的集群配置</h2>
-            {!hasSelection && (
-              <>
-                <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-body sm:text-lg">
-                  填入容量和带宽，一次对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 的集群规模、硬件清单和性能指标。
-                </p>
-                <div className="mt-7 flex flex-wrap items-center gap-3">
-                  <a href="#plan-params" className="btn-primary">
-                    开始规划
-                    <span aria-hidden>→</span>
-                  </a>
-                  <button type="button" onClick={openAiAssistant} className="btn-secondary">
-                    <SparkleIcon className="h-4 w-4 text-brand" />
-                    让 AI 帮我选
-                  </button>
-                </div>
-                <dl className="mt-10 grid max-w-2xl grid-cols-3 gap-px overflow-hidden rounded-xl border border-hairline bg-hairline">
-                  {HERO_STATS.map((stat) => (
-                    <div key={stat.label} className="bg-canvas/80 px-4 py-3 backdrop-blur">
-                      <dt className="text-xs text-mute">{stat.label}</dt>
-                      <dd className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-ink">{stat.value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </>
-            )}
-          </div>
+        <section className={hasSelection ? 'pt-8 pb-6' : 'pt-12 pb-8 sm:pt-16'}>
+          <h2 className={`max-w-3xl text-balance font-semibold tracking-tight text-ink ${hasSelection ? 'text-2xl' : 'text-3xl sm:text-4xl'}`}>从容量与带宽需求，直达可采购的集群配置</h2>
+          {!hasSelection && (
+            <>
+              <p className="mt-3 max-w-2xl text-pretty text-base leading-relaxed text-body">
+                填入容量和带宽，一次对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 的集群规模、硬件清单和性能指标。
+              </p>
+              <button type="button" onClick={openAiAssistant} className="btn-secondary mt-6">
+                <SparkleIcon className="h-4 w-4 text-brand" />
+                让 AI 帮我选
+              </button>
+            </>
+          )}
         </section>
 
-        <div id="plan-params" className="card mt-8 mb-8 scroll-mt-24 p-6 sm:p-8">
-          <div className="mb-6">
-            <p className="eyebrow">规划参数</p>
-            <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">选方案，填需求</h2>
-          </div>
+        <div id="plan-params" className="card mb-8 scroll-mt-24 p-6 sm:p-8">
           <div className="mb-3 flex items-center justify-between gap-3">
             <span className="flex items-center gap-2 text-sm font-medium text-ink"><span className="step-num">1</span>选择存储方案<span className="font-normal text-mute">（可多选，并排对比）</span></span>
             {hasSelection && (
@@ -1057,15 +920,16 @@ function StorplanApp() {
                   type="button"
                   onClick={() => toggleStorage(key)}
                   aria-pressed={active}
-                  className={`group flex items-start gap-3 rounded-lg border p-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${active ? t.selectedCard : 'border-hairline bg-canvas hover:border-hairline-strong hover:bg-canvas-soft'}`}
+                  className={`group flex items-start gap-3 rounded-lg border p-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${active ? 'border-ink bg-canvas' : 'border-hairline bg-canvas hover:border-hairline-strong hover:bg-canvas-soft'}`}
                 >
                   <span
-                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition ${active ? `${t.dot} ${t.accentBorder} border` : 'border-hairline-strong bg-canvas group-hover:border-ink/40'}`}
+                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition ${active ? '' : 'border-hairline-strong bg-canvas group-hover:border-ink/40'}`}
+                    style={active ? { backgroundColor: t.color, borderColor: t.color } : undefined}
                   >
                     {active && <CheckIcon className="h-3 w-3 text-white" />}
                   </span>
                   <span className="min-w-0">
-                    <span className={`block text-sm font-medium leading-tight ${active ? t.accentText : 'text-ink'}`}>{t.label}</span>
+                    <span className={`block text-sm font-medium leading-tight text-ink`}>{t.label}</span>
                     <span className="mt-1 block text-xs text-mute">{t.category}</span>
                   </span>
                 </button>
@@ -1190,9 +1054,9 @@ function GuideName({ row, onSelect }: { row: GuideRow; onSelect: (key: string) =
     <button
       type="button"
       onClick={() => onSelect(row.key!)}
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${t.chip}`}
+      className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-canvas px-2.5 py-1 text-xs font-medium text-ink transition hover:border-hairline-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${t.dot}`} />
+      <BrandDot color={t.color} className="h-1.5 w-1.5" />
       {row.name}
     </button>
   )
@@ -1202,14 +1066,13 @@ function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
   return (
     <div className="card p-6 sm:p-8">
       <div className="mb-6">
-        <p className="eyebrow">选型参考</p>
-        <h3 className="mt-1 text-lg font-semibold tracking-tight text-ink">拿不准选哪个？先看看各方案的取舍</h3>
+        <h3 className="text-lg font-semibold tracking-tight text-ink">拿不准选哪个？先看看各方案的取舍</h3>
         <p className="mt-1 text-pretty text-sm text-body">按文件、对象、块三类整理了各方案的优缺点和适用场景；点击方案名即可直接开始规划。</p>
       </div>
       <div className="space-y-8">
         {SELECTION_GUIDE.map((section) => (
           <div key={section.title}>
-            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink"><span className="h-3.5 w-0.5 rounded-full bg-brand" aria-hidden />{section.title}</h4>
+            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink">{section.title}</h4>
             {/* 宽屏：四列对比表 */}
             <div className="hidden overflow-x-auto sm:block">
               <table className="w-full text-sm border-collapse">
@@ -1286,12 +1149,12 @@ function SchemePanel({ storage, badge, error, children }: {
 
   return (
     <section className="card overflow-hidden">
-      <span className={`absolute inset-x-0 top-0 h-1 ${t.accentBar}`} />
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 p-6">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
+            <BrandDot color={t.color} className="h-2.5 w-2.5" />
             <h2 className="text-xl font-semibold tracking-tight text-ink">{t.title}</h2>
-            {badge && <span className={`rounded-full px-2 py-0.5 text-xs ${t.chip}`}>{badge}</span>}
+            {badge && <span className="rounded-full bg-canvas-soft-2 px-2 py-0.5 text-xs text-body">{badge}</span>}
           </div>
           <p className="mt-1 text-xs text-mute">{t.category}</p>
         </div>
@@ -1375,7 +1238,6 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
   const hddLimit = ul ? XEOS_CONSTANTS.MAX_TOTAL_DISKS_ULTRA : XEOS_CONSTANTS.MAX_TOTAL_DISKS
   const requiredCacheTB = (data.disksPerServer * data.diskSize) / XEOS_CONSTANTS.CACHE_RATIO
   const isCacheSufficient = data.cacheConfig.totalSize >= requiredCacheTB
-  const t = THEME.xeos
 
   return (
     <div className="space-y-6">
@@ -1443,7 +1305,7 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
           <dl className="spec-list text-sm">
             <div>
               <dt className="text-body">可用容量</dt>
-              <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
+              <dd className="text-xl font-semibold tracking-tight text-ink">{data.formatted.capacity}</dd>
             </div>
             <div>
               <dt className="text-body">裸容量</dt>
@@ -1569,7 +1431,6 @@ function XEOSResult({ data, onServerCountChange, onDiskChange, onDisksPerServerC
 function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastDataPlanResult; onEboxCountChange: (n: number) => void; onDiskChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
-  const t = THEME.vastdata
 
   return (
     <div className="space-y-6">
@@ -1592,7 +1453,7 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
           <dl className="spec-list text-sm">
             <div>
               <dt className="text-body">可用容量</dt>
-              <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
+              <dd className="text-xl font-semibold tracking-tight text-ink">{data.formatted.capacity}</dd>
             </div>
             <div>
               <dt className="text-body">裸容量</dt>
@@ -1666,7 +1527,6 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
 function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, onSsdCountChange }: { data: GPFSECEPlanResult; onServerCountChange: (n: number) => void; onDiskChange: (n: number) => void; onEcChange: (n: number) => void; onSsdCountChange: (n: number) => void }) {
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
-  const t = THEME['gpfs-ece']
 
   return (
     <div className="space-y-6">
@@ -1697,7 +1557,7 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
           <dl className="spec-list text-sm">
             <div>
               <dt className="text-body">可用容量</dt>
-              <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
+              <dd className="text-xl font-semibold tracking-tight text-ink">{data.formatted.capacity}</dd>
             </div>
             <div>
               <dt className="text-body">裸容量</dt>
@@ -1781,7 +1641,6 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
   onNetworkTypeChange: (s: string) => void;
   onNetworkSpeedChange: (n: number) => void;
 }) {
-  const t = THEME['gpfs-hybrid']
   const totalHDD = data.nodeCount * data.hddPerNode
   const cacheReq = gpfsHybridCacheRequirement(data.hddPerNode, data.hddSize)
   const isCacheSufficient = data.cacheConfig.totalSize >= cacheReq.minTB
@@ -1841,7 +1700,7 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
             <dl className="spec-list text-sm">
               <div>
                 <dt className="text-body">可用容量</dt>
-                <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
+                <dd className="text-xl font-semibold tracking-tight text-ink">{data.formatted.capacity}</dd>
               </div>
               <div>
                 <dt className="text-body">裸容量</dt>
@@ -1927,7 +1786,6 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
             hint="热数据命中 NVMe 层，随集群 NVMe 总数外推"
             perf={data.formatted.tiered}
             perTiBRead={perTiB(data.performance.tiered.readBandwidth)}
-            accent={t.chip}
             networkLimited={data.networkLimited.tiered}
           />
           <PerfTier
@@ -1935,7 +1793,6 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
             hint="IO 全部落在 HDD 层，随集群 HDD 总数外推"
             perf={data.formatted.hddOnly}
             perTiBRead={perTiB(data.performance.hddOnly.readBandwidth)}
-            accent={t.chip}
             networkLimited={data.networkLimited.hddOnly}
           />
         </div>
@@ -1944,19 +1801,18 @@ function GPFSHybridResult({ data, onNodeCountChange, onHddPerNodeChange, onHddSi
 }
 
 // 分层开启 / 关闭两组性能指标共用的小节
-function PerfTier({ title, hint, perf, perTiBRead, accent, networkLimited }: {
+function PerfTier({ title, hint, perf, perTiBRead, networkLimited }: {
   title: string;
   hint: string;
   perf: { readBandwidth: string; writeBandwidth: string; readIOPS: string; writeIOPS: string };
   perTiBRead: string;
-  accent: string;
   networkLimited?: boolean;
 }) {
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h3 className="eyebrow">性能</h3>
-        <span className={`rounded-full px-2 py-0.5 text-xs ${accent}`}>{title}</span>
+        <span className="rounded-full bg-canvas-soft-2 px-2 py-0.5 text-xs text-body">{title}</span>
         {networkLimited && (
           <span className="inline-flex items-center gap-1 text-xs text-warning-deep">
             <WarnIcon className="h-3 w-3" />
@@ -1999,7 +1855,6 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
   onDiskChange: (n: number) => void;
   onRedundancyChange: (s: string) => void;
 }) {
-  const t = THEME.ceph
   const totalDisks = data.nodeCount * data.disksPerNode
   const effectiveRate = data.actualCapacity / data.rawCapacity
   const mem = getCephMemory(data.disksPerNode)
@@ -2051,7 +1906,7 @@ function CephResult({ data, onNodeCountChange, onMdsNodeCountChange, onDisksPerN
             <dl className="spec-list text-sm">
               <div>
                 <dt className="text-body">可用容量</dt>
-                <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
+                <dd className="text-xl font-semibold tracking-tight text-ink">{data.formatted.capacity}</dd>
               </div>
               <div>
                 <dt className="text-body">裸容量</dt>
@@ -2195,7 +2050,6 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
   onCacheCountChange: (n: number) => void;
   onCacheSizeChange: (n: number) => void;
 }) {
-  const t = THEME['ceph-hybrid']
   const totalDisks = data.nodeCount * data.disksPerNode
   const effectiveRate = data.actualCapacity / data.rawCapacity
   const requiredCacheTB = (data.disksPerNode * data.diskSize) / CEPH_HYBRID_CONSTANTS.CACHE_RATIO
@@ -2240,7 +2094,7 @@ function CephHybridResult({ data, onNodeCountChange, onDisksPerNodeChange, onDis
             <dl className="spec-list text-sm">
               <div>
                 <dt className="text-body">可用容量</dt>
-                <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
+                <dd className="text-xl font-semibold tracking-tight text-ink">{data.formatted.capacity}</dd>
               </div>
               <div>
                 <dt className="text-body">裸容量</dt>
@@ -2352,7 +2206,6 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
   onProtectionChange: (n: number) => void;
   onNetworkChange: (s: string) => void;
 }) {
-  const t = THEME.weka
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
   const minDataNodes = WEKA_CONSTANTS.MIN_TOTAL_NODES - WEKA_CONSTANTS.HOT_SPARE
@@ -2402,7 +2255,7 @@ function WekaResult({ data, onDataNodeCountChange, onHotSpareChange, onDiskChang
             <dl className="spec-list text-sm">
               <div>
                 <dt className="text-body">可用容量</dt>
-                <dd className={`text-xl font-semibold tracking-tight ${t.bigValue}`}>{data.formatted.capacity}</dd>
+                <dd className="text-xl font-semibold tracking-tight text-ink">{data.formatted.capacity}</dd>
               </div>
               <div>
                 <dt className="text-body">裸容量</dt>

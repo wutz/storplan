@@ -734,3 +734,9 @@ The brand uses STACKED shadows — multiple small offsets layered to fake natura
 - Don't promote the geometric sans to weight 700. The brand's display ceiling is 600.
 - Don't pair the marketing 100-px pill CTA shape with the 6-px nav radius on the same screen — pick a scale and stay there.
 - Don't set body paragraphs in the mono face. The mono is for code + technical labels only.
+
+## Storplan 用法约定
+
+- 主题色：钴蓝 `#155dfc`（`--color-brand`），只用于焦点环、AI 入口图标等少量强调；界面主体保持黑白灰。
+- 各存储产品的官网品牌色只以小圆点出现（选择卡勾选圆点、方案卡标题前、选型参考方案名前），不再用于卡片顶条、底色、边框、徽标或数值文字。
+- 不使用 hero mesh 渐变与装饰性统计条：首屏只保留一句标题、一句说明和「让 AI 帮我选」。
