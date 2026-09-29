@@ -118,7 +118,7 @@ const SUGGESTIONS = [
 ]
 
 const WELCOME =
-  '说说你的业务需求就行：数据量、访问协议、GPU 规模、预算都可以。我会先确认几个关键条件（候选项可以直接点选），再挑出合适的方案，把容量和带宽填进页面上的规划表单。\n\n不想回答问题？直接说「按经验来」，我会用行业常见值补齐参数，并列出每一条假设。\n\n我只回答存储、K8s、网络、GPU 和 AI 基础设施相关的问题。'
+  '说说数据量、访问协议、GPU 规模或预算，我来挑方案、把参数填进规划表单。不想细答就说「按经验来」。'
 
 function SparkIcon({ className }: { className?: string }) {
   return (
@@ -133,19 +133,6 @@ function CloseIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className={className}>
       <path d="M2.5 2.5l7 7m0-7l-7 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function MaximizeIcon({ className, maximized }: { className?: string; maximized: boolean }) {
-  return (
-    <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className={className}>
-      {maximized ? (
-        // 还原：一个小框缩在角上
-        <path d="M4 8h4V4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-      ) : (
-        <rect x="2" y="2" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
-      )}
     </svg>
   )
 }
@@ -679,85 +666,51 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           </button>
         )}
 
-        <header
-          className={`flex shrink-0 select-none items-center justify-between gap-3 border-b border-hairline px-4 ${
-            sidebar ? 'py-3' : 'pb-2.5 pt-1.5'
-          }`}
-        >
-          <div className="flex min-w-0 items-center gap-1.5">
-            <div className="min-w-0">
-              <p className="flex items-center gap-1.5 text-sm font-medium text-ink">
-                <SparkIcon className="h-3.5 w-3.5 text-violet" />
-                AI 规划助手
-              </p>
-              <p className="mt-0.5 text-xs text-mute">说出需求，自动选方案、填参数</p>
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-          {!sidebar && (
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            aria-pressed={expanded}
-            aria-label={expanded ? '收回半屏' : '展开到全屏'}
-            title={expanded ? '收回半屏' : '展开到全屏'}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-          >
-            <MaximizeIcon className="h-3 w-3" maximized={expanded} />
-          </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            aria-label="关闭 AI 规划助手"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-          >
-            <CloseIcon className="h-3 w-3" />
-          </button>
-        </div>
-        </header>
-
-        {/* 对话标签：每个标签一段独立的对话，后台标签照常生成回复 */}
-        <div className="flex shrink-0 items-center gap-1 border-b border-hairline bg-canvas-soft px-2 py-1.5">
-          <div ref={tabsRef} role="tablist" aria-label="对话列表" className="flex min-w-0 flex-1 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {conversations.map((c) => {
-              const selected = c.id === active.id
-              const title = conversationTitle(c)
-              return (
-                <div
-                  key={c.id}
-                  className={`group flex h-7 max-w-[10rem] shrink-0 items-center rounded-md border text-xs transition ${
-                    selected ? 'border-hairline bg-canvas text-ink shadow-[0_1px_1px_rgba(0,0,0,0.04)]' : 'border-transparent text-body hover:bg-canvas-soft-2 hover:text-ink'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={selected}
-                    onClick={() => setActiveId(c.id)}
-                    title={title}
-                    className="flex h-full min-w-0 items-center gap-1.5 rounded-md pl-2.5 pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+        {/* 顶栏：只有一段对话时显示助手名，多段时变成对话标签；后台标签照常生成回复 */}
+        <header className={`flex shrink-0 select-none items-center gap-1 border-b border-hairline pl-3 pr-2 ${sidebar ? 'h-12' : 'h-10'}`}>
+          {conversations.length === 1 ? (
+            <p className="flex min-w-0 flex-1 items-center gap-1.5 text-sm font-medium text-ink">
+              <SparkIcon className="h-3.5 w-3.5 shrink-0 text-violet" />
+              <span className="truncate">AI 规划助手</span>
+            </p>
+          ) : (
+            <div ref={tabsRef} role="tablist" aria-label="对话列表" className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {conversations.map((c) => {
+                const selected = c.id === active.id
+                const title = conversationTitle(c)
+                return (
+                  <div
+                    key={c.id}
+                    className={`group flex h-7 max-w-[9rem] shrink-0 items-center rounded-md text-xs transition ${
+                      selected ? 'bg-canvas-soft-2 text-ink' : 'text-mute hover:bg-canvas-soft hover:text-ink'
+                    }`}
                   >
-                    {c.busy && <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-brand" aria-label="正在回复" />}
-                    <span className="truncate">{title}</span>
-                  </button>
-                  {/* 只剩一个空白对话时没什么可关的，不给关闭按钮 */}
-                  {(conversations.length > 1 || c.turns.length > 0) && (
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={selected}
+                      onClick={() => setActiveId(c.id)}
+                      title={title}
+                      className="flex h-full min-w-0 items-center gap-1.5 rounded-md pl-2 pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                    >
+                      {c.busy && <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-brand" aria-label="正在回复" />}
+                      <span className="truncate">{title}</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => closeConversation(c.id)}
                       aria-label={`关闭对话：${title}`}
-                      className={`mr-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-mute transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                      className={`mr-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-mute transition hover:text-ink focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                         selected ? '' : 'sm:opacity-0 sm:group-hover:opacity-100'
                       }`}
                     >
                       <CloseIcon className="h-2.5 w-2.5" />
                     </button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
           <button
             type="button"
             onClick={createConversation}
@@ -767,22 +720,30 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           >
             <PlusIcon className="h-3 w-3" />
           </button>
-        </div>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="关闭 AI 规划助手"
+            title="关闭"
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+          >
+            <CloseIcon className="h-3 w-3" />
+          </button>
+        </header>
 
         <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
           {showWelcome && (
             <>
-              <div className="rounded-2xl bg-canvas-soft px-3.5 py-3 text-[13px] leading-relaxed text-body">
+              <div className="text-[13px] leading-relaxed text-body">
                 <RichText text={WELCOME} />
               </div>
-              <div className="space-y-2">
-                <p className="eyebrow">试试这些</p>
+              <div className="space-y-1">
                 {SUGGESTIONS.map((s) => (
                   <button
                     key={s}
                     type="button"
                     onClick={() => void send(s)}
-                    className="block w-full rounded-lg border border-hairline bg-canvas px-3 py-2 text-left text-[13px] leading-relaxed text-body transition hover:border-hairline-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                    className="block w-full rounded-lg bg-canvas-soft px-3 py-2 text-left text-[13px] leading-relaxed text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                   >
                     {s}
                   </button>
@@ -836,8 +797,8 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         </div>
 
         {/* 底部补一段安全区：手机全屏时输入区不会被 Home 指示条压住（无刘海设备上 env 为 0） */}
-        <div className="shrink-0 border-t border-hairline p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-          <div className="flex items-end gap-2">
+        <div className="shrink-0 px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-1">
+          <div className="flex items-end gap-1 rounded-xl border border-hairline bg-canvas p-1.5 transition focus-within:border-hairline-strong focus-within:ring-2 focus-within:ring-brand/20">
             <textarea
               ref={inputRef}
               value={input}
@@ -848,24 +809,24 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
                   void send(input)
                 }
               }}
-              rows={2}
+              rows={1}
               maxLength={2000}
-              placeholder="例如：256 卡训练集群，数据 1PB，需要 NFS 和 S3"
+              placeholder="描述你的存储需求，Enter 发送"
               aria-label="描述你的存储需求"
               /* ai-composer-input：小屏下把字号顶到 16px，iOS 才不会一聚焦就把整页放大 */
-              className="ai-composer-input max-h-32 min-h-[3.25rem] flex-1 resize-none rounded-md border border-hairline bg-canvas px-3 py-2 text-[13px] leading-relaxed text-ink transition placeholder:text-mute hover:border-hairline-strong focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-brand/20"
+              className="ai-composer-input max-h-32 min-h-[2.25rem] flex-1 resize-none bg-transparent px-2 py-1.5 text-[13px] leading-relaxed text-ink placeholder:text-mute focus:outline-none [field-sizing:content]"
             />
             <button
               type="button"
               onClick={() => void send(input)}
               disabled={busy || input.trim() === ''}
               aria-label="发送"
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-ink text-white transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-30"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink text-white transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-30"
             >
-              <SendIcon className="h-4 w-4" />
+              <SendIcon className="h-3.5 w-3.5" />
             </button>
           </div>
-          <p className="mt-2 text-xs text-mute">Enter 发送，Shift + Enter 换行 · AI 生成内容，请自行核实</p>
+          <p className="mt-1.5 text-center text-[11px] text-mute">AI 生成内容，请自行核实</p>
         </div>
       </div>
     </>
