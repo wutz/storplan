@@ -28,8 +28,14 @@ const SIDEBAR_QUERY = '(min-width: 1024px)'
 const SIDEBAR_WIDTH = 420
 /** 小屏底部面板默认占视口高度的比例；上限留出顶部一截，让用户看得到页面还在 */
 const SHEET_RATIO = 0.6
-const SHEET_MIN_HEIGHT = 360
+const SHEET_MIN_HEIGHT = 280
 const SHEET_TOP_GAP = 48
+/** 拖到离顶部不足这段距离时松手，直接吸附到全屏 */
+const SHEET_SNAP_FULL = 24
+const SHEET_HEIGHT_STORAGE_KEY = 'storplan.ai-sheet.height'
+const CONVERSATIONS_STORAGE_KEY = 'storplan.ai-conversations'
+/** 标签太多会挤不下，也没人真的并行聊这么多；超出时新建会顶掉最早的那个 */
+const MAX_CONVERSATIONS = 8
 
 /** 底部面板的位置：高度，以及离布局视口底边的距离（手机软键盘弹起时不为 0） */
 type SheetFrame = { height: number; bottom: number }
@@ -39,13 +45,66 @@ type SheetFrame = { height: number; bottom: number }
  * 手机弹出软键盘时布局视口不变、视觉视口会变矮，fixed 定位的 bottom: 0 会落到键盘后面。
  * 把视觉视口下沿到布局视口下沿的这段距离算出来当作 bottom，面板就能贴在键盘上方。
  */
-function sheetFrame(expanded: boolean): SheetFrame {
+function visibleHeight(): number {
+  return window.visualViewport?.height ?? window.innerHeight
+}
+
+/** 半屏高度的合法区间：不低于最小高度，不高于「顶部留一截」 */
+function clampSheetHeight(height: number): number {
+  const vh = visibleHeight()
+  return Math.round(Math.min(Math.max(height, Math.min(SHEET_MIN_HEIGHT, vh)), vh - SHEET_TOP_GAP))
+}
+
+/** preferred：用户拖出来的高度；没拖过就按视口比例给默认值 */
+function sheetFrame(expanded: boolean, preferred: number | null): SheetFrame {
   const vv = window.visualViewport
-  const vh = vv?.height ?? window.innerHeight
+  const vh = visibleHeight()
   const bottom = Math.max(0, window.innerHeight - (vv ? vv.offsetTop + vv.height : window.innerHeight))
   if (expanded) return { height: vh, bottom }
-  const height = Math.min(Math.max(Math.round(vh * SHEET_RATIO), SHEET_MIN_HEIGHT), vh - SHEET_TOP_GAP)
-  return { height, bottom }
+  return { height: clampSheetHeight(preferred ?? vh * SHEET_RATIO), bottom }
+}
+
+function readStoredSheetHeight(): number | null {
+  try {
+    const value = Number(localStorage.getItem(SHEET_HEIGHT_STORAGE_KEY))
+    return Number.isFinite(value) && value > 0 ? value : null
+  } catch {
+    return null
+  }
+}
+
+type Conversation = {
+  id: string
+  turns: Turn[]
+  error: string | null
+  busy: boolean
+}
+
+function newConversation(): Conversation {
+  return { id: Math.random().toString(36).slice(2, 10), turns: [], error: null, busy: false }
+}
+
+/** 标签名取第一句提问，没问过就叫「新对话」 */
+function conversationTitle(c: Conversation): string {
+  const first = c.turns.find((t) => t.role === 'user')?.text.trim()
+  return first ? first.replace(/\s+/g, ' ') : '新对话'
+}
+
+/** 从 localStorage 恢复对话；进行中的请求不会跨刷新存活，所以只留已完成的内容 */
+function readStoredConversations(): { list: Conversation[]; activeId: string } | null {
+  try {
+    const raw = localStorage.getItem(CONVERSATIONS_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as { list?: Conversation[]; activeId?: string }
+    const list = (parsed.list ?? [])
+      .filter((c) => c && typeof c.id === 'string' && Array.isArray(c.turns))
+      .map((c) => ({ ...c, busy: false, error: null, turns: c.turns.filter((t) => t.text.trim() !== '') }))
+    if (list.length === 0) return null
+    const activeId = list.some((c) => c.id === parsed.activeId) ? parsed.activeId! : list[0].id
+    return { list, activeId }
+  } catch {
+    return null
+  }
 }
 
 function isCompact(): boolean {
@@ -87,6 +146,14 @@ function MaximizeIcon({ className, maximized }: { className?: string; maximized:
       ) : (
         <rect x="2" y="2" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
       )}
+    </svg>
+  )
+}
+
+function PlusIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className={className}>
+      <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
   )
 }
@@ -186,18 +253,31 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
   isPlanApplied: (plan: PlanDirective) => boolean
 }) {
   const [open, setOpen] = useState(false)
-  const [turns, setTurns] = useState<Turn[]>([])
-  const [input, setInput] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  // 首帧用固定 id 渲染，挂载后再从 localStorage 恢复，避免 SSR 与客户端渲染不一致
+  const [conversations, setConversations] = useState<Conversation[]>(() => [{ ...newConversation(), id: 'initial' }])
+  const [activeId, setActiveId] = useState('initial')
+  const [restored, setRestored] = useState(false)
+  /** 每个对话各自的输入草稿：切标签不丢已经打了一半的字 */
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [sidebar, setSidebar] = useState(false)
   /** 小屏底部面板是否展开到全屏 */
   const [expanded, setExpanded] = useState(false)
+  /** 用户拖出来的半屏高度；null 表示按视口比例取默认值 */
+  const [preferredHeight, setPreferredHeight] = useState<number | null>(null)
   const [sheet, setSheet] = useState<SheetFrame | null>(null)
+  /** 正在拖动抓手：拖动时关掉高度过渡，面板才能紧跟手指 */
+  const [dragging, setDragging] = useState(false)
+
+  const active = conversations.find((c) => c.id === activeId) ?? conversations[0]
+  const { turns, busy, error } = active
+  const input = drafts[active.id] ?? ''
+  const setInput = (value: string) => setDrafts((d) => ({ ...d, [active.id]: value }))
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const abortRef = useRef<AbortController | null>(null)
+  /** 每个对话一个请求控制器：切标签时后台对话照常流式生成，关标签时才掐断 */
+  const abortRef = useRef<Map<string, AbortController>>(new Map())
+  const tabsRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const launcherRef = useRef<HTMLButtonElement>(null)
   /** 面板隐藏期间不自动滚到底，这样再打开时停在离开前的位置 */
@@ -209,6 +289,41 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
     window.addEventListener(OPEN_EVENT, onOpen)
     return () => window.removeEventListener(OPEN_EVENT, onOpen)
   }, [])
+
+  useEffect(() => {
+    const stored = readStoredConversations()
+    if (stored) {
+      setConversations(stored.list)
+      setActiveId(stored.activeId)
+    }
+    setPreferredHeight(readStoredSheetHeight())
+    setRestored(true)
+  }, [])
+
+  // 刷新页面后对话还在；恢复完成前不写，免得把空白初始状态盖到存档上
+  useEffect(() => {
+    if (!restored) return
+    try {
+      const list = conversations.map(({ id, turns }) => ({ id, turns }))
+      localStorage.setItem(CONVERSATIONS_STORAGE_KEY, JSON.stringify({ list, activeId }))
+    } catch {
+      // 隐私模式或配额满时写不了，忽略即可
+    }
+  }, [conversations, activeId, restored])
+
+  useEffect(() => {
+    if (!restored || preferredHeight === null) return
+    try {
+      localStorage.setItem(SHEET_HEIGHT_STORAGE_KEY, String(preferredHeight))
+    } catch {
+      // 同上
+    }
+  }, [preferredHeight, restored])
+
+  // 新建或切换标签后把当前标签滚进可视区
+  useEffect(() => {
+    tabsRef.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [activeId])
 
   useEffect(() => {
     const mq = window.matchMedia(SIDEBAR_QUERY)
@@ -233,7 +348,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
 
   // 底部面板跟着视口重算 —— 手机软键盘弹起走的是 visualViewport 的 resize/scroll，window resize 不一定触发
   useEffect(() => {
-    const update = () => setSheet(sheetFrame(expanded))
+    const update = () => setSheet(sheetFrame(expanded, preferredHeight))
     update()
     window.addEventListener('resize', update)
     window.visualViewport?.addEventListener('resize', update)
@@ -243,7 +358,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
       window.visualViewport?.removeEventListener('resize', update)
       window.visualViewport?.removeEventListener('scroll', update)
     }
-  }, [expanded])
+  }, [expanded, preferredHeight])
 
   // 收起后下次打开回到半屏，别让用户一打开就被全屏面板吞掉页面
   useEffect(() => {
@@ -269,7 +384,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
     if (!openRef.current) return
     const el = scrollRef.current
     if (el) el.scrollTop = el.scrollHeight
-  }, [turns, busy])
+  }, [turns, busy, activeId])
 
   // 面板与页面并排（大屏在右、小屏在下），用户要边聊边改表单，所以点页面不自动收起，只认 Esc 和关闭按钮
   useEffect(() => {
@@ -282,28 +397,39 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
   }, [open])
 
   // 关闭面板或卸载时掐断进行中的请求，避免流在后台继续跑
-  useEffect(() => () => abortRef.current?.abort(), [])
+  useEffect(() => {
+    const controllers = abortRef.current
+    return () => controllers.forEach((c) => c.abort())
+  }, [])
+
+  /** 只改指定 id 的那个对话：流式回调可能在用户切到别的标签之后才到 */
+  const updateConversation = (id: string, patch: (c: Conversation) => Conversation) =>
+    setConversations((list) => list.map((c) => (c.id === id ? patch(c) : c)))
 
   const send = async (raw: string) => {
     const question = raw.trim()
     if (!question || busy) return
+    const id = active.id
 
     // 历史里的助手消息已剥掉规划指令，模型不必再看自己上一轮的 JSON
     const history: ChatMessage[] = [...turns, { role: 'user' as const, text: question }]
       .filter((t) => t.text.trim() !== '')
       .map((t) => ({ role: t.role, content: t.text }))
 
-    setTurns((prev) => [...prev, { role: 'user', text: question }, { role: 'assistant', text: '' }])
-    setInput('')
-    setError(null)
-    setBusy(true)
+    updateConversation(id, (c) => ({
+      ...c,
+      turns: [...c.turns, { role: 'user', text: question }, { role: 'assistant', text: '' }],
+      error: null,
+      busy: true,
+    }))
+    setDrafts((d) => ({ ...d, [id]: '' }))
 
     const controller = new AbortController()
-    abortRef.current = controller
+    abortRef.current.set(id, controller)
 
-    /** 只更新末尾那条助手消息 */
+    /** 只更新该对话末尾那条助手消息 */
     const patchLast = (patch: (turn: Turn) => Turn) =>
-      setTurns((prev) => prev.map((t, i) => (i === prev.length - 1 ? patch(t) : t)))
+      updateConversation(id, (c) => ({ ...c, turns: c.turns.map((t, i) => (i === c.turns.length - 1 ? patch(t) : t)) }))
 
     try {
       const res = await fetch('/api/chat', {
@@ -364,20 +490,106 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
       if (plan) onApplyPlan(plan)
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') return
-      setError(err instanceof Error ? err.message : '请求失败，请稍后重试。')
       // 丢掉空的助手占位，用户可以直接重问
-      setTurns((prev) => (prev[prev.length - 1]?.role === 'assistant' && !prev[prev.length - 1]?.text ? prev.slice(0, -1) : prev))
+      updateConversation(id, (c) => {
+        const last = c.turns[c.turns.length - 1]
+        return {
+          ...c,
+          error: err instanceof Error ? err.message : '请求失败，请稍后重试。',
+          turns: last?.role === 'assistant' && !last.text ? c.turns.slice(0, -1) : c.turns,
+        }
+      })
     } finally {
-      setBusy(false)
-      abortRef.current = null
+      // 被关掉的对话已不在列表里，这里的更新自然落空
+      updateConversation(id, (c) => ({ ...c, busy: false }))
+      if (abortRef.current.get(id) === controller) abortRef.current.delete(id)
     }
   }
 
-  const reset = () => {
-    abortRef.current?.abort()
-    setTurns([])
-    setError(null)
-    setBusy(false)
+  /** 新建对话：当前已经是空白对话就直接复用，不重复开空标签 */
+  const createConversation = () => {
+    if (active.turns.length === 0 && !active.busy) {
+      inputRef.current?.focus()
+      return
+    }
+    const fresh = newConversation()
+    setConversations((list) => {
+      const next = [...list, fresh]
+      // 超出上限时丢掉最早且空闲的对话
+      if (next.length <= MAX_CONVERSATIONS) return next
+      const dropIndex = next.findIndex((c) => !c.busy)
+      return dropIndex === -1 ? next : next.filter((_, i) => i !== dropIndex)
+    })
+    setActiveId(fresh.id)
+    if (!isCompact()) requestAnimationFrame(() => inputRef.current?.focus())
+  }
+
+  /** 关闭标签：掐断它的请求，并切到相邻的标签；关掉最后一个时留一个空白对话 */
+  const closeConversation = (id: string) => {
+    abortRef.current.get(id)?.abort()
+    abortRef.current.delete(id)
+    setDrafts(({ [id]: _, ...rest }) => rest)
+    const index = conversations.findIndex((c) => c.id === id)
+    const remaining = conversations.filter((c) => c.id !== id)
+    if (remaining.length === 0) {
+      const fresh = newConversation()
+      setConversations([fresh])
+      setActiveId(fresh.id)
+      return
+    }
+    setConversations(remaining)
+    if (id === activeId) setActiveId(remaining[Math.min(index, remaining.length - 1)].id)
+  }
+
+  /**
+   * 拖动顶部抓手调整底部面板高度。面板贴底，所以新高度 = 起始高度 − 手指上下位移。
+   * 拖到接近顶部松手就吸附成全屏；在全屏状态下往下拖则回到半屏并跟手。
+   */
+  const startSheetResize = (e: React.PointerEvent) => {
+    if (sidebar || e.button !== 0 || !sheet) return
+    e.preventDefault()
+    const startY = e.clientY
+    const startHeight = sheet.height
+    let moved = false
+    let latest = startHeight
+    setDragging(true)
+
+    const onMove = (ev: PointerEvent) => {
+      const dy = ev.clientY - startY
+      if (!moved && Math.abs(dy) < 4) return
+      moved = true
+      const vh = visibleHeight()
+      latest = Math.min(Math.max(startHeight - dy, Math.min(SHEET_MIN_HEIGHT, vh)), vh)
+      setExpanded(false)
+      setSheet((f) => (f ? { ...f, height: latest } : f))
+    }
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointercancel', onUp)
+      setDragging(false)
+      // 没拖动就当作一次点击：在半屏 / 全屏之间切换
+      if (!moved) {
+        setExpanded((v) => !v)
+        return
+      }
+      if (latest >= visibleHeight() - SHEET_SNAP_FULL) {
+        setExpanded(true)
+        return
+      }
+      setPreferredHeight(clampSheetHeight(latest))
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp, { once: true })
+    window.addEventListener('pointercancel', onUp, { once: true })
+  }
+
+  /** 键盘也能调高度：焦点在抓手上时按 ↑ / ↓ */
+  const onSheetHandleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
+    e.preventDefault()
+    const step = e.key === 'ArrowUp' ? 40 : -40
+    setExpanded(false)
+    setPreferredHeight(clampSheetHeight((sheet?.height ?? visibleHeight() * SHEET_RATIO) + step))
   }
 
   const showWelcome = turns.length === 0
@@ -442,20 +654,28 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           boxShadow: open ? '0 -8px 24px -12px rgba(0,0,0,0.14)' : 'none',
           transform: open ? 'translateY(0)' : 'translateY(100%)',
           visibility: sheet && open ? 'visible' : 'hidden',
+          /* 拖动抓手时去掉高度过渡，面板才会紧跟手指而不是慢半拍追上来 */
           transition: open
-            ? 'transform 300ms cubic-bezier(0.32, 0.72, 0, 1), height 240ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s'
+            ? `transform 300ms cubic-bezier(0.32, 0.72, 0, 1), ${dragging ? 'height 0s' : 'height 240ms cubic-bezier(0.32, 0.72, 0, 1)'}, visibility 0s`
             : 'transform 220ms cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 220ms',
         }}
       >
-        {/* 底部面板顶上的抓手：点一下在半屏 / 全屏之间切换 */}
+        {/* 底部面板顶上的抓手：上下拖动调整高度，点一下在半屏 / 全屏之间切换 */}
         {!sidebar && (
           <button
             type="button"
-            onClick={() => setExpanded((v) => !v)}
-            aria-label={expanded ? '收回半屏' : '展开到全屏'}
-            className="flex h-4 shrink-0 items-end justify-center focus-visible:outline-none"
+            onPointerDown={startSheetResize}
+            onKeyDown={onSheetHandleKeyDown}
+            aria-label="拖动调整高度，点击切换半屏 / 全屏（也可用上下方向键调整）"
+            title="拖动调整高度，点击切换全屏"
+            className="group flex h-5 shrink-0 cursor-ns-resize touch-none items-end justify-center focus-visible:outline-none"
           >
-            <span className="h-1 w-9 rounded-full bg-hairline-strong/60" aria-hidden />
+            <span
+              className={`h-1 w-10 rounded-full transition ${
+                dragging ? 'bg-ink/40' : 'bg-hairline-strong/60 group-hover:bg-hairline-strong group-focus-visible:bg-brand'
+              }`}
+              aria-hidden
+            />
           </button>
         )}
 
@@ -474,15 +694,6 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            {turns.length > 0 && (
-            <button
-              type="button"
-              onClick={reset}
-              className="rounded-md px-2 py-1 text-xs text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-            >
-              新对话
-            </button>
-          )}
           {!sidebar && (
           <button
             type="button"
@@ -505,6 +716,58 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           </button>
         </div>
         </header>
+
+        {/* 对话标签：每个标签一段独立的对话，后台标签照常生成回复 */}
+        <div className="flex shrink-0 items-center gap-1 border-b border-hairline bg-canvas-soft px-2 py-1.5">
+          <div ref={tabsRef} role="tablist" aria-label="对话列表" className="flex min-w-0 flex-1 gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {conversations.map((c) => {
+              const selected = c.id === active.id
+              const title = conversationTitle(c)
+              return (
+                <div
+                  key={c.id}
+                  className={`group flex h-7 max-w-[10rem] shrink-0 items-center rounded-md border text-xs transition ${
+                    selected ? 'border-hairline bg-canvas text-ink shadow-[0_1px_1px_rgba(0,0,0,0.04)]' : 'border-transparent text-body hover:bg-canvas-soft-2 hover:text-ink'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => setActiveId(c.id)}
+                    title={title}
+                    className="flex h-full min-w-0 items-center gap-1.5 rounded-md pl-2.5 pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                  >
+                    {c.busy && <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-brand" aria-label="正在回复" />}
+                    <span className="truncate">{title}</span>
+                  </button>
+                  {/* 只剩一个空白对话时没什么可关的，不给关闭按钮 */}
+                  {(conversations.length > 1 || c.turns.length > 0) && (
+                    <button
+                      type="button"
+                      onClick={() => closeConversation(c.id)}
+                      aria-label={`关闭对话：${title}`}
+                      className={`mr-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-mute transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                        selected ? '' : 'sm:opacity-0 sm:group-hover:opacity-100'
+                      }`}
+                    >
+                      <CloseIcon className="h-2.5 w-2.5" />
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={createConversation}
+            aria-label="新建对话"
+            title="新建对话"
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+          >
+            <PlusIcon className="h-3 w-3" />
+          </button>
+        </div>
 
         <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
           {showWelcome && (
