@@ -3,6 +3,7 @@
  * 再由策略推出得盘率与容错能力，同时给出内存、存储网络和 CephFS 元数据节点的配置。
  */
 import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth } from './utils';
+import { tr } from './i18n';
 
 export interface CephPlanRequest {
   capacity: string;
@@ -104,7 +105,7 @@ export function getMemoryConfig(disksPerNode: number): { dimmCount: number; dimm
 // 存储网络配置：2 × 双口 200Gb 以太网；单节点盘数 ≤ 12 时降为 2 × 双口 100Gb 以太网
 export function getStorageNetworkConfig(disksPerNode: number): { nicCount: number; speedGb: number; label: string } {
   const speedGb = disksPerNode <= CONSTANTS.MEM_HALF_THRESHOLD ? 100 : 200;
-  return { nicCount: 2, speedGb, label: `2 × 双口 ${speedGb}Gb 以太网卡` };
+  return { nicCount: 2, speedGb, label: tr(`2 × 双口 ${speedGb}Gb 以太网卡`, `2 × dual-port ${speedGb}Gb Ethernet NIC`) };
 }
 
 // CephFS 元数据节点配置（仅 CephFS 需要）：
@@ -115,7 +116,7 @@ export function getMdsMemoryConfig(): { dimmCount: number; dimmSizeGB: number; t
 
 export function getMdsStorageNetworkConfig(disksPerNode: number): { nicCount: number; speedGb: number; label: string } {
   const speedGb = disksPerNode <= CONSTANTS.MEM_HALF_THRESHOLD ? 100 : 200;
-  return { nicCount: 1, speedGb, label: `1 × 双口 ${speedGb}Gb 以太网卡` };
+  return { nicCount: 1, speedGb, label: tr(`1 × 双口 ${speedGb}Gb 以太网卡`, `1 × dual-port ${speedGb}Gb Ethernet NIC`) };
 }
 
 // CephFS / Ceph RBD 每盘平均性能（按冗余策略）
@@ -263,7 +264,7 @@ export function planCeph(req: CephPlanRequest): CephPlanResult {
   }
 
   if (configs.length === 0) {
-    throw new Error('找不到满足需求的配置，请调小容量或带宽后重试');
+    throw new Error(tr('找不到满足需求的配置，请调小容量或带宽后重试', 'No configuration meets the requirement; reduce capacity or bandwidth and try again'));
   }
 
   // 选择节点数最少的方案；节点数相同时选可用容量最接近需求（更省成本）的方案

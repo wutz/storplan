@@ -11,6 +11,19 @@ import { env } from 'cloudflare:workers'
 import { CHAT_LIMITS } from '#/lib/ai-chat'
 import type { ChatMessage } from '#/lib/ai-chat'
 import { buildSystemPrompt } from '#/lib/ai-system-prompt'
+import { LANG_COOKIE } from '#/lib/i18n'
+import type { Lang } from '#/lib/i18n'
+
+/**
+ * 报错文案的语言：请求体里的 lang 优先（与页面一致），解析请求体之前（如限流）
+ * 退回页面写下的语言 cookie，再退回 Accept-Language。
+ */
+function requestLang(request: Request): Lang {
+  const cookie = request.headers.get('cookie')?.match(new RegExp(`(?:^|; )${LANG_COOKIE}=(zh|en)`))?.[1]
+  if (cookie === 'zh' || cookie === 'en') return cookie
+  const first = request.headers.get('accept-language')?.split(',')[0]?.trim().toLowerCase()
+  return first && !first.startsWith('zh') ? 'en' : 'zh'
+}
 
 const DEFAULT_API_URL = 'https://api.blsc.dev'
 const DEFAULT_MODEL = 'claude-opus-5-5'
@@ -31,7 +44,8 @@ const MAX_WEB_SEARCHES = 3
  * 绑定缺失或调用异常时放行 —— 配置问题不该让功能整体不可用；绑定是部署期配置，
  * 请求方无法把它“弄丢”。
  */
-async function checkRateLimit(request: Request): Promise<Response | null> {
+async function checkRateLimit(request: Request, lang: Lang): Promise<Response | null> {
+  const en = lang === 'en'
   // 绑定在类型上是必填，但运行时可能因配置缺失而不存在
   const { CHAT_IP_LIMITER, CHAT_GLOBAL_LIMITER } = env as Partial<Cloudflare.Env>
   type RateLimiter = Cloudflare.Env['CHAT_IP_LIMITER']
@@ -39,8 +53,8 @@ async function checkRateLimit(request: Request): Promise<Response | null> {
   const ip = request.headers.get('cf-connecting-ip') ?? 'local'
 
   const checks: Array<[RateLimiter | undefined, string, string]> = [
-    [CHAT_IP_LIMITER, `ip:${ip}`, '请求过于频繁，请稍后再试（每分钟最多 8 次提问）。'],
-    [CHAT_GLOBAL_LIMITER, 'global', '当前访问量较大，AI 助手暂时限流，请稍后再试。'],
+    [CHAT_IP_LIMITER, `ip:${ip}`, en ? 'Too many requests, please try again later (at most 8 questions per minute).' : '请求过于频繁，请稍后再试（每分钟最多 8 次提问）。'],
+    [CHAT_GLOBAL_LIMITER, 'global', en ? 'The AI assistant is busy and temporarily rate-limited, please try again later.' : '当前访问量较大，AI 助手暂时限流，请稍后再试。'],
   ]
 
   for (const [limiter, key, message] of checks) {
@@ -77,25 +91,25 @@ function json(body: unknown, status: number): Response {
   })
 }
 
-function parseMessages(input: unknown): ChatMessage[] | string {
-  if (!input || typeof input !== 'object') return '请求体格式不正确。'
+function parseMessages(input: unknown, en: boolean): ChatMessage[] | string {
+  if (!input || typeof input !== 'object') return (en ? 'Malformed request body.' : '请求体格式不正确。')
   const raw = (input as { messages?: unknown }).messages
-  if (!Array.isArray(raw) || raw.length === 0) return '请求缺少对话内容。'
-  if (raw.length > CHAT_LIMITS.maxMessages) return '对话轮次过多，请开启新对话。'
+  if (!Array.isArray(raw) || raw.length === 0) return (en ? 'The request has no messages.' : '请求缺少对话内容。')
+  if (raw.length > CHAT_LIMITS.maxMessages) return (en ? 'Too many turns, please start a new chat.' : '对话轮次过多，请开启新对话。')
 
   const messages: ChatMessage[] = []
   let total = 0
   for (const item of raw) {
-    if (!item || typeof item !== 'object') return '对话内容格式不正确。'
+    if (!item || typeof item !== 'object') return (en ? 'Malformed messages.' : '对话内容格式不正确。')
     const { role, content } = item as { role?: unknown; content?: unknown }
-    if (role !== 'user' && role !== 'assistant') return '对话内容格式不正确。'
-    if (typeof content !== 'string' || content.trim() === '') return '对话内容不能为空。'
-    if (content.length > CHAT_LIMITS.maxCharsPerMessage) return '单条消息过长，请精简后重试。'
+    if (role !== 'user' && role !== 'assistant') return (en ? 'Malformed messages.' : '对话内容格式不正确。')
+    if (typeof content !== 'string' || content.trim() === '') return (en ? 'Messages cannot be empty.' : '对话内容不能为空。')
+    if (content.length > CHAT_LIMITS.maxCharsPerMessage) return (en ? 'A message is too long, please shorten it.' : '单条消息过长，请精简后重试。')
     total += content.length
-    if (total > CHAT_LIMITS.maxTotalChars) return '对话内容过长，请开启新对话。'
+    if (total > CHAT_LIMITS.maxTotalChars) return (en ? 'The conversation is too long, please start a new chat.' : '对话内容过长，请开启新对话。')
     messages.push({ role, content })
   }
-  if (messages[messages.length - 1]?.role !== 'user') return '对话内容格式不正确。'
+  if (messages[messages.length - 1]?.role !== 'user') return (en ? 'Malformed messages.' : '对话内容格式不正确。')
   return messages
 }
 
@@ -120,23 +134,31 @@ async function handleChat({ request }: { request: Request }): Promise<Response> 
   const apiKey = process.env.LLM_API_KEY
   const apiUrl = (process.env.LLM_API_URL || DEFAULT_API_URL).replace(/\/+$/, '')
   const model = process.env.LLM_MODEL || DEFAULT_MODEL
+  let lang = requestLang(request)
+  let en = lang === 'en'
 
   if (!apiKey) {
-    return json({ error: 'AI 助手未配置：服务端缺少 LLM_API_KEY。' }, 503)
+    return json({ error: (en ? 'AI assistant is not configured: LLM_API_KEY is missing on the server.' : 'AI 助手未配置：服务端缺少 LLM_API_KEY。') }, 503)
   }
 
   // 限流放在解析请求体之前：被限的请求不该再消耗解析与上游调用
-  const limited = await checkRateLimit(request)
+  const limited = await checkRateLimit(request, lang)
   if (limited) return limited
 
   let body: unknown
   try {
     body = await request.json()
   } catch {
-    return json({ error: '请求体不是合法 JSON。' }, 400)
+    return json({ error: (en ? 'Request body is not valid JSON.' : '请求体不是合法 JSON。') }, 400)
   }
 
-  const parsed = parseMessages(body)
+  const bodyLang = (body as { lang?: unknown } | null)?.lang
+  if (bodyLang === 'zh' || bodyLang === 'en') {
+    lang = bodyLang
+    en = lang === 'en'
+  }
+
+  const parsed = parseMessages(body, en)
   if (typeof parsed === 'string') return json({ error: parsed }, 400)
 
   let upstream: Response
@@ -155,18 +177,18 @@ async function handleChat({ request }: { request: Request }): Promise<Response> 
         stream: true,
         // Opus 5.5 不支持关闭 thinking（传 disabled 会 400），用低 effort 控制延迟与成本
         output_config: { effort: 'low' },
-        system: buildSystemPrompt(),
+        system: buildSystemPrompt(lang),
         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: MAX_WEB_SEARCHES }],
         messages: parsed,
       }),
     })
   } catch {
-    return json({ error: '无法连接 AI 服务，请稍后重试。' }, 502)
+    return json({ error: (en ? 'Cannot reach the AI service, please try again later.' : '无法连接 AI 服务，请稍后重试。') }, 502)
   }
 
   if (!upstream.ok || !upstream.body) {
     // 上游错误正文可能带账号 / 路由信息，不透传给浏览器，只留状态码便于排查
-    return json({ error: `AI 服务返回错误（HTTP ${upstream.status}），请稍后重试。` }, 502)
+    return json({ error: (en ? `The AI service returned an error (HTTP ${upstream.status}), please try again later.` : `AI 服务返回错误（HTTP ${upstream.status}），请稍后重试。`) }, 502)
   }
 
   const encoder = new TextEncoder()
@@ -208,14 +230,14 @@ async function handleChat({ request }: { request: Request }): Promise<Response> 
                 textBlock = false
                 break
               case 'error':
-                send({ type: 'error', message: 'AI 服务在生成过程中出错，请重试。' })
+                send({ type: 'error', message: (en ? 'The AI service failed while generating, please retry.' : 'AI 服务在生成过程中出错，请重试。') })
                 break
             }
           }
         }
         send({ type: 'done' })
       } catch {
-        send({ type: 'error', message: '连接中断，请重试。' })
+        send({ type: 'error', message: (en ? 'Connection interrupted, please retry.' : '连接中断，请重试。') })
       } finally {
         controller.close()
         reader.releaseLock()

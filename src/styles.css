@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* 夜间主题：<html class="dark"> 由 lib/i18n 的首帧脚本按偏好 / 系统明暗写入 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* DESIGN.md: Vercel 设计语言令牌 */
   --color-ink: #171717;
@@ -10,6 +13,8 @@
   --color-canvas: #ffffff;
   --color-canvas-soft: #fafafa;
   --color-canvas-soft-2: #f5f5f5;
+  /* 墨色底上的文字（主按钮、用户气泡）：白天为白，夜间随墨色翻转为近黑 */
+  --color-on-ink: #ffffff;
 
   /* 语义色（DESIGN.md Colors > Semantic / Brand & Accent） */
   --color-link: #0070f3;
@@ -41,9 +46,40 @@ html {
   scroll-behavior: smooth;
 }
 
+/*
+   夜间主题：只重写令牌，组件与工具类不用改 —— bg-canvas、text-ink 等自动跟着翻转。
+   取 Vercel 夜间色阶（DESIGN.md 的 gray ladder 反向）：页面近黑、卡片略亮一级、发丝线为深灰。
+*/
+html.dark {
+  --color-ink: #ededed;
+  --color-body: #a1a1a1;
+  --color-mute: #8f8f8f;
+  --color-hairline: #2e2e2e;
+  --color-hairline-strong: #4d4d4d;
+  --color-canvas: #111111;
+  --color-canvas-soft: #0a0a0a;
+  --color-canvas-soft-2: #1f1f1f;
+  --color-on-ink: #0a0a0a;
+
+  --color-link: #52a8ff;
+  --color-link-deep: #7cbcff;
+  --color-error: #ff6166;
+  --color-error-deep: #ff9592;
+  --color-error-soft: #5c1a1d;
+  --color-error-bg: #2a1113;
+  --color-warning: #f5a623;
+  --color-warning-deep: #ffb224;
+  --color-warning-soft: #3d2a0a;
+
+  /* 钴蓝在近黑底上偏暗，提亮一档保证焦点环与图标可辨 */
+  --color-brand: #4d8bff;
+  --color-brand-deep: #7aa7ff;
+  --color-brand-soft: #0f1e3d;
+}
+
 ::selection {
   background: var(--color-ink);
-  color: #f2f2f2;
+  color: var(--color-on-ink);
 }
 
 @layer base {
@@ -156,13 +192,13 @@ html {
 
   /* 分步编号：圆形等宽数字（规划参数区的 ① ②） */
   .step-num {
-    @apply inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-medium text-white;
+    @apply inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-medium text-on-ink;
     font-family: var(--font-mono);
   }
 
   /* 按钮（DESIGN.md button-primary / button-secondary：胶囊形） */
   .btn-primary {
-    @apply inline-flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-medium text-white transition
+    @apply inline-flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-medium text-on-ink transition
       hover:bg-ink/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2;
   }
   .btn-secondary {

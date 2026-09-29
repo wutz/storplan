@@ -740,3 +740,5 @@ The brand uses STACKED shadows — multiple small offsets layered to fake natura
 - 主题色：钴蓝 `#155dfc`（`--color-brand`），只用于焦点环、AI 入口图标等少量强调；界面主体保持黑白灰。
 - 各存储产品的官网品牌色只以小圆点出现（选择卡勾选圆点、方案卡标题前、选型参考方案名前），不再用于卡片顶条、底色、边框、徽标或数值文字。
 - 不使用 hero mesh 渐变与装饰性统计条：首屏只保留一句标题、一句说明和「让 AI 帮我选」。
+- 明暗主题：支持「跟随系统 / 白天 / 夜间」三档，顶栏右侧按钮循环切换，偏好存 cookie `storplan-theme`。夜间只重写 `src/styles.css` 里 `html.dark` 下的颜色令牌（页面 `#0a0a0a`、卡片 `#111111`、发丝线 `#2e2e2e`、正文 `#ededed`，钴蓝提亮为 `#4d8bff`），组件一律用令牌类（`bg-canvas`、`text-ink`、墨色底上的文字用 `text-on-ink`），不要写死 `text-white` / `bg-white`。
+- 界面语言：中文 / 英文，顶栏右侧按钮切换，偏好存 cookie `storplan-lang`，没有 cookie 时按浏览器语言。组件内用 `usePrefs().t('中文', 'English')`，非组件模块用 `tr()`；方案说明的英文版在 `src/lib/storage-catalog-en.ts`，与中文版逐项对应。

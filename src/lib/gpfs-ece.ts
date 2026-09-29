@@ -3,6 +3,7 @@
  * 容量按得盘率和元数据保留折算，性能按节点数摊算。
  */
 import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth } from './utils';
+import { tr } from './i18n';
 
 export interface GPFSECEPlanRequest {
   capacity: string;
@@ -221,7 +222,7 @@ export function planGPFSECE(req: GPFSECEPlanRequest): GPFSECEPlanResult {
   }
 
   if (configs.length === 0) {
-    throw new Error('找不到满足需求的配置，请调小容量或带宽后重试');
+    throw new Error(tr('找不到满足需求的配置，请调小容量或带宽后重试', 'No configuration meets the requirement; reduce capacity or bandwidth and try again'));
   }
 
   // 选择服务器台数最少的方案

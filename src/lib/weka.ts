@@ -3,6 +3,7 @@
  * 容量扣除元数据保留，性能按每块 NVMe 折算并受网络带宽封顶。
  */
 import { parseCapacity, parseBandwidth, formatCapacity, formatBandwidth, MIB_TO_MB } from './utils';
+import { tr } from './i18n';
 
 export interface WekaPlanRequest {
   capacity: string;
@@ -87,12 +88,12 @@ export function getProtectionScheme(dataNodeCount: number, protectionLevel = CON
   const D = Math.min(dataNodeCount - P, 20 - P);
 
   if (D <= P) {
-    throw new Error(`数据块 (D=${D}) 必须大于校验块 (P=${P})，节点数不足`);
+    throw new Error(tr(`数据块 (D=${D}) 必须大于校验块 (P=${P})，节点数不足`, `Data blocks (D=${D}) must exceed parity blocks (P=${P}); not enough nodes`));
   }
 
   const stripeWidth = D + P;
   if (stripeWidth < 5 || stripeWidth > 20) {
-    throw new Error(`条带宽度 (${stripeWidth}) 必须在 5–20 之间`);
+    throw new Error(tr(`条带宽度 (${stripeWidth}) 必须在 5–20 之间`, `Stripe width (${stripeWidth}) must be between 5 and 20`));
   }
 
   return { D, P, stripeWidth, efficiency: D / stripeWidth, scheme: `EC ${D}+${P}` };
@@ -197,5 +198,5 @@ export function planWeka(req: WekaPlanRequest): WekaPlanResult {
     }
   }
 
-  throw new Error('找不到满足需求的配置，请调小容量或带宽后重试');
+  throw new Error(tr('找不到满足需求的配置，请调小容量或带宽后重试', 'No configuration meets the requirement; reduce capacity or bandwidth and try again'));
 }
