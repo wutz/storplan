@@ -58,7 +58,7 @@ cp .dev.vars.example .dev.vars
 ```bash
 npx wrangler versions secret put LLM_API_KEY
 npx wrangler versions secret put LLM_API_URL   # 可选，默认 https://api.blsc.dev
-npx wrangler versions secret put LLM_MODEL     # 可选，默认 claude-opus-5
+npx wrangler versions secret put LLM_MODEL     # 可选，默认 claude-opus-5-5
 ```
 
 本项目走版本化上传（`wrangler versions upload`），有两点要注意：

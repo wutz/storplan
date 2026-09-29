@@ -22,7 +22,7 @@ import type { WekaPlanResult } from '#/lib/weka'
 import { formatBandwidth, formatCapacity, MIB_TO_MB } from '#/lib/utils'
 import { SELECTION_GUIDE, STORAGE_INFO, STORAGE_ORDER } from '#/lib/storage-catalog'
 import type { GuideRow, StorageKey } from '#/lib/storage-catalog'
-import { AiAssistant } from '#/components/ai-assistant'
+import { AiAssistant, openAiAssistant } from '#/components/ai-assistant'
 import { planSignature } from '#/lib/ai-chat'
 import type { PlanDirective } from '#/lib/ai-chat'
 
@@ -195,6 +195,21 @@ const HERO_MESH: React.CSSProperties = {
     'radial-gradient(38% 55% at 100% 88%, rgba(0,223,216,0.14) 0%, transparent 60%)',
     'radial-gradient(42% 60% at 0% 96%, rgba(255,0,128,0.08) 0%, transparent 60%)',
   ].join(', '),
+}
+
+// Hero 概览：数字取自方案目录，增删方案时自动跟着变
+const HERO_STATS = [
+  { label: '可对比方案', value: String(STORAGE_ORDER.length) },
+  { label: '存储类别', value: String(SELECTION_GUIDE.length) },
+  { label: '规划维度', value: '容量 · 带宽' },
+]
+
+function SparkleIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" className={className} aria-hidden>
+      <path d="M8 1.5l1.3 3.7a2 2 0 0 0 1.2 1.2L14.2 8l-3.7 1.3a2 2 0 0 0-1.2 1.2L8 14.2l-1.3-3.7a2 2 0 0 0-1.2-1.2L1.8 8l3.7-1.3a2 2 0 0 0 1.2-1.2L8 1.5z" />
+    </svg>
+  )
 }
 
 function convertTibToUnit(tib: number, unit: string): string {
@@ -978,30 +993,53 @@ function StorplanApp() {
         <section className="relative mt-6 overflow-hidden rounded-2xl border border-hairline bg-canvas sm:mt-8">
           <div aria-hidden className="pointer-events-none absolute inset-0" style={HERO_MESH} />
           <div className={`relative px-6 sm:px-10 ${hasSelection ? 'py-7 sm:py-8' : 'py-10 sm:py-14'}`}>
-            <p className="font-mono text-xs font-normal uppercase text-mute">Storage Capacity &amp; Performance Planner</p>
-            <h2 className="mt-3 max-w-2xl text-balance text-3xl font-semibold tracking-tight text-ink sm:text-4xl">从容量与带宽需求，到可采购的集群配置。</h2>
+            <p className="inline-flex items-center gap-2 font-mono text-xs font-normal uppercase text-mute">
+              <span className="h-1.5 w-1.5 rounded-full bg-brand" aria-hidden />
+              Storage Capacity &amp; Performance Planner
+            </p>
+            <h2 className={`mt-3 max-w-3xl text-balance font-semibold tracking-tight text-ink ${hasSelection ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-5xl sm:leading-[1.1]'}`}>从容量与带宽需求，到可采购的集群配置。</h2>
             {!hasSelection && (
-              <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-body">
-                输入需求即可对比 VastData、GPFS/Scale、Weka、XSKY XEOS 和 Ceph 各方案的集群规模、硬件配置与性能指标。
-              </p>
+              <>
+                <p className="mt-4 max-w-2xl text-pretty text-base leading-relaxed text-body sm:text-lg">
+                  输入需求即可对比 VastData、GPFS/Scale、Weka、XSKY XEOS 和 Ceph 各方案的集群规模、硬件配置与性能指标。
+                </p>
+                <div className="mt-7 flex flex-wrap items-center gap-3">
+                  <a href="#plan-params" className="btn-primary">
+                    开始规划
+                    <span aria-hidden>→</span>
+                  </a>
+                  <button type="button" onClick={openAiAssistant} className="btn-secondary">
+                    <SparkleIcon className="h-4 w-4 text-brand" />
+                    让 AI 帮我选型
+                  </button>
+                </div>
+                <dl className="mt-10 grid max-w-2xl grid-cols-3 gap-px overflow-hidden rounded-xl border border-hairline bg-hairline">
+                  {HERO_STATS.map((stat) => (
+                    <div key={stat.label} className="bg-canvas/80 px-4 py-3 backdrop-blur">
+                      <dt className="text-xs text-mute">{stat.label}</dt>
+                      <dd className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-ink">{stat.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </>
             )}
           </div>
         </section>
 
-        <div className="card mt-8 mb-8 p-6 sm:p-8">
+        <div id="plan-params" className="card mt-8 mb-8 scroll-mt-24 p-6 sm:p-8">
           <div className="mb-6">
             <p className="eyebrow">规划参数</p>
             <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink">选择方案并输入需求</h2>
           </div>
           <div className="mb-3 flex items-center justify-between gap-3">
-            <span className="text-sm font-medium text-ink">存储方案</span>
+            <span className="flex items-center gap-2 text-sm font-medium text-ink"><span className="step-num">1</span>存储方案<span className="font-normal text-mute">（可多选对比）</span></span>
             {hasSelection && (
               <span className="flex items-center gap-2 text-xs text-mute">
                 已选 {selectedStorages.size} 个
                 <button
                   type="button"
                   onClick={clearSelection}
-                  className="rounded-md px-1.5 py-0.5 text-xs text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
+                  className="rounded-md px-1.5 py-0.5 text-xs text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                 >
                   清空
                 </button>
@@ -1018,7 +1056,7 @@ function StorplanApp() {
                   type="button"
                   onClick={() => toggleStorage(key)}
                   aria-pressed={active}
-                  className={`group flex items-start gap-3 rounded-lg border p-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${active ? t.selectedCard : 'border-hairline bg-canvas hover:border-hairline-strong hover:bg-canvas-soft'}`}
+                  className={`group flex items-start gap-3 rounded-lg border p-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${active ? t.selectedCard : 'border-hairline bg-canvas hover:border-hairline-strong hover:bg-canvas-soft'}`}
                 >
                   <span
                     className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition ${active ? `${t.dot} ${t.accentBorder} border` : 'border-hairline-strong bg-canvas group-hover:border-ink/40'}`}
@@ -1034,6 +1072,7 @@ function StorplanApp() {
             })}
           </div>
 
+          <div className="mb-3 flex items-center gap-2 border-t border-hairline pt-6 text-sm font-medium text-ink"><span className="step-num">2</span>容量与性能需求</div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <label htmlFor="capacity" className="mb-1.5 block text-sm font-medium text-ink">容量</label>
@@ -1150,7 +1189,7 @@ function GuideName({ row, onSelect }: { row: GuideRow; onSelect: (key: string) =
     <button
       type="button"
       onClick={() => onSelect(row.key!)}
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${t.chip}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${t.chip}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${t.dot}`} />
       {row.name}
@@ -1161,14 +1200,15 @@ function GuideName({ row, onSelect }: { row: GuideRow; onSelect: (key: string) =
 function SelectionGuide({ onSelect }: { onSelect: (key: string) => void }) {
   return (
     <div className="card p-6 sm:p-8">
-      <div className="mb-6 text-center">
-        <h3 className="text-base font-semibold text-ink">存储选型参考</h3>
+      <div className="mb-6">
+        <p className="eyebrow">选型参考</p>
+        <h3 className="mt-1 text-lg font-semibold tracking-tight text-ink">不确定选哪个？先看各方案的取舍</h3>
         <p className="mt-1 text-pretty text-sm text-body">按存储类型对比各方案的优缺点；点击方案名称即可开始容量与性能规划。</p>
       </div>
       <div className="space-y-8">
         {SELECTION_GUIDE.map((section) => (
           <div key={section.title}>
-            <h4 className="text-sm font-semibold text-ink mb-3">{section.title}</h4>
+            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink"><span className="h-3.5 w-0.5 rounded-full bg-brand" aria-hidden />{section.title}</h4>
             {/* 宽屏：四列对比表 */}
             <div className="hidden overflow-x-auto sm:block">
               <table className="w-full text-sm border-collapse">
@@ -1259,7 +1299,7 @@ function SchemePanel({ storage, badge, error, children }: {
             type="button"
             onClick={() => setNotesOpen(v => !v)}
             aria-expanded={notesOpen}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-hairline bg-canvas px-2.5 text-[13px] text-body transition hover:border-hairline-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-hairline bg-canvas px-2.5 text-[13px] text-body transition hover:border-hairline-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
           >
             优劣与限制
             <ChevronIcon className={`h-3 w-3 transition-transform ${notesOpen ? 'rotate-180' : ''}`} />

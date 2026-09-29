@@ -216,13 +216,20 @@ function AppliedPlan({ plan, applied, onRestore }: {
       <button
         type="button"
         onClick={() => onRestore(plan)}
-        className="mt-2.5 inline-flex h-8 items-center rounded-md bg-ink px-3 text-[13px] font-medium text-white transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+        className="mt-2.5 inline-flex h-8 items-center rounded-md bg-ink px-3 text-[13px] font-medium text-white transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
       >
         {applied ? '查看规划结果' : '恢复这组参数并查看'}
       </button>
       {!applied && <p className="mt-1.5 text-xs text-mute">表单参数已改动，点上面的按钮即可还原成这组。</p>}
     </div>
   )
+}
+
+const OPEN_EVENT = 'storplan:open-ai-assistant'
+
+/** 从页面其他位置（如首页 hero 按钮）打开助手面板 */
+export function openAiAssistant() {
+  window.dispatchEvent(new Event(OPEN_EVENT))
 }
 
 export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
@@ -252,6 +259,12 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
   /** 面板隐藏期间不自动滚到底，这样再打开时停在离开前的位置 */
   const openRef = useRef(open)
   openRef.current = open
+
+  useEffect(() => {
+    const onOpen = () => setOpen(true)
+    window.addEventListener(OPEN_EVENT, onOpen)
+    return () => window.removeEventListener(OPEN_EVENT, onOpen)
+  }, [])
 
   // 首帧不读 localStorage，避免 SSR 与客户端渲染不一致
   useEffect(() => {
@@ -499,7 +512,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         aria-expanded={open}
         aria-hidden={open}
         tabIndex={open ? -1 : 0}
-        className="ai-fade fixed bottom-5 right-5 z-40 inline-flex h-11 items-center gap-2 rounded-full bg-ink px-4 text-sm font-medium text-white hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30"
+        className="ai-fade fixed bottom-5 right-5 z-40 inline-flex h-11 items-center gap-2 rounded-full bg-ink px-4 text-sm font-medium text-white hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
         style={{
           boxShadow: '0 1px 1px rgba(0,0,0,0.05), 0 8px 16px -4px rgba(0,0,0,0.12)',
           opacity: open ? 0 : 1,
@@ -558,7 +571,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
             type="button"
             aria-label="拖动以调整对话框大小"
             onPointerDown={startInteraction('resize')}
-            className="absolute left-1 top-1 z-10 hidden h-6 w-6 touch-none items-center justify-center rounded-md text-hairline-strong hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 sm:inline-flex"
+            className="absolute left-1 top-1 z-10 hidden h-6 w-6 touch-none items-center justify-center rounded-md text-hairline-strong hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 sm:inline-flex"
           >
             {/* 圆角 + overflow-hidden 会把最角上那几像素裁掉，所以手柄向内缩一点，别贴死角 */}
             <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" className="h-3 w-3">
@@ -590,7 +603,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
             <button
               type="button"
               onClick={reset}
-              className="rounded-md px-2 py-1 text-xs text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
+              className="rounded-md px-2 py-1 text-xs text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
             >
               新对话
             </button>
@@ -601,7 +614,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
             aria-pressed={maximized}
             aria-label={maximized ? '还原对话框大小' : '最大化对话框'}
             title={maximized ? '还原大小' : '最大化'}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
           >
             <MaximizeIcon className="h-3 w-3" maximized={maximized} />
           </button>
@@ -609,7 +622,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
             type="button"
             onClick={() => setOpen(false)}
             aria-label="关闭 AI 规划助手"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-body transition hover:bg-canvas-soft-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
           >
             <CloseIcon className="h-3 w-3" />
           </button>
@@ -629,7 +642,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
                     key={s}
                     type="button"
                     onClick={() => void send(s)}
-                    className="block w-full rounded-lg border border-hairline bg-canvas px-3 py-2 text-left text-[13px] leading-relaxed text-body transition hover:border-hairline-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
+                    className="block w-full rounded-lg border border-hairline bg-canvas px-3 py-2 text-left text-[13px] leading-relaxed text-body transition hover:border-hairline-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                   >
                     {s}
                   </button>
@@ -668,7 +681,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
                         key={reply}
                         type="button"
                         onClick={() => void send(reply)}
-                        className="rounded-full border border-hairline bg-canvas px-3 py-1.5 text-xs text-body transition hover:border-hairline-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10"
+                        className="rounded-full border border-hairline bg-canvas px-3 py-1.5 text-xs text-body transition hover:border-hairline-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                       >
                         {reply}
                       </button>
@@ -700,14 +713,14 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
               placeholder="例如：256 张卡的训练集群，数据 1PB，要 NFS 和 S3"
               aria-label="描述你的存储需求"
               /* ai-composer-input：小屏下把字号顶到 16px，iOS 才不会一聚焦就把整页放大 */
-              className="ai-composer-input max-h-32 min-h-[3.25rem] flex-1 resize-none rounded-md border border-hairline bg-canvas px-3 py-2 text-[13px] leading-relaxed text-ink transition placeholder:text-mute hover:border-hairline-strong focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-ink/10"
+              className="ai-composer-input max-h-32 min-h-[3.25rem] flex-1 resize-none rounded-md border border-hairline bg-canvas px-3 py-2 text-[13px] leading-relaxed text-ink transition placeholder:text-mute hover:border-hairline-strong focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-brand/20"
             />
             <button
               type="button"
               onClick={() => void send(input)}
               disabled={busy || input.trim() === ''}
               aria-label="发送"
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-ink text-white transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/30 disabled:opacity-30"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-ink text-white transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-30"
             >
               <SendIcon className="h-4 w-4" />
             </button>

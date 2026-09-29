@@ -26,10 +26,19 @@
   --color-cyan-deep: #29bc9b;
   --color-violet: #7928ca;
 
+  /* 品牌主题色：取自 Logo 的钴蓝，用于焦点环、主链接与少量强调（DESIGN.md 仍以黑白为主） */
+  --color-brand: #155dfc;
+  --color-brand-deep: #0f4bd1;
+  --color-brand-soft: #e8efff;
+
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Mono",
     "PingFang SC", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 ::selection {
@@ -64,7 +73,7 @@
   .field {
     @apply inline-flex h-8 items-center rounded-md border border-hairline bg-canvas px-2 text-[13px] text-ink transition tabular-nums
       hover:border-hairline-strong
-      focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-ink/10
+      focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-brand/20
       disabled:opacity-40;
   }
 
@@ -72,7 +81,7 @@
   .field-lg {
     @apply inline-flex h-10 items-center rounded-md border border-hairline bg-canvas px-3 text-sm text-ink transition placeholder:text-mute tabular-nums
       hover:border-hairline-strong
-      focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-ink/10
+      focus:border-hairline-strong focus:outline-none focus:ring-2 focus:ring-brand/20
       disabled:opacity-40;
   }
 
@@ -82,7 +91,7 @@
       text-xs leading-none text-ink transition select-none
       hover:border-hairline-strong hover:bg-canvas-soft-2
       active:bg-canvas-soft-2
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/10
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40
       disabled:opacity-40 disabled:pointer-events-none;
   }
 
@@ -141,6 +150,22 @@
     flex-shrink: 0;
   }
 
+  /* 分步编号：圆形等宽数字（规划参数区的 ① ②） */
+  .step-num {
+    @apply inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-medium text-white;
+    font-family: var(--font-mono);
+  }
+
+  /* 按钮（DESIGN.md button-primary / button-secondary：胶囊形） */
+  .btn-primary {
+    @apply inline-flex h-10 items-center gap-2 rounded-full bg-ink px-5 text-sm font-medium text-white transition
+      hover:bg-ink/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2;
+  }
+  .btn-secondary {
+    @apply inline-flex h-10 items-center gap-2 rounded-full border border-hairline bg-canvas px-5 text-sm font-medium text-ink transition
+      hover:border-hairline-strong hover:bg-canvas-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2;
+  }
+
   /* 错误提示框（语义色令牌） */
   .error-box {
     @apply rounded-md border border-error-soft bg-error-bg px-4 py-3 text-sm text-error-deep;
@@ -153,6 +178,9 @@
    曲线与延迟随开合方向不同，写在组件里更好读。这里只做减少动效的兜底。
 */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   .ai-panel,
   .ai-fade {
     transition: none !important;
