@@ -1,5 +1,6 @@
 /**
  * AI 规划助手：右下角的浮动按钮和多轮对话面板。
+ * 大屏（≥1024px）以右侧边栏展开、页面向左让位；更小的屏幕仍是可拖动的浮窗，手机上铺满全屏。
  *
  * 模型只负责听懂需求、选方案、定参数；定好的参数通过 onApplyPlan 写回页面顶部的规划表单，
  * 具体数字仍由本站既有的容量 / 性能计算逻辑算出来。样式沿用 DESIGN.md（发丝线 + 堆叠阴影 + 墨黑主 CTA）。
@@ -28,6 +29,9 @@ const MIN_SIZE = { width: 300, height: 320 }
 const GEOMETRY_STORAGE_KEY = 'storplan.ai-panel.geometry'
 /** 小于这个宽度按手机处理：默认最大化、不给拖动与缩放 */
 const COMPACT_WIDTH = 640
+/** 大屏以右侧边栏呈现：贴右、铺满高度，页面内容让出这块宽度而不是被盖住 */
+const SIDEBAR_QUERY = '(min-width: 1024px)'
+const SIDEBAR_WIDTH = 420
 
 /**
  * 以「视觉视口」为准而不是 window.innerWidth/Height：
@@ -246,6 +250,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
   const [error, setError] = useState<string | null>(null)
   const [geometry, setGeometry] = useState<Geometry | null>(null)
   const [maximized, setMaximized] = useState(false)
+  const [sidebar, setSidebar] = useState(false)
   // 收放动画的锚点：启动按钮中心在面板内的坐标
   const [transformOrigin, setTransformOrigin] = useState('100% 100%')
 
@@ -265,6 +270,23 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
     window.addEventListener(OPEN_EVENT, onOpen)
     return () => window.removeEventListener(OPEN_EVENT, onOpen)
   }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia(SIDEBAR_QUERY)
+    const sync = () => setSidebar(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+
+  // 侧边栏展开时通过 CSS 变量让页面右侧留出同宽空白（styles.css 里给 body 加 padding）
+  useEffect(() => {
+    const root = document.documentElement
+    root.style.setProperty('--ai-sidebar-width', open && sidebar ? `${SIDEBAR_WIDTH}px` : '0px')
+    return () => {
+      root.style.removeProperty('--ai-sidebar-width')
+    }
+  }, [open, sidebar])
 
   // 首帧不读 localStorage，避免 SSR 与客户端渲染不一致
   useEffect(() => {
@@ -329,8 +351,10 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    // 点面板外自动收起（点启动按钮除外，否则会“关了又开”）
+    // 点面板外自动收起（点启动按钮除外，否则会“关了又开”）；
+    // 侧边栏与页面并排，用户要边聊边改表单，所以不自动收起
     const onPointerDown = (e: PointerEvent) => {
+      if (sidebar) return
       // contains() 只接受 Node，事件目标万一不是（合成事件可能给 window），先挡一道
       const target = e.target
       if (!(target instanceof Node)) return
@@ -343,7 +367,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('pointerdown', onPointerDown)
     }
-  }, [open])
+  }, [open, sidebar])
 
   /**
    * macOS「缩放特效」式的开合：窗口从 Dock 图标里长出来、收起时缩回图标。
@@ -539,8 +563,22 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         aria-label="AI 规划助手"
         aria-hidden={!open}
         inert={!open}
-        className="ai-panel fixed z-40 flex flex-col overflow-hidden rounded-2xl border border-hairline bg-canvas"
-        style={{
+        className={`ai-panel fixed z-40 flex flex-col overflow-hidden bg-canvas ${
+          sidebar ? 'border-l border-hairline' : 'rounded-2xl border border-hairline'
+        }`}
+        style={sidebar ? {
+          /* 侧边栏：贴右、铺满高度，从右侧滑入；页面同时让出宽度（见 --ai-sidebar-width） */
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: SIDEBAR_WIDTH,
+          boxShadow: open ? '-8px 0 24px -12px rgba(0,0,0,0.12)' : 'none',
+          transform: open ? 'translateX(0)' : 'translateX(100%)',
+          visibility: open ? 'visible' : 'hidden',
+          transition: open
+            ? 'transform 280ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s'
+            : 'transform 220ms cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 220ms',
+        } : {
           left: geometry?.left ?? 0,
           top: geometry?.top ?? 0,
           width: geometry?.width ?? DEFAULT_SIZE.width,
@@ -566,7 +604,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         }}
       >
         {/* 左上角缩放手柄：拖动时右下角固定不动；最大化时没有可拉的余地，收起来 */}
-        {!maximized && (
+        {!maximized && !sidebar && (
           <button
             type="button"
             aria-label="拖动以调整对话框大小"
@@ -581,15 +619,15 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
         )}
 
         <header
-          onPointerDown={startInteraction('move')}
-          onDoubleClick={() => !maximized && setGeometry(defaultGeometry())}
-          title={maximized ? undefined : '拖动可移动位置，双击恢复默认位置'}
+          onPointerDown={sidebar ? undefined : startInteraction('move')}
+          onDoubleClick={() => !maximized && !sidebar && setGeometry(defaultGeometry())}
+          title={maximized || sidebar ? undefined : '拖动可移动位置，双击恢复默认位置'}
           className={`flex shrink-0 touch-none select-none items-center justify-between gap-3 border-b border-hairline px-4 py-3 ${
-            maximized ? '' : 'cursor-grab active:cursor-grabbing'
+            maximized || sidebar ? '' : 'cursor-grab active:cursor-grabbing'
           }`}
         >
           <div className="flex min-w-0 items-center gap-1.5">
-            {!maximized && <GripIcon className="h-3 w-3 shrink-0 text-hairline-strong" aria-hidden />}
+            {!maximized && !sidebar && <GripIcon className="h-3 w-3 shrink-0 text-hairline-strong" aria-hidden />}
             <div className="min-w-0">
               <p className="flex items-center gap-1.5 text-sm font-medium text-ink">
                 <SparkIcon className="h-3.5 w-3.5 text-violet" />
@@ -608,6 +646,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
               新对话
             </button>
           )}
+          {!sidebar && (
           <button
             type="button"
             onClick={toggleMaximize}
@@ -618,6 +657,7 @@ export function AiAssistant({ onApplyPlan, onRestorePlan, isPlanApplied }: {
           >
             <MaximizeIcon className="h-3 w-3" maximized={maximized} />
           </button>
+          )}
           <button
             type="button"
             onClick={() => setOpen(false)}

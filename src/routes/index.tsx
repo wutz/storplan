@@ -987,7 +987,8 @@ function StorplanApp() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-8">
+      {/* @container：下面的分栏按内容区宽度而不是窗口宽度来算，AI 侧边栏展开挤窄页面时自动减少列数 */}
+      <div className="@container mx-auto max-w-7xl px-4 sm:px-8">
 
         {/* 品牌 hero：多色 mesh 渐变背景（DESIGN.md hero-band） */}
         <section className="relative mt-6 overflow-hidden rounded-2xl border border-hairline bg-canvas sm:mt-8">
@@ -1046,7 +1047,7 @@ function StorplanApp() {
               </span>
             )}
           </div>
-          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mb-6 grid grid-cols-1 gap-3 @xl:grid-cols-2 @4xl:grid-cols-3">
             {STORAGE_ORDER.map((key) => {
               const t = THEME[key]
               const active = selectedStorages.has(key)
@@ -1073,7 +1074,7 @@ function StorplanApp() {
           </div>
 
           <div className="mb-3 flex items-center gap-2 border-t border-hairline pt-6 text-sm font-medium text-ink"><span className="step-num">2</span>填写容量与带宽</div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
             <div>
               <label htmlFor="capacity" className="mb-1.5 block text-sm font-medium text-ink">容量</label>
               <div className="flex gap-2">
@@ -1146,7 +1147,7 @@ function StorplanApp() {
 
         {!hasSelection && <SelectionGuide onSelect={toggleStorage} />}
 
-        <div id="plan-results" className="grid grid-cols-1 items-start gap-8 xl:grid-cols-2">
+                <div id="plan-results" className="grid grid-cols-1 items-start gap-8 @5xl:grid-cols-2">
           {STORAGE_ORDER.filter(key => selectedStorages.has(key)).map(key => (
             <SchemePanel
               key={key}
