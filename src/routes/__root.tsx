@@ -10,7 +10,8 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Storplan — 存储容量和性能规划' },
+      { title: 'Storplan — 存储容量与性能规划' },
+      { name: 'description', content: '填入容量和带宽，一次对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 的集群规模、硬件清单和性能指标。' },
     ],
     links: [
       { rel: 'stylesheet', href: appCss },
