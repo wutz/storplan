@@ -11,13 +11,13 @@
 
 ## 支持的存储方案
 
-- **XSKY XEOS** — 对象存储
-- **VastData** — 统一存储（NFS、SMB、S3、iSCSI、NVMe-oF）
-- **GPFS ECE** — 高性能文件系统（全闪）
-- **GPFS 混闪** — 大容量并行文件系统（NVMe 元数据层 + HDD 数据层，分别给出开启 / 关闭分层的性能）
-- **Weka** — 全闪并行文件系统
-- **Ceph** — 开源统一存储（块、对象、文件系统）
-- **Ceph 混闪** — 对象存储（HDD 数据层 + NVMe 索引层）
+- **XSKY XEOS 混闪对象存储** — 大量 HDD + 少量 NVMe SSD
+- **VastData 全闪统一存储** — 文件 / 对象 / 块（NFS、SMB、S3、iSCSI、NVMe-oF）
+- **GPFS ECE 全闪文件系统** — 高性能并行文件系统
+- **GPFS ECE 混闪文件系统** — 大容量并行文件系统（NVMe 元数据层 + HDD 数据层，分别给出开启 / 关闭分层的性能）
+- **Weka 全闪文件系统** — 高性能并行文件系统
+- **Ceph 全闪统一存储** — 开源，块 / 对象 / 文件
+- **Ceph 混闪对象存储** — 开源，HDD 数据层 + NVMe 索引层（RGW）
 
 ## 主题与语言
 
@@ -168,11 +168,11 @@ storplan/
 │   │   ├── xeos.ts               # XSKY XEOS 对象存储规划
 │   │   ├── vastdata.ts           # VastData 统一存储规划
 │   │   ├── vastdata-data.ts      # VastData 容量 / 性能参考数据（自动生成）
-│   │   ├── gpfs-ece.ts           # GPFS/Scale 全闪并行文件系统规划
-│   │   ├── gpfs-hybrid.ts        # GPFS/Scale 混闪规划
+│   │   ├── gpfs-ece.ts           # GPFS ECE 全闪文件系统规划
+│   │   ├── gpfs-hybrid.ts        # GPFS ECE 混闪文件系统规划
 │   │   ├── ceph.ts               # Ceph 全闪统一存储规划
 │   │   ├── ceph-hybrid.ts        # Ceph 混闪对象存储规划
-│   │   ├── weka.ts               # Weka 全闪并行文件系统规划
+│   │   ├── weka.ts               # Weka 全闪文件系统规划
 │   │   ├── ai-chat.ts            # 对话契约与规划指令解析
 │   │   └── ai-system-prompt.ts   # AI 系统提示词，仅服务端引用
 │   ├── routes/                   # 路由页面

@@ -1,5 +1,5 @@
 /**
- * GPFS/Scale 混闪规划：NVMe 层放元数据与热数据，HDD 层存主数据。
+ * GPFS ECE 混闪文件系统规划：NVMe 层放元数据与热数据，HDD 层存主数据。
  * 性能以十节点实测报告为基准折算（见 REPORT_BASELINE）：分层开启时性能由 NVMe 层决定，
  * 关闭时由 HDD 主轴数决定。EC 与容错规则复用 gpfs-ece。
  */
