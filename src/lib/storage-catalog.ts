@@ -9,15 +9,15 @@ export const STORAGE_ORDER = ['vastdata', 'gpfs-ece', 'gpfs-hybrid', 'weka', 'xe
 
 export type StorageKey = (typeof STORAGE_ORDER)[number]
 
-/** 方案 key -> 供 AI 提示词使用的中文名称（页面展示名见 routes/index.tsx 的 THEME） */
+/** 方案 key -> 统一的产品名称：选择卡、方案卡、选型参考、AI 助手与提示词共用 */
 export const STORAGE_NAMES: Record<StorageKey, string> = {
-  vastdata: 'VastData（全闪）：文件 / 对象 / 块统一存储',
-  'gpfs-ece': 'GPFS/Scale（全闪）：ECE 并行文件系统',
-  'gpfs-hybrid': 'GPFS/Scale（混闪）：NVMe 元数据层 + HDD 数据层的并行文件系统',
-  weka: 'Weka（全闪）：并行文件系统',
-  xeos: 'XSKY XEOS（混闪）：对象存储',
-  ceph: 'Ceph（全闪）：块 / 对象 / 文件统一存储',
-  'ceph-hybrid': 'Ceph（混闪）：对象存储（RGW）',
+  vastdata: 'VastData 全闪统一存储',
+  'gpfs-ece': 'GPFS ECE 全闪文件系统',
+  'gpfs-hybrid': 'GPFS ECE 混闪文件系统',
+  weka: 'Weka 全闪文件系统',
+  xeos: 'XSKY XEOS 混闪对象存储',
+  ceph: 'Ceph 全闪统一存储',
+  'ceph-hybrid': 'Ceph 混闪对象存储',
 }
 
 // 存储选型参考（迁移自 infra-skills / storage-planner-router）
@@ -35,35 +35,35 @@ export const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[
     rows: [
       {
         key: 'vastdata',
-        name: 'VastData（全闪）',
+        name: 'VastData 全闪统一存储',
         pros: '支持多种存储协议，可替代 Ceph；支持多租户、QoS 与去重；授权费用摊薄后建设成本低；有原厂技术支持',
-        cons: '性能略低于 GPFS/Scale（全闪），采购周期较长',
+        cons: '性能略低于 GPFS ECE 全闪文件系统，采购周期较长',
         scenarios: '多租户共享，需要 QoS 和原厂支持',
       },
       {
         key: 'gpfs-ece',
-        name: 'GPFS/Scale（全闪）',
+        name: 'GPFS ECE 全闪文件系统',
         pros: '性能高、生态成熟，软件授权费用低',
         cons: '多租户支持较弱，依赖第三方厂商技术支持',
         scenarios: '单租户高性能，预算有限',
       },
       {
         key: 'gpfs-hybrid',
-        name: 'GPFS/Scale（混闪）',
-        pros: '每 TB 成本远低于全闪；大块带宽随 HDD 数量线性增长；与 GPFS/Scale（全闪）共用同一套运维体系',
+        name: 'GPFS ECE 混闪文件系统',
+        pros: '每 TB 成本远低于全闪；大块带宽随 HDD 数量线性增长；与 GPFS ECE 全闪文件系统共用同一套运维体系',
         cons: '小文件随机性能依赖 NVMe 层命中率；HDD 重建慢；多租户支持较弱',
         scenarios: '大容量温冷数据，以大文件顺序读写为主',
       },
       {
         key: 'weka',
-        name: 'Weka（全闪）',
-        pros: '性能高于 GPFS/Scale（全闪）；支持多租户',
+        name: 'Weka 全闪文件系统',
+        pros: '性能高于 GPFS ECE 全闪文件系统；支持多租户',
         cons: '软件授权费用高，依赖第三方厂商技术支持',
         scenarios: '追求极致性能，预算充裕',
       },
       {
         key: 'ceph',
-        name: 'CephFS（全闪）',
+        name: 'Ceph 全闪统一存储',
         pros: '开源，无软件授权费用；支持多租户',
         cons: '不支持 QoS；元数据缓存受节点内存限制，内存不足时性能锐减；运维成本高；无原厂技术支持',
         scenarios: '预算有限的非 AI 通用共享文件存储',
@@ -76,21 +76,21 @@ export const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[
     rows: [
       {
         key: 'xeos',
-        name: 'XSKY XEOS（混闪）',
+        name: 'XSKY XEOS 混闪对象存储',
         pros: '功能齐全、稳定；支持大规模扩展与 QoS；有原厂技术支持',
         cons: '软件授权费用高',
         scenarios: '生产环境，看重稳定性和原厂支持',
       },
       {
         key: 'ceph-hybrid',
-        name: 'Ceph RGW（混闪）',
+        name: 'Ceph 混闪对象存储',
         pros: '开源，无软件授权费用',
         cons: '稳定性不及 XSKY XEOS；QoS 较弱；海量对象场景尚未充分验证；无原厂技术支持',
         scenarios: '预算有限、非关键业务',
       },
       {
         key: 'vastdata',
-        name: 'VastData S3（全闪）',
+        name: 'VastData 全闪统一存储',
         pros: '性能高；可与文件系统共用同一集群；支持 QoS 与大规模扩展；有原厂技术支持',
         cons: '全闪架构成本较高，只适合高性能场景',
         scenarios: '需要高性能对象存储',
@@ -102,14 +102,14 @@ export const SELECTION_GUIDE: { title: string; rows: GuideRow[]; notes?: string[
     rows: [
       {
         key: 'vastdata',
-        name: 'VastData Block（全闪）',
+        name: 'VastData 全闪统一存储',
         pros: '性能高，有原厂技术支持',
         cons: '当前版本暂不支持 QoS',
         scenarios: '需要高性能块存储，能接受较新的产品',
       },
       {
         key: 'ceph',
-        name: 'Ceph RBD（全闪）',
+        name: 'Ceph 全闪统一存储',
         pros: '开源，无软件授权费用；块存储方案成熟',
         cons: '全闪配置性能一般，无原厂技术支持',
         scenarios: '预算有限的虚拟机、数据库等通用块存储',
@@ -136,12 +136,12 @@ export const STORAGE_INFO: Record<StorageKey, { description: string; pros: strin
     limits: ['启用多租户时，容量起步与扩容步长均为 50 TiB', '启用多租户时，K8s 仅支持 hostPath，不支持基于 CSI 的 PVC'],
   },
   'gpfs-hybrid': {
-    description: 'GPFS/Scale（混闪）以大容量 HDD 为主、少量 NVMe SSD 为辅：元数据与热数据放在 NVMe 层，冷数据落在 HDD 层，用远低于全闪的成本换来大容量并行文件系统。',
+    description: 'GPFS ECE 混闪文件系统以大容量 HDD 为主、少量 NVMe SSD 为辅：元数据与热数据放在 NVMe 层，冷数据落在 HDD 层，用远低于全闪的成本换来大容量并行文件系统。',
     pros: [
       '每 TB 成本远低于全闪方案',
       '开启分层后热数据命中 NVMe，带宽约为纯 HDD 的 1.5–2 倍，IOPS 可达 8 倍以上',
       '大块顺序读写带宽随 HDD 主轴数线性增长',
-      '与 GPFS/Scale（全闪）共用同一套软件与运维体系，可混合组池分层',
+      '与 GPFS ECE 全闪文件系统共用同一套软件与运维体系，可混合组池分层',
     ],
     cons: [
       '性能强依赖 NVMe 层命中率，命中率低时会回落到 HDD 水平（IOPS 差距接近一个数量级）',
@@ -180,7 +180,7 @@ export const STORAGE_INFO: Record<StorageKey, { description: string; pros: strin
     ],
   },
   'ceph-hybrid': {
-    description: 'Ceph（混闪）以大容量 HDD 为主，NVMe SSD 作索引层；混闪形态下只建议配置为对象存储（Ceph RGW），适合低成本存放海量非结构化数据。',
+    description: 'Ceph 混闪对象存储以大容量 HDD 为主，NVMe SSD 作索引层；混闪形态下只建议配置为对象存储（Ceph RGW），适合低成本存放海量非结构化数据。',
     pros: [
       '开源软件，无需购买软件授权',
       '支持多租户',

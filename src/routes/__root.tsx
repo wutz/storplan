@@ -10,11 +10,11 @@ import { PrefsProvider, THEME_BOOT_SCRIPT, readPrefs } from '#/lib/i18n'
 const META = {
   zh: {
     title: 'Storplan — 存储容量与性能规划',
-    description: '填入容量和带宽，一次对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 的集群规模、硬件清单和性能指标。',
+    description: '填入容量和带宽，一次对比 VastData、GPFS ECE、Weka、XSKY XEOS 与 Ceph 的集群规模、硬件清单和性能指标。',
   },
   en: {
     title: 'Storplan — Storage Capacity & Performance Planning',
-    description: 'Enter capacity and bandwidth to compare cluster size, bill of materials and performance of VastData, GPFS/Scale, Weka, XSKY XEOS and Ceph side by side.',
+    description: 'Enter capacity and bandwidth to compare cluster size, bill of materials and performance of VastData, GPFS ECE, Weka, XSKY XEOS and Ceph side by side.',
   },
 }
 

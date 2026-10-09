@@ -5,13 +5,13 @@
 import type { GuideRow, StorageKey } from './storage-catalog'
 
 export const STORAGE_NAMES_EN: Record<StorageKey, string> = {
-  vastdata: 'VastData (all-flash): unified file / object / block storage',
-  'gpfs-ece': 'GPFS/Scale (all-flash): ECE parallel file system',
-  'gpfs-hybrid': 'GPFS/Scale (hybrid): parallel file system with NVMe metadata tier + HDD data tier',
-  weka: 'Weka (all-flash): parallel file system',
-  xeos: 'XSKY XEOS (hybrid): object storage',
-  ceph: 'Ceph (all-flash): unified block / object / file storage',
-  'ceph-hybrid': 'Ceph (hybrid): object storage (RGW)',
+  vastdata: 'VastData All-Flash Unified Storage',
+  'gpfs-ece': 'GPFS ECE All-Flash File System',
+  'gpfs-hybrid': 'GPFS ECE Hybrid File System',
+  weka: 'Weka All-Flash File System',
+  xeos: 'XSKY XEOS Hybrid Object Storage',
+  ceph: 'Ceph All-Flash Unified Storage',
+  'ceph-hybrid': 'Ceph Hybrid Object Storage',
 }
 
 export const SELECTION_GUIDE_EN: { title: string; rows: GuideRow[]; notes?: string[] }[] = [
@@ -20,35 +20,35 @@ export const SELECTION_GUIDE_EN: { title: string; rows: GuideRow[]; notes?: stri
     rows: [
       {
         key: 'vastdata',
-        name: 'VastData (all-flash)',
+        name: 'VastData All-Flash Unified Storage',
         pros: 'Multi-protocol, can replace Ceph; multi-tenancy, QoS and dedup; low build cost once licensing is amortized; vendor support',
-        cons: 'Slightly slower than GPFS/Scale (all-flash); long procurement cycle',
+        cons: 'Slightly slower than GPFS ECE All-Flash File System; long procurement cycle',
         scenarios: 'Shared multi-tenant storage that needs QoS and vendor support',
       },
       {
         key: 'gpfs-ece',
-        name: 'GPFS/Scale (all-flash)',
+        name: 'GPFS ECE All-Flash File System',
         pros: 'High performance, mature ecosystem, low licensing cost',
         cons: 'Weak multi-tenancy; relies on third-party vendor support',
         scenarios: 'Single-tenant high performance on a limited budget',
       },
       {
         key: 'gpfs-hybrid',
-        name: 'GPFS/Scale (hybrid)',
-        pros: 'Far lower cost per TB than all-flash; large-block bandwidth scales with HDD count; same operations stack as GPFS/Scale (all-flash)',
+        name: 'GPFS ECE Hybrid File System',
+        pros: 'Far lower cost per TB than all-flash; large-block bandwidth scales with HDD count; same operations stack as GPFS ECE All-Flash File System',
         cons: 'Small-file random performance depends on NVMe tier hit rate; slow HDD rebuilds; weak multi-tenancy',
         scenarios: 'Large warm/cold datasets, mostly large sequential I/O',
       },
       {
         key: 'weka',
-        name: 'Weka (all-flash)',
-        pros: 'Faster than GPFS/Scale (all-flash); multi-tenancy',
+        name: 'Weka All-Flash File System',
+        pros: 'Faster than GPFS ECE All-Flash File System; multi-tenancy',
         cons: 'High licensing cost; relies on third-party vendor support',
         scenarios: 'Maximum performance with an ample budget',
       },
       {
         key: 'ceph',
-        name: 'CephFS (all-flash)',
+        name: 'Ceph All-Flash Unified Storage',
         pros: 'Open source, no licensing cost; multi-tenancy',
         cons: 'No QoS; metadata cache bound by node memory, performance collapses when memory runs short; high operating cost; no vendor support',
         scenarios: 'Budget general-purpose shared file storage (non-AI)',
@@ -61,21 +61,21 @@ export const SELECTION_GUIDE_EN: { title: string; rows: GuideRow[]; notes?: stri
     rows: [
       {
         key: 'xeos',
-        name: 'XSKY XEOS (hybrid)',
+        name: 'XSKY XEOS Hybrid Object Storage',
         pros: 'Feature-complete and stable; scales out with QoS; vendor support',
         cons: 'High licensing cost',
         scenarios: 'Production workloads that value stability and vendor support',
       },
       {
         key: 'ceph-hybrid',
-        name: 'Ceph RGW (hybrid)',
+        name: 'Ceph Hybrid Object Storage',
         pros: 'Open source, no licensing cost',
         cons: 'Less stable than XSKY XEOS; weak QoS; unproven at massive object counts; no vendor support',
         scenarios: 'Limited budget, non-critical workloads',
       },
       {
         key: 'vastdata',
-        name: 'VastData S3 (all-flash)',
+        name: 'VastData All-Flash Unified Storage',
         pros: 'High performance; can share a cluster with the file system; QoS and scale-out; vendor support',
         cons: 'All-flash is costly, only worth it for high-performance use',
         scenarios: 'High-performance object storage',
@@ -87,14 +87,14 @@ export const SELECTION_GUIDE_EN: { title: string; rows: GuideRow[]; notes?: stri
     rows: [
       {
         key: 'vastdata',
-        name: 'VastData Block (all-flash)',
+        name: 'VastData All-Flash Unified Storage',
         pros: 'High performance, vendor support',
         cons: 'No QoS in the current release',
         scenarios: 'High-performance block storage, comfortable with a newer product',
       },
       {
         key: 'ceph',
-        name: 'Ceph RBD (all-flash)',
+        name: 'Ceph All-Flash Unified Storage',
         pros: 'Open source, no licensing cost; mature block storage',
         cons: 'Mediocre all-flash performance; no vendor support',
         scenarios: 'Budget general-purpose block storage for VMs and databases',
@@ -123,12 +123,12 @@ export const STORAGE_INFO_EN: Record<StorageKey, StorageInfo> = {
     limits: ['With multi-tenancy enabled, both the minimum capacity and the expansion step are 50 TiB', 'With multi-tenancy enabled, K8s supports hostPath only, not CSI-based PVCs'],
   },
   'gpfs-hybrid': {
-    description: 'GPFS/Scale (hybrid) is mostly high-capacity HDD with a small NVMe SSD tier: metadata and hot data live on NVMe, cold data on HDD — a large parallel file system at far below all-flash cost.',
+    description: 'GPFS ECE Hybrid File System is mostly high-capacity HDD with a small NVMe SSD tier: metadata and hot data live on NVMe, cold data on HDD — a large parallel file system at far below all-flash cost.',
     pros: [
       'Far lower cost per TB than all-flash',
       'With tiering on, hot data hits NVMe: about 1.5–2× the bandwidth of pure HDD and 8×+ the IOPS',
       'Large sequential bandwidth scales linearly with HDD spindle count',
-      'Same software and operations as GPFS/Scale (all-flash); pools can be mixed and tiered',
+      'Same software and operations as GPFS ECE All-Flash File System; pools can be mixed and tiered',
     ],
     cons: [
       'Performance depends heavily on NVMe hit rate; a low hit rate falls back to HDD levels (IOPS gap near 10×)',
@@ -167,7 +167,7 @@ export const STORAGE_INFO_EN: Record<StorageKey, StorageInfo> = {
     ],
   },
   'ceph-hybrid': {
-    description: 'Ceph (hybrid) is mostly high-capacity HDD with NVMe SSD as the index tier; in hybrid form it is only recommended as object storage (Ceph RGW), for low-cost massive unstructured data.',
+    description: 'Ceph Hybrid Object Storage is mostly high-capacity HDD with NVMe SSD as the index tier; in hybrid form it is only recommended as object storage (Ceph RGW), for low-cost massive unstructured data.',
     pros: [
       'Open source, no software licensing',
       'Multi-tenancy',

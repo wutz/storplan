@@ -43,21 +43,19 @@ type PlanResults = {
 // 每个存储产品的官网品牌色：只用于小圆点标识，其余界面保持黑白灰
 type Text = { zh: string; en: string }
 type Theme = {
-  /** 产品名称（含全闪 / 混闪标识），选择卡、方案卡头共用 */
-  title: Text
   category: Text
   /** 品牌色（十六进制），用于圆点标识 */
   color: string
 }
 
 const THEME: Record<string, Theme> = {
-  vastdata: { title: { zh: 'VastData（全闪）', en: 'VastData (all-flash)' }, category: { zh: '文件 · 对象 · 块', en: 'File · Object · Block' }, color: '#1FD9FE' }, // VastData 官网品牌色：亮青 #1FD9FE 配深藏蓝文字 #0D1021
-  'gpfs-ece': { title: { zh: 'GPFS/Scale（全闪）', en: 'GPFS/Scale (all-flash)' }, category: { zh: '并行文件系统', en: 'Parallel file system' }, color: '#0F62FE' }, // IBM 官网品牌色：IBM 蓝 #0F62FE
-  'gpfs-hybrid': { title: { zh: 'GPFS/Scale（混闪）', en: 'GPFS/Scale (hybrid)' }, category: { zh: '并行文件系统', en: 'Parallel file system' }, color: '#002D9C' }, // IBM 官网品牌色（混闪用更深的 IBM Blue 80 区分全闪）
-  xeos: { title: { zh: 'XSKY XEOS（混闪）', en: 'XSKY XEOS (hybrid)' }, category: { zh: '对象存储', en: 'Object storage' }, color: '#7855FA' }, // XSKY 官网品牌色：星辰紫 #7855FA
-  ceph: { title: { zh: 'Ceph（全闪）', en: 'Ceph (all-flash)' }, category: { zh: '块 · 对象 · 文件', en: 'Block · Object · File' }, color: '#EF5C55' }, // Ceph 官网品牌色：红 #EF5C55
-  'ceph-hybrid': { title: { zh: 'Ceph（混闪）', en: 'Ceph (hybrid)' }, category: { zh: '对象存储', en: 'Object storage' }, color: '#9A2E29' }, // Ceph 官网品牌色（混闪用更深的暗红区分全闪）
-  weka: { title: { zh: 'Weka（全闪）', en: 'Weka (all-flash)' }, category: { zh: '并行文件系统', en: 'Parallel file system' }, color: '#7C03EC' }, // Weka 官网品牌色：紫罗兰 #7C03EC
+  vastdata: { category: { zh: '文件 · 对象 · 块', en: 'File · Object · Block' }, color: '#1FD9FE' }, // VastData 官网品牌色：亮青 #1FD9FE 配深藏蓝文字 #0D1021
+  'gpfs-ece': { category: { zh: '并行文件系统', en: 'Parallel file system' }, color: '#0F62FE' }, // IBM 官网品牌色：IBM 蓝 #0F62FE
+  'gpfs-hybrid': { category: { zh: '并行文件系统', en: 'Parallel file system' }, color: '#002D9C' }, // IBM 官网品牌色（混闪用更深的 IBM Blue 80 区分全闪）
+  xeos: { category: { zh: '对象存储', en: 'Object storage' }, color: '#7855FA' }, // XSKY 官网品牌色：星辰紫 #7855FA
+  ceph: { category: { zh: '块 · 对象 · 文件', en: 'Block · Object · File' }, color: '#EF5C55' }, // Ceph 官网品牌色：红 #EF5C55
+  'ceph-hybrid': { category: { zh: '对象存储', en: 'Object storage' }, color: '#9A2E29' }, // Ceph 官网品牌色（混闪用更深的暗红区分全闪）
+  weka: { category: { zh: '并行文件系统', en: 'Parallel file system' }, color: '#7C03EC' }, // Weka 官网品牌色：紫罗兰 #7C03EC
 }
 
 // 冗余方案名只用于显示：'3 副本' 这类标识值在英文界面下显示为 '3× replica'，option 的 value 保持原样
@@ -885,7 +883,7 @@ function StorplanApp() {
           {!hasSelection && (
             <>
               <p className="mt-3 max-w-2xl text-pretty text-base leading-relaxed text-body">
-                {t('填入容量和带宽，一次对比 VastData、GPFS/Scale、Weka、XSKY XEOS 与 Ceph 的集群规模、硬件清单和性能指标。', 'Enter capacity and bandwidth to compare cluster size, bill of materials and performance for VastData, GPFS/Scale, Weka, XSKY XEOS and Ceph side by side.')}
+                {t('填入容量和带宽，一次对比 VastData、GPFS ECE、Weka、XSKY XEOS 与 Ceph 的集群规模、硬件清单和性能指标。', 'Enter capacity and bandwidth to compare cluster size, bill of materials and performance for VastData, GPFS ECE, Weka, XSKY XEOS and Ceph side by side.')}
               </p>
               <button type="button" onClick={openAiAssistant} className="btn-secondary mt-6">
                 <SparkleIcon className="h-4 w-4 text-brand" />
@@ -930,7 +928,7 @@ function StorplanApp() {
                     {active && <CheckIcon className="h-3 w-3 text-white" />}
                   </span>
                   <span className="min-w-0">
-                    <span className={`block text-sm font-medium leading-tight text-ink`}>{th.title[lang]}</span>
+                    <span className={`block text-sm font-medium leading-tight text-ink`}>{localizeCatalog(lang).STORAGE_NAMES[key]}</span>
                     <span className="mt-1 block text-xs text-mute">{th.category[lang]}</span>
                   </span>
                 </button>
@@ -1151,7 +1149,7 @@ function SchemePanel({ storage, badge, error, children }: {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <BrandDot color={th.color} className="h-2.5 w-2.5" />
-            <h2 className="text-xl font-semibold tracking-tight text-ink">{th.title[lang]}</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-ink">{localizeCatalog(lang).STORAGE_NAMES[storage]}</h2>
             {badge && <span className="rounded-full bg-canvas-soft-2 px-2 py-0.5 text-xs text-body">{badge}</span>}
           </div>
           <p className="mt-1 text-xs text-mute">{th.category[lang]}</p>
