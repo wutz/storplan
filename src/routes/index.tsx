@@ -43,9 +43,7 @@ type PlanResults = {
 // 每个存储产品的官网品牌色：只用于小圆点标识，其余界面保持黑白灰
 type Text = { zh: string; en: string }
 type Theme = {
-  /** 选择卡上的完整名称（含类型说明） */
-  label: Text
-  /** 方案卡头的短名称 */
+  /** 产品名称（含全闪 / 混闪标识），选择卡、方案卡头共用 */
   title: Text
   category: Text
   /** 品牌色（十六进制），用于圆点标识 */
@@ -53,13 +51,13 @@ type Theme = {
 }
 
 const THEME: Record<string, Theme> = {
-  vastdata: { label: { zh: 'VastData（统一存储）', en: 'VastData (unified storage)' }, title: { zh: 'VastData（全闪）', en: 'VastData (all-flash)' }, category: { zh: '文件 · 对象 · 块', en: 'File · Object · Block' }, color: '#1FD9FE' }, // VastData 官网品牌色：亮青 #1FD9FE 配深藏蓝文字 #0D1021
-  'gpfs-ece': { label: { zh: 'GPFS/Scale（文件系统）', en: 'GPFS/Scale (file system)' }, title: { zh: 'GPFS/Scale（全闪）', en: 'GPFS/Scale (all-flash)' }, category: { zh: '并行文件系统', en: 'Parallel file system' }, color: '#0F62FE' }, // IBM 官网品牌色：IBM 蓝 #0F62FE
-  'gpfs-hybrid': { label: { zh: 'GPFS/Scale 混闪（文件系统）', en: 'GPFS/Scale hybrid (file system)' }, title: { zh: 'GPFS/Scale（混闪）', en: 'GPFS/Scale (hybrid)' }, category: { zh: '混闪并行文件系统', en: 'Hybrid parallel file system (flash + HDD)' }, color: '#002D9C' }, // IBM 官网品牌色（混闪用更深的 IBM Blue 80 区分全闪）
-  xeos: { label: { zh: 'XSKY XEOS（对象存储）', en: 'XSKY XEOS (object storage)' }, title: { zh: 'XSKY XEOS（混闪）', en: 'XSKY XEOS (hybrid)' }, category: { zh: '对象存储', en: 'Object storage' }, color: '#7855FA' }, // XSKY 官网品牌色：星辰紫 #7855FA
-  ceph: { label: { zh: 'Ceph（全闪统一存储）', en: 'Ceph (all-flash unified storage)' }, title: { zh: 'Ceph（全闪）', en: 'Ceph (all-flash)' }, category: { zh: '块 · 对象 · 文件', en: 'Block · Object · File' }, color: '#EF5C55' }, // Ceph 官网品牌色：红 #EF5C55
-  'ceph-hybrid': { label: { zh: 'Ceph（混闪对象存储）', en: 'Ceph (hybrid object storage)' }, title: { zh: 'Ceph（混闪）', en: 'Ceph (hybrid)' }, category: { zh: '混闪对象存储', en: 'Hybrid object storage (flash + HDD)' }, color: '#9A2E29' }, // Ceph 官网品牌色（混闪用更深的暗红区分全闪）
-  weka: { label: { zh: 'Weka（文件系统）', en: 'Weka (file system)' }, title: { zh: 'Weka（全闪）', en: 'Weka (all-flash)' }, category: { zh: '并行文件系统', en: 'Parallel file system' }, color: '#7C03EC' }, // Weka 官网品牌色：紫罗兰 #7C03EC
+  vastdata: { title: { zh: 'VastData（全闪）', en: 'VastData (all-flash)' }, category: { zh: '文件 · 对象 · 块', en: 'File · Object · Block' }, color: '#1FD9FE' }, // VastData 官网品牌色：亮青 #1FD9FE 配深藏蓝文字 #0D1021
+  'gpfs-ece': { title: { zh: 'GPFS/Scale（全闪）', en: 'GPFS/Scale (all-flash)' }, category: { zh: '并行文件系统', en: 'Parallel file system' }, color: '#0F62FE' }, // IBM 官网品牌色：IBM 蓝 #0F62FE
+  'gpfs-hybrid': { title: { zh: 'GPFS/Scale（混闪）', en: 'GPFS/Scale (hybrid)' }, category: { zh: '并行文件系统', en: 'Parallel file system' }, color: '#002D9C' }, // IBM 官网品牌色（混闪用更深的 IBM Blue 80 区分全闪）
+  xeos: { title: { zh: 'XSKY XEOS（混闪）', en: 'XSKY XEOS (hybrid)' }, category: { zh: '对象存储', en: 'Object storage' }, color: '#7855FA' }, // XSKY 官网品牌色：星辰紫 #7855FA
+  ceph: { title: { zh: 'Ceph（全闪）', en: 'Ceph (all-flash)' }, category: { zh: '块 · 对象 · 文件', en: 'Block · Object · File' }, color: '#EF5C55' }, // Ceph 官网品牌色：红 #EF5C55
+  'ceph-hybrid': { title: { zh: 'Ceph（混闪）', en: 'Ceph (hybrid)' }, category: { zh: '对象存储', en: 'Object storage' }, color: '#9A2E29' }, // Ceph 官网品牌色（混闪用更深的暗红区分全闪）
+  weka: { title: { zh: 'Weka（全闪）', en: 'Weka (all-flash)' }, category: { zh: '并行文件系统', en: 'Parallel file system' }, color: '#7C03EC' }, // Weka 官网品牌色：紫罗兰 #7C03EC
 }
 
 // 冗余方案名只用于显示：'3 副本' 这类标识值在英文界面下显示为 '3× replica'，option 的 value 保持原样
@@ -932,7 +930,7 @@ function StorplanApp() {
                     {active && <CheckIcon className="h-3 w-3 text-white" />}
                   </span>
                   <span className="min-w-0">
-                    <span className={`block text-sm font-medium leading-tight text-ink`}>{th.label[lang]}</span>
+                    <span className={`block text-sm font-medium leading-tight text-ink`}>{th.title[lang]}</span>
                     <span className="mt-1 block text-xs text-mute">{th.category[lang]}</span>
                   </span>
                 </button>
