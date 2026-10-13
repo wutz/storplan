@@ -215,7 +215,7 @@ function StorplanApp() {
   const [manualConfig, setManualConfig] = useState<{
     xeos?: { serverCount: number; disksPerServer: number; diskSize: number; ecEfficiency: number; cacheCount: number; cacheSizePerDisk: number };
     vastdata?: { eboxCount: number; diskSize: number };
-    'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number };
+    'gpfs-ece'?: { serverCount: number; ssdSize: number; ecEfficiency: number; ssdCount: number; networkType?: string };
     'gpfs-hybrid'?: { nodeCount: number; hddPerNode: number; hddSize: number; ecScheme?: string; cacheCount: number; cacheSizePerDisk: number; networkType: string; networkSpeed: number };
     ceph?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; mdsNodeCount?: number };
     'ceph-hybrid'?: { nodeCount: number; disksPerNode: number; diskSize: number; redundancy?: string; cacheCount: number; cacheSizePerDisk: number };
@@ -291,7 +291,7 @@ function StorplanApp() {
           if (manualConfig['gpfs-ece']) {
             const mc = manualConfig['gpfs-ece']
             const ec = GPFS_EC_SCHEMES.find((s: any) => s.efficiency === mc.ecEfficiency)!
-            newResults['gpfs-ece'] = buildGPFSECEResult(mc.serverCount, mc.ssdSize, ec.scheme, ec.efficiency, getGPFSTolerance(mc.serverCount, ec.scheme), isBinary, bandwidthUnitType, mc.ssdCount)
+            newResults['gpfs-ece'] = buildGPFSECEResult(mc.serverCount, mc.ssdSize, ec.scheme, ec.efficiency, getGPFSTolerance(mc.serverCount, ec.scheme), isBinary, bandwidthUnitType, mc.ssdCount, mc.networkType)
           } else {
             const readBW = downloadBWValue ? `${downloadBWValue}${bwUnit}` : ''
             const writeBW = uploadBWValue ? `${uploadBWValue}${bwUnit}` : ''
@@ -491,37 +491,45 @@ function StorplanApp() {
 
   const handleGpfsServerCountChange = (newCount: number) => {
     if (!results['gpfs-ece'] || newCount < 3 || newCount > GPFS_CONSTANTS.MAX_SERVERS) return
-    const { ssdSize, ssdCount } = results['gpfs-ece']
+    const { ssdSize, ssdCount, networkType } = results['gpfs-ece']
     const ec = getGpfsEcScheme(newCount)
     const newCapacityTiB = gpfsCapacity(newCount, ssdSize, ec.efficiency, ssdCount)
-    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount: newCount, ssdSize, ecEfficiency: ec.efficiency, ssdCount } }))
+    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount: newCount, ssdSize, ecEfficiency: ec.efficiency, ssdCount, networkType } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleGpfsDiskChange = (newSsdSize: number) => {
     if (!results['gpfs-ece']) return
-    const { serverCount, ssdCount } = results['gpfs-ece']
+    const { serverCount, ssdCount, networkType } = results['gpfs-ece']
     const ec = getGpfsEcScheme(serverCount)
     const newCapacityTiB = gpfsCapacity(serverCount, newSsdSize, ec.efficiency, ssdCount)
-    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize: newSsdSize, ecEfficiency: ec.efficiency, ssdCount } }))
+    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize: newSsdSize, ecEfficiency: ec.efficiency, ssdCount, networkType } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleGpfsEcChange = (ecEfficiency: number) => {
     if (!results['gpfs-ece']) return
-    const { serverCount, ssdSize, ssdCount } = results['gpfs-ece']
+    const { serverCount, ssdSize, ssdCount, networkType } = results['gpfs-ece']
     const newCapacityTiB = gpfsCapacity(serverCount, ssdSize, ecEfficiency, ssdCount)
-    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize, ecEfficiency, ssdCount } }))
+    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize, ecEfficiency, ssdCount, networkType } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
   }
 
   const handleGpfsSsdCountChange = (newSsdCount: number) => {
     if (!results['gpfs-ece']) return
-    const { serverCount, ssdSize } = results['gpfs-ece']
+    const { serverCount, ssdSize, networkType } = results['gpfs-ece']
     const ec = getGpfsEcScheme(serverCount)
     const newCapacityTiB = gpfsCapacity(serverCount, ssdSize, ec.efficiency, newSsdCount)
-    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize, ecEfficiency: ec.efficiency, ssdCount: newSsdCount } }))
+    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize, ecEfficiency: ec.efficiency, ssdCount: newSsdCount, networkType } }))
     setCapacityValue(convertTibToUnit(newCapacityTiB, capacityUnit))
+  }
+
+  // 切换存储网络：容量与 EC 方案不变，仅性能预估按网络类型折算
+  const handleGpfsNetworkChange = (newNetworkType: string) => {
+    if (!results['gpfs-ece']) return
+    const { serverCount, ssdSize, ssdCount } = results['gpfs-ece']
+    const ec = getGpfsEcScheme(serverCount)
+    setManualConfig(prev => ({ ...prev, 'gpfs-ece': { serverCount, ssdSize, ecEfficiency: ec.efficiency, ssdCount, networkType: newNetworkType } }))
   }
 
   /**
@@ -825,7 +833,7 @@ function StorplanApp() {
         )
       case 'gpfs-ece':
         return results['gpfs-ece'] && (
-          <GPFSECEResult data={results['gpfs-ece']} onServerCountChange={handleGpfsServerCountChange} onDiskChange={handleGpfsDiskChange} onEcChange={handleGpfsEcChange} onSsdCountChange={handleGpfsSsdCountChange} />
+          <GPFSECEResult data={results['gpfs-ece']} onServerCountChange={handleGpfsServerCountChange} onDiskChange={handleGpfsDiskChange} onEcChange={handleGpfsEcChange} onSsdCountChange={handleGpfsSsdCountChange} onNetworkChange={handleGpfsNetworkChange} />
         )
       case 'gpfs-hybrid':
         return results['gpfs-hybrid'] && (
@@ -1523,7 +1531,7 @@ function VastDataResult({ data, onEboxCountChange, onDiskChange }: { data: VastD
   )
 }
 
-function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, onSsdCountChange }: { data: GPFSECEPlanResult; onServerCountChange: (n: number) => void; onDiskChange: (n: number) => void; onEcChange: (n: number) => void; onSsdCountChange: (n: number) => void }) {
+function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, onSsdCountChange, onNetworkChange }: { data: GPFSECEPlanResult; onServerCountChange: (n: number) => void; onDiskChange: (n: number) => void; onEcChange: (n: number) => void; onSsdCountChange: (n: number) => void; onNetworkChange: (v: string) => void }) {
   const { t } = usePrefs()
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
@@ -1583,7 +1591,15 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
             </div>
             <div>
               <dt className="text-body">{t('存储网络', 'Storage network')}</dt>
-              <dd>{t('2 × 双口 200Gb RoCE/IB 网卡', '2 × dual-port 200Gb RoCE/IB NIC')}</dd>
+              <dd>
+                <select value={data.networkType} onChange={(e) => onNetworkChange(e.target.value)} aria-label={t('存储网络', 'Storage network')} className="field">
+                  {GPFS_CONSTANTS.NETWORK_TYPES.map(n => (
+                    <option key={n.value} value={n.value}>
+                      {t(`2 × 双口 200Gb ${n.label} 网卡`, `2 × dual-port 200Gb ${'labelEn' in n ? n.labelEn : n.label} NIC`)}
+                    </option>
+                  ))}
+                </select>
+              </dd>
             </div>
             <div>
               <dt className="text-body">{t('管理网络', 'Management network')}</dt>
