@@ -9,9 +9,13 @@ export interface GPFSECEPlanRequest {
   capacity: string;
   readBandwidth?: string;
   writeBandwidth?: string;
+  /** 网卡类型：'roce-ib'（默认）| 'eth'（以太网卡，性能按 IB 下的 30% 预估） */
+  networkType?: string;
 }
 
 export interface GPFSECEPlanResult {
+  /** 网卡类型：'roce-ib'（RoCE/IB）| 'eth'（以太网卡，性能按 IB 下的 30% 预估） */
+  networkType: string;
   serverCount: number;
   ssdCount: number;
   ecScheme: string;
@@ -52,7 +56,20 @@ export const CONSTANTS = {
   READ_BW_FLOOR: 38000,
   READ_IOPS_PER_SERVER: 225000,
   WRITE_IOPS_PER_SERVER: 225000,
+  // 存储网络:基线性能以 RoCE/IB 网卡(RDMA)实测;
+  // 换用以太网卡(TCP)时,性能预估值按 IB 下的 30% 计
+  NETWORK_TYPES: [
+    { value: 'roce-ib', label: 'RoCE/IB' },
+    { value: 'eth', label: 'ETH' },
+  ] as const,
+  DEFAULT_NETWORK_TYPE: 'roce-ib',
+  ETH_PERF_RATIO: 0.3,
 };
+
+/** 该配置下可选的网卡类型 */
+export function getAllowedNetworkTypes() {
+  return CONSTANTS.NETWORK_TYPES;
+}
 
 export const EC_SCHEMES = [
   { scheme: 'EC4+2P', efficiency: CONSTANTS.EC4_2P_EFFICIENCY, minServers: 3 },
@@ -134,14 +151,16 @@ function getReadBWPerServer(serverCount: number): number {
   return Math.max(CONSTANTS.READ_BW_FLOOR, Math.min(CONSTANTS.READ_BW_BASE, bw));
 }
 
-function calculatePerformance(serverCount: number, ssdCount: number = CONSTANTS.SSDS_PER_SERVER) {
+function calculatePerformance(serverCount: number, ssdCount: number = CONSTANTS.SSDS_PER_SERVER, networkType: string = CONSTANTS.DEFAULT_NETWORK_TYPE) {
+  // 以太网卡(TCP)下性能按 RoCE/IB 的 30% 预估
+  const factor = networkType === 'eth' ? CONSTANTS.ETH_PERF_RATIO : 1;
   const readBWPerServer = getReadBWPerServer(serverCount);
   const ssdFactor = ssdCount / CONSTANTS.SSDS_PER_SERVER;
   return {
-    readBandwidth: serverCount * readBWPerServer * ssdFactor,
-    writeBandwidth: serverCount * CONSTANTS.WRITE_BW_PER_SERVER * ssdFactor,
-    readIOPS: serverCount * CONSTANTS.READ_IOPS_PER_SERVER * ssdFactor,
-    writeIOPS: serverCount * CONSTANTS.WRITE_IOPS_PER_SERVER * ssdFactor,
+    readBandwidth: serverCount * readBWPerServer * ssdFactor * factor,
+    writeBandwidth: serverCount * CONSTANTS.WRITE_BW_PER_SERVER * ssdFactor * factor,
+    readIOPS: serverCount * CONSTANTS.READ_IOPS_PER_SERVER * ssdFactor * factor,
+    writeIOPS: serverCount * CONSTANTS.WRITE_IOPS_PER_SERVER * ssdFactor * factor,
   };
 }
 
@@ -153,13 +172,14 @@ export function buildGPFSECEResult(
   tolerance: number,
   isBinary: boolean,
   bandwidthUnitType: string,
-  ssdCount: number = CONSTANTS.SSDS_PER_SERVER
+  ssdCount: number = CONSTANTS.SSDS_PER_SERVER,
+  networkType: string = CONSTANTS.DEFAULT_NETWORK_TYPE
 ): GPFSECEPlanResult {
   const actualCapacity = calculateCapacityTiB(serverCount, ssdSize, ecEfficiency, ssdCount);
   const rawCapacity = serverCount * ssdCount * ssdSize * CONSTANTS.TB_TO_TIB;
-  const performance = calculatePerformance(serverCount, ssdCount);
+  const performance = calculatePerformance(serverCount, ssdCount, networkType);
   return {
-    serverCount, ssdCount, ecScheme, tolerance, ssdConfig: `${ssdCount} × ${ssdSize}TB NVMe SSD`, ssdSize,
+    networkType, serverCount, ssdCount, ecScheme, tolerance, ssdConfig: `${ssdCount} × ${ssdSize}TB NVMe SSD`, ssdSize,
     actualCapacity, rawCapacity, performance,
     formatted: {
       capacity: formatCapacity(actualCapacity, isBinary),
@@ -175,19 +195,22 @@ export function buildGPFSECEResult(
 export function planGPFSECE(req: GPFSECEPlanRequest): GPFSECEPlanResult {
   const capacityInfo = parseCapacity(req.capacity);
   const capacityTiB = capacityInfo.tib;
+  const networkType = req.networkType ?? CONSTANTS.DEFAULT_NETWORK_TYPE;
+  // 以太网卡(TCP)下性能按 RoCE/IB 的 30% 预估
+  const factor = networkType === 'eth' ? CONSTANTS.ETH_PERF_RATIO : 1;
 
   let minServersForPerf = 3;
 
   if (req.readBandwidth) {
     const bwInfo = parseBandwidth(req.readBandwidth);
-    // 简化计算：假设平均读带宽
-    const avgReadBW = 45000; // MiB/s per server
+    // 简化计算：假设平均读带宽（已按网卡类型折算）
+    const avgReadBW = 45000 * factor; // MiB/s per server
     const needed = Math.ceil(bwInfo.mibps / avgReadBW);
     minServersForPerf = Math.max(minServersForPerf, needed);
   }
   if (req.writeBandwidth) {
     const bwInfo = parseBandwidth(req.writeBandwidth);
-    const needed = Math.ceil(bwInfo.mibps / CONSTANTS.WRITE_BW_PER_SERVER);
+    const needed = Math.ceil(bwInfo.mibps / (CONSTANTS.WRITE_BW_PER_SERVER * factor));
     minServersForPerf = Math.max(minServersForPerf, needed);
   }
 
@@ -228,12 +251,13 @@ export function planGPFSECE(req: GPFSECEPlanRequest): GPFSECEPlanResult {
   // 选择服务器台数最少的方案
   const best = configs.reduce((a, b) => (a.serverCount <= b.serverCount ? a : b));
 
-  const performance = calculatePerformance(best.serverCount);
+  const performance = calculatePerformance(best.serverCount, CONSTANTS.SSDS_PER_SERVER, networkType);
   const rawCapacity = best.serverCount * CONSTANTS.SSDS_PER_SERVER * best.ssdSize * CONSTANTS.TB_TO_TIB;
 
   const bandwidthUnitType = req.readBandwidth || req.writeBandwidth ? 'decimal-byte' : 'decimal-byte';
 
   return {
+    networkType,
     serverCount: best.serverCount,
     ssdCount: CONSTANTS.SSDS_PER_SERVER,
     ecScheme: best.ecScheme,

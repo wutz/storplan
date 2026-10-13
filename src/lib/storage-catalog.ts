@@ -133,7 +133,7 @@ export const STORAGE_INFO: Record<StorageKey, { description: string; pros: strin
     description: 'IBM GPFS/Scale ECE（Erasure Coding Edition）是基于 NVMe SSD 和 RDMA 网络的高性能并行文件系统。',
     pros: ['性能高', '采购成本低'],
     cons: ['多租户支持较弱', '运维成本高', '原厂技术支持较弱'],
-    limits: ['启用多租户时，容量起步与扩容步长均为 50 TiB', '启用多租户时，K8s 仅支持 hostPath，不支持基于 CSI 的 PVC'],
+    limits: ['启用多租户时，容量起步与扩容步长均为 50 TiB', '启用多租户时，K8s 仅支持 hostPath，不支持基于 CSI 的 PVC', '默认按 RoCE/IB 网卡（RDMA）预估性能；选用以太网卡时性能按 IB 下的 30% 预估'],
   },
   'gpfs-hybrid': {
     description: 'GPFS ECE 混闪文件系统以大容量 HDD 为主、少量 NVMe SSD 为辅：元数据与热数据放在 NVMe 层，冷数据落在 HDD 层，用远低于全闪的成本换来大容量并行文件系统。',
