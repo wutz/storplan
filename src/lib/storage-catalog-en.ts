@@ -120,7 +120,7 @@ export const STORAGE_INFO_EN: Record<StorageKey, StorageInfo> = {
     description: 'IBM GPFS/Scale ECE (Erasure Coding Edition) is a high-performance parallel file system built on NVMe SSD and RDMA networking.',
     pros: ['High performance', 'Low purchase cost'],
     cons: ['Weak multi-tenancy', 'High operating cost', 'Weak vendor support'],
-    limits: ['With multi-tenancy enabled, both the minimum capacity and the expansion step are 50 TiB', 'With multi-tenancy enabled, K8s supports hostPath only, not CSI-based PVCs'],
+    limits: ['With multi-tenancy enabled, both the minimum capacity and the expansion step are 50 TiB', 'With multi-tenancy enabled, K8s supports hostPath only, not CSI-based PVCs', 'Performance is projected on RoCE/IB NICs (RDMA) by default; with an Ethernet NIC, performance is projected at 30% of IB'],
   },
   'gpfs-hybrid': {
     description: 'GPFS ECE Hybrid File System is mostly high-capacity HDD with a small NVMe SSD tier: metadata and hot data live on NVMe, cold data on HDD — a large parallel file system at far below all-flash cost.',
