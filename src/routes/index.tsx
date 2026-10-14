@@ -1536,7 +1536,6 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
   const { t } = usePrefs()
   const perTiBReadBW = data.performance.readBandwidth / data.actualCapacity
   const perTiBReadBWFormatted = (perTiBReadBW * MIB_TO_MB).toFixed(2) + ' MB/s'
-  const isEth = data.networkType === 'eth'
 
   return (
     <div className="space-y-6">
@@ -1599,12 +1598,6 @@ function GPFSECEResult({ data, onServerCountChange, onDiskChange, onEcChange, on
                   {GPFS_CONSTANTS.NETWORK_TYPES.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
                 </select>
                 <span>{t('网卡', 'NIC')}</span>
-                {isEth && (
-                  <span className="inline-flex items-center gap-1 text-xs text-warning-deep">
-                    <WarnIcon className="h-3 w-3" />
-                    {t('性能按 IB 下的 30% 预估', 'Performance projected at 30% of IB')}
-                  </span>
-                )}
               </dd>
             </div>
             <div>
