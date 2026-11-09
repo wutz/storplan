@@ -28,7 +28,7 @@ function requestLang(request: Request): Lang {
 const DEFAULT_API_URL = 'https://api.blsc.dev'
 const DEFAULT_MODEL = 'claude-haiku-5-5'
 // 推理级别 high 下思考内容计入 max_tokens，需给正文之外留出思考余量
-const MAX_TOKENS = 4000
+const MAX_TOKENS = 8000
 const MAX_WEB_SEARCHES = 3
 
 /**
