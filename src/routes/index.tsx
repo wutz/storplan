@@ -23,7 +23,7 @@ import { formatBandwidth, formatCapacity, MIB_TO_MB } from '#/lib/utils'
 import { localizeCatalog, STORAGE_ORDER } from '#/lib/storage-catalog'
 import type { GuideRow, StorageKey } from '#/lib/storage-catalog'
 import { AiAssistant, openAiAssistant } from '#/components/ai-assistant'
-import { planSignature } from '#/lib/ai-chat'
+import { AI_ASSISTANT_ENABLED, planSignature } from '#/lib/ai-chat'
 import type { PlanDirective } from '#/lib/ai-chat'
 import { usePrefs, tr } from '#/lib/i18n'
 import { PrefsSwitcher } from '#/components/prefs-switcher'
@@ -894,10 +894,12 @@ function StorplanApp() {
               <p className="mt-3 max-w-2xl text-pretty text-base leading-relaxed text-body">
                 {t('填入容量和带宽，一次对比 VastData、GPFS ECE、Weka、XSKY XEOS 与 Ceph 的集群规模、硬件清单和性能指标。', 'Enter capacity and bandwidth to compare cluster size, bill of materials and performance for VastData, GPFS ECE, Weka, XSKY XEOS and Ceph side by side.')}
               </p>
-              <button type="button" onClick={openAiAssistant} className="btn-secondary mt-6">
-                <SparkleIcon className="h-4 w-4 text-brand" />
-                {t('让 AI 帮我选', 'Let AI help me choose')}
-              </button>
+              {AI_ASSISTANT_ENABLED && (
+                <button type="button" onClick={openAiAssistant} className="btn-secondary mt-6">
+                  <SparkleIcon className="h-4 w-4 text-brand" />
+                  {t('让 AI 帮我选', 'Let AI help me choose')}
+                </button>
+              )}
             </>
           )}
         </section>
@@ -1042,7 +1044,7 @@ function StorplanApp() {
         </footer>
       </div>
 
-      <AiAssistant onApplyPlan={applyPlan} onRestorePlan={restorePlan} isPlanApplied={isPlanApplied} />
+      {AI_ASSISTANT_ENABLED && <AiAssistant onApplyPlan={applyPlan} onRestorePlan={restorePlan} isPlanApplied={isPlanApplied} />}
     </div>
   )
 }

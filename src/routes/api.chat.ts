@@ -8,7 +8,7 @@
 
 import { createFileRoute } from '@tanstack/react-router'
 import { env } from 'cloudflare:workers'
-import { CHAT_LIMITS } from '#/lib/ai-chat'
+import { AI_ASSISTANT_ENABLED, CHAT_LIMITS } from '#/lib/ai-chat'
 import type { ChatMessage } from '#/lib/ai-chat'
 import { buildSystemPrompt } from '#/lib/ai-system-prompt'
 import { LANG_COOKIE } from '#/lib/i18n'
@@ -130,6 +130,10 @@ function extractDataPayloads(chunk: string, buffer: { rest: string }): string[] 
 }
 
 async function handleChat({ request }: { request: Request }): Promise<Response> {
+  // AI 助手已关闭：直接拒绝，不读配置、不限流、不调用上游
+  if (!AI_ASSISTANT_ENABLED) {
+    return json({ error: (requestLang(request) === 'en' ? 'The AI assistant has been turned off.' : 'AI 助手已关闭。') }, 410)
+  }
   // 环境变量必须在请求内读取：Workers 在请求时才注入，模块作用域读到的是 undefined
   const apiKey = process.env.LLM_API_KEY
   const apiUrl = (process.env.LLM_API_URL || DEFAULT_API_URL).replace(/\/+$/, '')
