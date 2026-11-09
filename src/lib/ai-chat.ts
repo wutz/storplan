@@ -13,6 +13,12 @@
 import { STORAGE_ORDER } from './storage-catalog'
 import type { StorageKey } from './storage-catalog'
 
+/**
+ * AI 规划助手总开关。false 时：首页「让 AI 帮我选」入口与浮动助手都不渲染，
+ * 服务端 /api/chat 直接返回 410，不读配置、不限流、不调用上游。重新开启：改为 true 后重新部署。
+ */
+export const AI_ASSISTANT_ENABLED = false
+
 export const PLAN_OPEN_TAG = '<storplan-plan>'
 export const PLAN_CLOSE_TAG = '</storplan-plan>'
 export const ASK_OPEN_TAG = '<storplan-ask>'
