@@ -2,4 +2,4 @@
 # 复制为 .dev.vars 后填入自己的密钥：cp .dev.vars.example .dev.vars
 LLM_API_URL=https://api.blsc.dev
 LLM_API_KEY=sk-your-key-here
-LLM_MODEL=claude-opus-5
+LLM_MODEL=claude-haiku-5-5

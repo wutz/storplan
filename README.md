@@ -64,7 +64,7 @@ cp .dev.vars.example .dev.vars
 ```bash
 npx wrangler versions secret put LLM_API_KEY
 npx wrangler versions secret put LLM_API_URL   # 可选，默认 https://api.blsc.dev
-npx wrangler versions secret put LLM_MODEL     # 可选，默认 claude-opus-5-5
+npx wrangler versions secret put LLM_MODEL     # 可选，默认 claude-haiku-5-5
 ```
 
 本项目走版本化上传（`wrangler versions upload`），有两点要注意：
@@ -130,7 +130,7 @@ Free 套餐下规则只能按路径匹配，会对该 zone 所有主机名的 `/
 1. **不覆盖预览域**：WAF 只对自有域生效，`*.workers.dev` 绕过它，只剩绑定那层兜底。预览域是给 PR
    验证用的、不对外公布；要彻底堵死就在生产切到自有域后关掉 `workers_dev`。
 2. **限的是速率，不是总量**：`wutz.dev` 是 Free 套餐，窗口固定 10 秒，最紧也只能压到 1–2 次/10s，
-   换算下来单 IP 每天仍可发起上万次请求，而每次都是一次 Opus 调用。WAF 大幅拉高了刷量成本，
+   换算下来单 IP 每天仍可发起上万次请求，而每次都是一次 Haiku 调用。WAF 大幅拉高了刷量成本，
    但真要给花费设硬顶，得再上其中一条：上游 API Key 侧的额度限制、Durable Object 做每日配额、
    或给助手加访问控制（Turnstile / 登录）。
 
