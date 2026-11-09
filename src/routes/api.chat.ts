@@ -26,9 +26,9 @@ function requestLang(request: Request): Lang {
 }
 
 const DEFAULT_API_URL = 'https://api.blsc.dev'
-const DEFAULT_MODEL = 'claude-opus-5-5'
-// Opus 5.5 的 thinking 无法关闭且计入 max_tokens，给正文之外留出思考余量
-const MAX_TOKENS = 4000
+const DEFAULT_MODEL = 'claude-haiku-5-5'
+// 推理级别 high 下思考内容计入 max_tokens，需给正文之外留出思考余量
+const MAX_TOKENS = 8000
 const MAX_WEB_SEARCHES = 3
 
 /**
@@ -175,8 +175,8 @@ async function handleChat({ request }: { request: Request }): Promise<Response> 
         model,
         max_tokens: MAX_TOKENS,
         stream: true,
-        // Opus 5.5 不支持关闭 thinking（传 disabled 会 400），用低 effort 控制延迟与成本
-        output_config: { effort: 'low' },
+        // 推理级别固定为 high
+        output_config: { effort: 'high' },
         system: buildSystemPrompt(lang),
         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: MAX_WEB_SEARCHES }],
         messages: parsed,
